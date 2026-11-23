@@ -565,4 +565,15 @@
   <Style Selector="Button.pill:pointerover /template/ ContentPresenter">
     <Setter Property="Background" Value="{DynamicResource AppHoverBrush}" />
   </Style>
+
+  <!-- History bars: brass when there was time, a hairline when there wasn't. -->
+  <Style Selector="Border.bar">
+    <Setter Property="Background" Value="{DynamicResource AppAccentBrush}" />
+  </Style>
+  <Style Selector="Border.bar.empty">
+    <Setter Property="Background" Value="{DynamicResource AppSubtleBackgroundBrush}" />
+  </Style>
+  <Style Selector="Border.bar.today">
+    <Setter Property="Opacity" Value="1" />
+  </Style>
 </Styles>

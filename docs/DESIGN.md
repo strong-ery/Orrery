@@ -97,6 +97,20 @@ to slip (anything softer waits until 17:00), a cool-down per goal, at most four 
 session. They appear as a small card in the screen corner. Closing the window puts Orrery in the tray so
 nudges still arrive; "Quit" in the tray menu exits, and the same menu turns nudges off.
 
+## Calendar
+
+Month grid plus an agenda for the selected day and a "coming up" list (`CalendarModel`). It only shows what the
+other parts already know: deadlines, the day each repeating goal next comes due (the end of its window, and not
+at all if that window is already done), the day a held-back step opens up, and, for past days, a small brass dot
+where something was worked on. Click anything to open it in the inspector.
+
+## Keeping it calm
+
+One accent (brass) carries meaning: today, progress, deadlines. Bucket colours are muted and appear only as a small
+dot or a thin tab, never as coloured text. Danger red is gone from lists. Detail lives in the inspector and
+tooltips, not on the page you scan. The goal designer asks plain questions with tiles instead of dropdowns, and
+the right-hand panel restates the answers as sentences.
+
 ## Not built yet
 
 * "Put off" on a step, then offering to split it after three defers (`Step.DeferCount` exists)

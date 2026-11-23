@@ -4,59 +4,95 @@
              x:Class="Orrery.App.Views.HistoryView"
              x:DataType="vm:HistoryViewModel">
     <ScrollViewer>
-        <StackPanel Margin="30,22,30,30" Spacing="18" MaxWidth="900" HorizontalAlignment="Stretch">
+        <StackPanel Margin="32,24,32,34" Spacing="30" MaxWidth="860" HorizontalAlignment="Left">
             <TextBlock Classes="page-title" Text="History" />
 
-            <StackPanel Spacing="0">
-                <TextBlock Classes="section-header" Text="LAST 5 WEEKS" />
-                <ItemsControl ItemsSource="{Binding Ribbons}">
+            <!-- The week in three numbers -->
+            <ItemsControl ItemsSource="{Binding Stats}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="48" /></ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:Stat">
+                        <StackPanel Spacing="0">
+                            <TextBlock Classes="numeric" Text="{Binding Value}" FontSize="30" FontWeight="Bold" />
+                            <TextBlock Classes="field-hint" Text="{Binding Label}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- Fourteen days of time put in -->
+            <StackPanel Spacing="8">
+                <TextBlock Classes="section-header" Text="LAST 14 DAYS" Margin="0" />
+                <ItemsControl ItemsSource="{Binding Bars}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate><UniformGrid Rows="1" /></ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="vm:RibbonViewModel">
-                            <Border Classes="card" Margin="0,0,0,10">
-                                <StackPanel Spacing="10">
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <StackPanel Orientation="Horizontal" Spacing="10">
-                                            <PathIcon Data="{StaticResource IconFlame}" Foreground="{Binding Accent}" Width="18" Height="18" />
-                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Foreground="{Binding Accent}" />
-                                            <TextBlock Text="{Binding Current, StringFormat='{}{0} day streak'}" FontWeight="SemiBold" />
-                                        </StackPanel>
-                                        <TextBlock Grid.Column="1" Classes="field-hint" Text="{Binding Detail}" />
-                                    </Grid>
-                                    <ItemsControl ItemsSource="{Binding Cells}">
-                                        <ItemsControl.ItemsPanel>
-                                            <ItemsPanelTemplate>
-                                                <WrapPanel />
-                                            </ItemsPanelTemplate>
-                                        </ItemsControl.ItemsPanel>
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate x:DataType="vm:DayCell">
-                                                <Border Classes="day-cell" Margin="0,0,4,4" Background="{Binding Brush}"
-                                                        ToolTip.Tip="{Binding Tip}" />
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </StackPanel>
-                            </Border>
+                        <DataTemplate x:DataType="vm:DayBar">
+                            <StackPanel Spacing="6" HorizontalAlignment="Stretch" ToolTip.Tip="{Binding Tip}">
+                                <Grid Height="100">
+                                    <Border Height="{Binding Height}" VerticalAlignment="Bottom" HorizontalAlignment="Center" Width="22"
+                                            CornerRadius="5,5,2,2" Classes="bar" Classes.empty="{Binding IsEmpty}" Classes.today="{Binding IsToday}" />
+                                </Grid>
+                                <TextBlock Text="{Binding Day}" Classes="field-hint" FontSize="10" HorizontalAlignment="Center"
+                                           Classes.todaynum="{Binding IsToday}" />
+                            </StackPanel>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-                <TextBlock Classes="field-hint" Text="Filled = everything asked that day was done. Red = something was missed. Dim = nothing was asked." />
+                <TextBlock Classes="field-hint" Text="{Binding ChartCaption}" FontSize="11" />
             </StackPanel>
 
-            <StackPanel Spacing="0">
-                <TextBlock Classes="section-header" Text="WHERE THE LAST 7 DAYS WENT" />
-                <Border Classes="card" IsVisible="{Binding !HasEffort}">
-                    <TextBlock Classes="field-hint" FontSize="13" Text="Nothing logged yet. Finish something on Today and it shows up here." />
-                </Border>
+            <!-- Streaks -->
+            <StackPanel Spacing="10">
+                <TextBlock Classes="section-header" Text="STREAKS" Margin="0" />
+                <ItemsControl ItemsSource="{Binding Ribbons}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:RibbonViewModel">
+                            <StackPanel Spacing="8" Margin="0,0,0,18">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <StackPanel Orientation="Horizontal" Spacing="9">
+                                        <Border Width="8" Height="8" CornerRadius="4" Background="{Binding Dot}" VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                                        <TextBlock Text="{Binding CurrentText}" Opacity="0.65" />
+                                    </StackPanel>
+                                    <TextBlock Grid.Column="1" Classes="field-hint" Text="{Binding Detail}" />
+                                </Grid>
+                                <ItemsControl ItemsSource="{Binding Cells}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:DayCell">
+                                            <Border Classes="day-cell" Margin="0,0,4,4" Background="{Binding Fill}"
+                                                    BorderBrush="{Binding Edge}" BorderThickness="1" ToolTip.Tip="{Binding Tip}" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock Classes="field-hint" FontSize="11"
+                           Text="Filled: everything asked that day was done. Outlined: something was missed. Faint: nothing was asked." />
+            </StackPanel>
+
+            <!-- Where the week went -->
+            <StackPanel Spacing="8">
+                <TextBlock Classes="section-header" Text="WHERE THE WEEK WENT" Margin="0" />
+                <TextBlock Classes="field-hint" FontSize="13" IsVisible="{Binding !HasEffort}"
+                           Text="Nothing logged yet. Finish something on Today and it shows up here." />
                 <ItemsControl ItemsSource="{Binding Effort}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="vm:EffortBar">
-                            <Grid ColumnDefinitions="220,*,90" ColumnSpacing="12" Margin="0,0,0,8">
-                                <TextBlock Text="{Binding Title}" FontSize="12" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-                                <ProgressBar Grid.Column="1" Classes="orrery-progress" Value="{Binding Percent}" Maximum="100"
-                                             Foreground="{Binding Accent}" VerticalAlignment="Center" />
-                                <TextBlock Grid.Column="2" Classes="field-hint" Text="{Binding Label}" HorizontalAlignment="Right"
-                                           VerticalAlignment="Center" />
+                            <Grid ColumnDefinitions="Auto,200,*,90" ColumnSpacing="12" Margin="0,0,0,9">
+                                <Border Width="8" Height="8" CornerRadius="4" Background="{Binding Dot}" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="{Binding Title}" FontSize="12.5" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                <ProgressBar Grid.Column="2" Classes="orrery-progress" Value="{Binding Percent}" Maximum="100"
+                                             Foreground="{DynamicResource AppAccentBrush}" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="3" Classes="field-hint" Text="{Binding Label}" HorizontalAlignment="Right" VerticalAlignment="Center" />
                             </Grid>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
