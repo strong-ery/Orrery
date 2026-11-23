@@ -27,9 +27,10 @@ public partial class MainViewModel : ObservableObject
     public FocusViewModel Focus { get; }
     public InspectorViewModel Inspector { get; }
     public CaptureViewModel Capture { get; }
+    public SettingsViewModel SettingsPage { get; }
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsToday), nameof(IsGoals), nameof(IsDesigner), nameof(IsHistory), nameof(IsCalendar))]
+    [NotifyPropertyChangedFor(nameof(IsToday), nameof(IsGoals), nameof(IsDesigner), nameof(IsHistory), nameof(IsCalendar), nameof(IsSettings))]
     private ObservableObject _current;
 
     public bool IsToday => Current == TodayPage;
@@ -37,6 +38,55 @@ public partial class MainViewModel : ObservableObject
     public bool IsDesigner => Current == DesignerPage;
     public bool IsHistory => Current == HistoryPage;
     public bool IsCalendar => Current == CalendarPage;
+    public bool IsSettings => Current == SettingsPage;
+
+    // --- Window size: the side panels ease between wide and narrow instead of squeezing the page ----
+
+    [ObservableProperty] private double _sidebarWidth = 214;
+    [ObservableProperty] private double _inspectorWidth = 410;
+    [ObservableProperty] private bool _compact;
+
+    public bool Wide => !Compact;
+
+    partial void OnCompactChanged(bool value) => OnPropertyChanged(nameof(Wide));
+
+    public void FitToWidth(double width)
+    {
+        Compact = width < 1120;
+        SidebarWidth = Compact ? 62 : 214;
+        InspectorWidth = Math.Clamp(width * 0.3, 320, 410);
+    }
+
+    /// <summary>Set by the app so Settings can show a sample reminder.</summary>
+    public Action? SendTestReminder { get; set; }
+
+    public void OpenDataFolder()
+    {
+        var folder = System.IO.Path.GetDirectoryName(JsonStore.DefaultPath);
+        if (folder is not null && System.IO.Directory.Exists(folder))
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(folder) { UseShellExecute = true });
+    }
+
+    [RelayCommand]
+    private void ShowSettings()
+    {
+        SettingsPage.Reload();
+        Show(SettingsPage);
+    }
+
+    [RelayCommand]
+    private void ToggleReminders()
+    {
+        Data.Settings.Nudges = !Data.Settings.Nudges;
+        JsonStore.Save(Data);
+        SettingsPage.Reload();
+        OnPropertyChanged(nameof(RemindersLabel));
+    }
+
+    public string RemindersLabel => Data.Settings.Nudges ? "Pause reminders" : "Turn reminders on";
+
+    [RelayCommand]
+    private void QuitApp() => (Avalonia.Application.Current as App)?.QuitApp();
 
     public MainViewModel()
     {
@@ -52,6 +102,7 @@ public partial class MainViewModel : ObservableObject
         Focus = new FocusViewModel(this);
         Inspector = new InspectorViewModel(this);
         Capture = new CaptureViewModel(this);
+        SettingsPage = new SettingsViewModel(this);
         _current = TodayPage;
 
         // Start buttons are only live while no session is running, so lists redraw when one starts or ends.
@@ -242,6 +293,90 @@ public partial class MainViewModel : ObservableObject
             Changed();
             Inspect(toGoalId, stepId);
         }
+    }
+
+    // --- Removing goals, and taking it back ---------------------------------------------------------
+
+    private string? _undoSnapshot;
+    private readonly Avalonia.Threading.DispatcherTimer _undoTimer = new() { Interval = TimeSpan.FromSeconds(10) };
+
+    [ObservableProperty] private bool _hasUndo;
+    [ObservableProperty] private string _undoText = "";
+
+    private void OfferUndo(string text)
+    {
+        _undoTimer.Stop();
+        UndoText = text;
+        HasUndo = true;
+        _undoTimer.Tick -= OnUndoTimeout;
+        _undoTimer.Tick += OnUndoTimeout;
+        _undoTimer.Start();
+    }
+
+    private void OnUndoTimeout(object? sender, EventArgs e) => DismissUndo();
+
+    [RelayCommand]
+    public void DismissUndo()
+    {
+        _undoTimer.Stop();
+        HasUndo = false;
+        _undoSnapshot = null;
+    }
+
+    /// <summary>Puts everything back the way it was before the last delete, archive or restore.</summary>
+    [RelayCommand]
+    public void Undo()
+    {
+        if (_undoSnapshot is null || JsonStore.FromJson(_undoSnapshot) is not { } old)
+            return;
+        Data.Categories = old.Categories;
+        Data.Goals = old.Goals;
+        Data.Contributions = old.Contributions;
+        Data.Settings = old.Settings;
+        DismissUndo();
+        Changed();
+    }
+
+    /// <summary>Deletes a goal for good: its steps, its history, and every link that pointed at it. Undo is offered for ten seconds.</summary>
+    public void DeleteGoal(Guid id)
+    {
+        if (FindGoal(id) is not { } goal)
+            return;
+        _undoSnapshot = JsonStore.ToJson(Data);
+        var stepIds = goal.Steps.Select(s => s.Id).ToHashSet();
+        Data.Goals.Remove(goal);
+        Data.Contributions.RemoveAll(c => c.GoalId == id);
+        foreach (var other in Data.Goals)
+        {
+            other.DependsOnGoals.Remove(id);
+            foreach (var step in other.Steps)
+                step.DependsOn.RemoveAll(stepIds.Contains);
+        }
+        Data.Settings.PlanOrder.RemoveAll(x => x == id || stepIds.Contains(x));
+        Data.Settings.NudgeLog.Remove(id);
+        if (Data.Settings.Focus?.GoalId == id)
+            Focus.Abandon();
+        Changed();
+        OfferUndo($"Deleted “{goal.Title}”");
+    }
+
+    /// <summary>Puts a goal away without losing it. It comes back from the "Put away" list.</summary>
+    public void ArchiveGoal(Guid id)
+    {
+        if (FindGoal(id) is not { } goal)
+            return;
+        _undoSnapshot = JsonStore.ToJson(Data);
+        goal.Archived = true;
+        Changed();
+        OfferUndo($"Put away “{goal.Title}”");
+    }
+
+    public void RestoreGoal(Guid id)
+    {
+        if (FindGoal(id) is not { } goal)
+            return;
+        goal.Archived = false;
+        Changed();
     }
 
     public void RemoveStep(Guid goalId, Guid stepId)

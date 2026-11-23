@@ -57,6 +57,138 @@
     <Setter Property="Opacity" Value="0.75" />
   </Style>
 
+  <!-- Title-bar menu: a quiet trigger and a rounded, elevated popup, the same pattern as str-amp. -->
+  <Style Selector="Button.top-menu-trigger">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="7" />
+    <Setter Property="Padding" Value="7,4" />
+    <Setter Property="MinHeight" Value="0" />
+    <Setter Property="Cursor" Value="Hand" />
+  </Style>
+  <Style Selector="Button.top-menu-trigger /template/ ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+  <Style Selector="Button.top-menu-trigger:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AppHoverBrush}" />
+  </Style>
+  <Style Selector="MenuFlyoutPresenter.orrery-menu">
+    <Setter Property="Background" Value="{DynamicResource AppDialogBackgroundBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AppCardBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="10" />
+    <Setter Property="Padding" Value="5" />
+    <Setter Property="MinWidth" Value="230" />
+  </Style>
+  <Style Selector="MenuFlyoutPresenter.orrery-menu /template/ Border">
+    <Setter Property="BoxShadow" Value="0 12 32 0 #70000000" />
+  </Style>
+  <Style Selector="MenuFlyoutPresenter.orrery-menu Separator">
+    <Setter Property="Background" Value="{DynamicResource AppCardBorderBrush}" />
+    <Setter Property="Height" Value="1" />
+    <Setter Property="Margin" Value="6,4" />
+  </Style>
+  <Style Selector="MenuItem.orrery-item">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="CornerRadius" Value="7" />
+    <Setter Property="Padding" Value="10,7" />
+    <Setter Property="FontSize" Value="12.5" />
+    <Setter Property="Margin" Value="0" />
+  </Style>
+  <Style Selector="MenuItem.orrery-item /template/ Border#PART_LayoutRoot">
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="VerticalAlignment" Value="Stretch" />
+    <Setter Property="Height" Value="NaN" />
+    <Setter Property="Margin" Value="0" />
+  </Style>
+  <Style Selector="MenuItem.orrery-item:pointerover /template/ Border#PART_LayoutRoot">
+    <Setter Property="Background" Value="{DynamicResource AppHoverBrush}" />
+    <Setter Property="CornerRadius" Value="7" />
+  </Style>
+  <Style Selector="MenuItem.orrery-item:selected /template/ Border#PART_LayoutRoot">
+    <Setter Property="Background" Value="{DynamicResource AppHoverBrush}" />
+    <Setter Property="CornerRadius" Value="7" />
+  </Style>
+  <Style Selector="MenuItem.orrery-item /template/ ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+  <Style Selector="MenuItem.orrery-item PathIcon">
+    <Setter Property="Foreground" Value="{DynamicResource AppAccentBrush}" />
+  </Style>
+
+  <!-- Calendar and its date field: same rounded indigo as every other input. -->
+  <Style Selector="CalendarDatePicker">
+    <Setter Property="Background" Value="{DynamicResource AppDialogBackgroundBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AppCardBorderBrush}" />
+    <Setter Property="CornerRadius" Value="9" />
+    <Setter Property="MinHeight" Value="38" />
+    <Setter Property="Padding" Value="12,8" />
+  </Style>
+  <Style Selector="Calendar">
+    <Setter Property="Background" Value="{DynamicResource AppDialogBackgroundBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AppCardBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="12" />
+    <Setter Property="Padding" Value="8" />
+  </Style>
+  <Style Selector="Calendar#PART_Calendar, CalendarDatePicker Calendar">
+    <Setter Property="Background" Value="{DynamicResource AppDialogBackgroundBrush}" />
+  </Style>
+  <Style Selector="CalendarItem">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="FontSize" Value="12" />
+  </Style>
+  <Style Selector="CalendarItem Button">
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+  <Style Selector="CalendarDayButton, CalendarButton">
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="Width" Value="34" />
+    <Setter Property="Height" Value="32" />
+    <Setter Property="Margin" Value="1" />
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+  <Style Selector="CalendarDayButton /template/ ContentPresenter, CalendarButton /template/ ContentPresenter">
+    <Setter Property="CornerRadius" Value="8" />
+  </Style>
+  <Style Selector="CalendarDayButton:inactive">
+    <Setter Property="Opacity" Value="0.35" />
+  </Style>
+  <Style Selector="CalendarItem /template/ Border">
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+  <Style Selector="CalendarDayButton:today">
+    <Setter Property="FontWeight" Value="Bold" />
+  </Style>
+  <Style Selector="CalendarDayButton:today /template/ ContentPresenter">
+    <Setter Property="TextElement.Foreground" Value="{DynamicResource AppAccentBrush}" />
+  </Style>
+  <Style Selector="CalendarDayButton:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AppHoverBrush}" />
+  </Style>
+  <Style Selector="CalendarDayButton:selected /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AppAccentBrush}" />
+    <Setter Property="TextElement.Foreground" Value="{DynamicResource AppOnAccentBrush}" />
+  </Style>
+
+  <!-- Narrow window: the sidebar becomes a rail of icons. -->
+  <Style Selector="Button.nav.compact">
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="Padding" Value="0,10" />
+  </Style>
+
+  <!-- The undo bar after a delete. -->
+  <Style Selector="Border.toast">
+    <Setter Property="Background" Value="{DynamicResource AppDialogBackgroundBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AppCardBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="12" />
+    <Setter Property="Padding" Value="16,8,8,8" />
+    <Setter Property="BoxShadow" Value="0 12 32 0 #80000000" />
+  </Style>
+
   <!-- Sidebar navigation: flat rows, a brass bar on the active one. -->
   <Style Selector="Button.nav">
     <Setter Property="Background" Value="Transparent" />
@@ -331,6 +463,13 @@
   </Style>
   <Style Selector="Button.icon:disabled">
     <Setter Property="Opacity" Value="0.3" />
+  </Style>
+
+  <Style Selector="Button.icon.danger:pointerover PathIcon">
+    <Setter Property="Foreground" Value="{DynamicResource AppWarnBrush}" />
+  </Style>
+  <Style Selector="Button.ghost.danger">
+    <Setter Property="Foreground" Value="{DynamicResource AppWarnBrush}" />
   </Style>
 
   <!-- Segmented switch (orbit / list). -->

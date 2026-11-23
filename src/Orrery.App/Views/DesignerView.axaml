@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Orrery.App.ViewModels"
              xmlns:design="using:Orrery.Core.Design"
+             xmlns:views="using:Orrery.App.Views"
              x:Class="Orrery.App.Views.DesignerView"
              x:DataType="vm:DesignerViewModel">
     <UserControl.Resources>
@@ -18,10 +19,10 @@
         </DataTemplate>
     </UserControl.Resources>
 
-    <Grid ColumnDefinitions="*,320" Margin="32,24,32,24" ColumnSpacing="32">
+    <Grid x:Name="Root" ColumnDefinitions="*,320" Margin="32,24,32,24" ColumnSpacing="32">
 
         <ScrollViewer Grid.Column="0">
-            <StackPanel Spacing="26" Margin="0,0,10,24" MaxWidth="640" HorizontalAlignment="Left">
+            <StackPanel x:Name="Questions" Spacing="26" Margin="0,0,10,24" MaxWidth="640" HorizontalAlignment="Left">
 
                 <StackPanel Spacing="2">
                     <TextBlock Classes="page-title" Text="{Binding Heading}" />
@@ -54,7 +55,7 @@
                     <TextBlock Classes="q" Text="What kind of thing is it?" />
                     <ItemsControl ItemsSource="{Binding KindChoices}" ItemTemplate="{StaticResource ChoiceTile}">
                         <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate><UniformGrid Rows="1" /></ItemsPanelTemplate>
+                            <ItemsPanelTemplate><views:TileGrid /></ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
                     </ItemsControl>
                 </StackPanel>
@@ -63,7 +64,7 @@
                     <TextBlock Classes="q" Text="How will you know it is going well?" />
                     <ItemsControl ItemsSource="{Binding MeasureChoices}" ItemTemplate="{StaticResource ChoiceTile}">
                         <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate><UniformGrid Rows="1" /></ItemsPanelTemplate>
+                            <ItemsPanelTemplate><views:TileGrid /></ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
                     </ItemsControl>
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="10" IsVisible="{Binding ShowUnit}">
@@ -79,7 +80,7 @@
                     <TextBlock Classes="q" Text="Does it come back?" />
                     <ItemsControl ItemsSource="{Binding RhythmChoices}" ItemTemplate="{StaticResource ChoiceTile}">
                         <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate><UniformGrid Rows="1" /></ItemsPanelTemplate>
+                            <ItemsPanelTemplate><views:TileGrid /></ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
                     </ItemsControl>
                     <StackPanel Spacing="4" IsVisible="{Binding ShowEvery}">
@@ -96,12 +97,12 @@
                     <TextBlock Classes="q" Text="Does it end?" />
                     <ItemsControl ItemsSource="{Binding EndChoices}" ItemTemplate="{StaticResource ChoiceTile}">
                         <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate><UniformGrid Rows="1" /></ItemsPanelTemplate>
+                            <ItemsPanelTemplate><views:TileGrid /></ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
                     </ItemsControl>
                     <StackPanel Spacing="6" IsVisible="{Binding ShowDeadline}">
                         <ToggleSwitch IsChecked="{Binding HasDeadline}" OnContent="Finish it by a date" OffContent="No deadline" />
-                        <DatePicker SelectedDate="{Binding DeadlineDate}" IsVisible="{Binding HasDeadline}" />
+                        <CalendarDatePicker SelectedDate="{Binding DeadlineDay}" IsVisible="{Binding HasDeadline}" Watermark="Pick a day" HorizontalAlignment="Left" MinWidth="220" />
                     </StackPanel>
                 </StackPanel>
 
@@ -109,7 +110,7 @@
                     <TextBlock Classes="q" Text="How much does it usually take out of you?" />
                     <ItemsControl ItemsSource="{Binding EnergyChoices}" ItemTemplate="{StaticResource ChoiceTile}">
                         <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate><UniformGrid Rows="1" /></ItemsPanelTemplate>
+                            <ItemsPanelTemplate><views:TileGrid /></ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
                     </ItemsControl>
                     <TextBlock Classes="field-hint" Text="Low-energy days only offer the light ones." />
@@ -118,7 +119,7 @@
         </ScrollViewer>
 
         <!-- What it will do, in plain words, updating as you answer -->
-        <StackPanel Grid.Column="1" Spacing="14" Margin="0,40,0,0">
+        <StackPanel x:Name="Summary" Grid.Column="1" Spacing="14" Margin="0,40,0,0">
             <Border Classes="card" Padding="18">
                 <StackPanel Spacing="10">
                     <TextBlock Classes="section-header" Text="HOW IT WILL BEHAVE" Margin="0" />

@@ -11,15 +11,12 @@ public sealed record Nudge(Guid GoalId, Guid? StepId, string Title, string Messa
 /// </summary>
 public static class Nudges
 {
-    public const double QuietBeforeHour = 10;
-    public const double QuietAfterHour = 21.5;
-    public const double GentleAfterHour = 17;
-
-    public static IReadOnlyList<Nudge> Due(OrreryData data, DateTime now, int maxPerDay = 4)
+    public static IReadOnlyList<Nudge> Due(OrreryData data, DateTime now)
     {
         var settings = data.Settings;
+        var maxPerDay = Math.Max(1, settings.NudgeMaxPerDay);
         var hour = now.Hour + now.Minute / 60.0;
-        if (!settings.Nudges || hour < QuietBeforeHour || hour >= QuietAfterHour)
+        if (!settings.Nudges || hour < settings.NudgeFromHour || hour >= settings.NudgeUntilHour)
             return [];
 
         var today = DateOnly.FromDateTime(now);
@@ -32,14 +29,16 @@ public static class Nudges
         {
             var behind = item.Demand is { IsDemanding: true, IsMet: false };
             var urgent = item.Pressure >= Planner.MustDo || (behind && item.Demand.Enforced);
-            if (!urgent && !(behind && hour >= GentleAfterHour))
+            if (!urgent && !(behind && hour >= settings.NudgeGentleFromHour))
+                continue;
+            var role = item.Category?.Role;
+            if (urgent ? !settings.NudgeDeadlines : role == CategoryRole.Passion ? !settings.NudgePassions : !settings.NudgeEvening)
                 continue;
 
-            var cooldown = TimeSpan.FromHours(urgent ? 2 : 4);
+            var cooldown = TimeSpan.FromHours(urgent ? settings.NudgeRepeatUrgentHours : role == CategoryRole.Passion ? settings.NudgeRepeatPassionHours : settings.NudgeRepeatGentleHours);
             if (settings.NudgeLog.TryGetValue(item.GoalId, out var last) && now - last < cooldown)
                 continue;
 
-            var role = item.Category?.Role;
             var what = item.StepId is null ? item.Title : $"{item.Title} ({item.GoalTitle})";
             var message = (urgent, role) switch
             {

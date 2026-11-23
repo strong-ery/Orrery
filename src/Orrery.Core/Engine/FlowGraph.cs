@@ -5,7 +5,8 @@ namespace Orrery.Core.Engine;
 public enum NodeState { Done, Open, Blocked }
 
 /// <summary>One box on the dependency graph: a section or loose step, or a whole goal that has no steps.</summary>
-public sealed record FlowNode(Guid Id, Guid GoalId, Guid? StepId, string Title, string GoalTitle, NodeState State, int Column, int Row);
+public sealed record FlowNode(Guid Id, Guid GoalId, Guid? StepId, string Title, string GoalTitle, NodeState State, int Column, int Row,
+    double? Fraction = null, string Detail = "", int Holds = 0);
 
 public sealed record FlowEdge(Guid From, Guid To);
 
@@ -109,8 +110,31 @@ public static class FlowGraph
                 row[n.Id] = at;
                 var done = n.Step is null ? isComplete(n.Goal) : n.Goal.IsDone(n.Step);
                 var blocked = !done && (n.Step is null ? graph.BlockedReason(n.Goal, today) : graph.BlockedReason(n.Step, today)) is not null;
+
+                // Where this box stands: steps done in a section, how far a goal has got, or what it is waiting for.
+                double? fraction = null;
+                var detail = "";
+                if (n.Step is { } root && n.Goal.IsSection(root))
+                {
+                    var inside = n.Goal.Steps.Where(x => x.Id != root.Id && IsUnder(n.Goal, x, root) && !n.Goal.IsSection(x)).ToList();
+                    if (inside.Count > 0)
+                    {
+                        var finished = inside.Count(x => x.Done);
+                        fraction = (double)finished / inside.Count;
+                        detail = $"{finished} of {inside.Count} steps";
+                    }
+                }
+                else if (n.Step is null)
+                {
+                    fraction = Progress.Fraction(n.Goal, data.Contributions);
+                    if (fraction is { } f)
+                        detail = $"{Math.Round(f * 100)}%";
+                }
+                if (blocked)
+                    detail = (n.Step is null ? graph.BlockedReason(n.Goal, today) : graph.BlockedReason(n.Step, today)) ?? detail;
+                var holds = edges.Count(e => e.Item1 == n.Id);
                 result.Add(new FlowNode(n.Id, n.Goal.Id, n.Step?.Id, n.Step?.Title ?? n.Goal.Title, n.Goal.Title,
-                    done ? NodeState.Done : blocked ? NodeState.Blocked : NodeState.Open, col, at));
+                    done ? NodeState.Done : blocked ? NodeState.Blocked : NodeState.Open, col, at, done ? 1 : fraction, detail, holds));
             }
         }
 

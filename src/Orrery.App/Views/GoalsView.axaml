@@ -5,12 +5,19 @@
              x:Class="Orrery.App.Views.GoalsView"
              x:DataType="vm:GoalsViewModel">
     <DockPanel Margin="32,24,32,24">
-        <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,0,12">
+        <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,12" ColumnSpacing="10">
             <StackPanel Spacing="2" VerticalAlignment="Center">
                 <TextBlock Classes="page-title" Text="Goals" />
-                <TextBlock Classes="field-hint" FontSize="12" Text="{Binding Summary}" />
+                <TextBlock Classes="field-hint" FontSize="12" Text="{Binding Summary}" IsVisible="{Binding !AsGraph}" />
+                <TextBlock Classes="field-hint" FontSize="12" Text="{Binding FlowSummary}" IsVisible="{Binding AsGraph}" />
             </StackPanel>
-            <Border Grid.Column="1" Classes="chip" Padding="3" VerticalAlignment="Center">
+            <Button Grid.Column="1" Classes="action" Command="{Binding NewGoalCommand}" VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal" Spacing="7">
+                    <PathIcon Data="{StaticResource IconAdd}" Width="11" Height="11" />
+                    <TextBlock Text="New goal" />
+                </StackPanel>
+            </Button>
+            <Border Grid.Column="2" Classes="chip" Padding="3" VerticalAlignment="Center">
                 <StackPanel Orientation="Horizontal" Spacing="2">
                     <Button Classes="seg" Classes.active="{Binding AsOrbit}" Content="Orbit" Command="{Binding ShowOrbitCommand}" />
                     <Button Classes="seg" Classes.active="{Binding AsList}" Content="List" Command="{Binding ShowListCommand}" />
@@ -21,8 +28,20 @@
         </Grid>
 
         <Border DockPanel.Dock="Top" Classes="card" IsVisible="{Binding IsEmpty}">
-            <TextBlock Classes="field-hint" FontSize="13" Text="No goals yet. Type one into the box at the top, or design one from “New goal”." />
+            <StackPanel Spacing="10">
+                <TextBlock Classes="field-hint" FontSize="13" Text="No goals yet. Start with one thing you want to get done, or keep going on." />
+                <Button Classes="action primary" Content="Design a goal" Command="{Binding NewGoalCommand}" HorizontalAlignment="Left" Padding="16,8" />
+            </StackPanel>
         </Border>
+
+        <!-- The scrubber: how the map looks a few days from now -->
+        <Grid DockPanel.Dock="Bottom" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="12" Margin="0,8,0,0" Width="480"
+              HorizontalAlignment="Center" IsVisible="{Binding AsOrbit}">
+            <TextBlock Text="Today" Classes="field-hint" VerticalAlignment="Center" />
+            <Slider Grid.Column="1" Minimum="0" Maximum="60" Value="{Binding LookAhead}" VerticalAlignment="Center" />
+            <TextBlock Grid.Column="2" Text="{Binding LookAheadText}" Classes="field-hint" MinWidth="110" TextAlignment="Right" VerticalAlignment="Center" />
+            <Button Grid.Column="3" Classes="ghost" Content="Reset" Command="{Binding ResetLookAheadCommand}" IsVisible="{Binding IsLookingAhead}" />
+        </Grid>
 
         <Grid>
         <!-- Orbit: rings are how soon it'll want you, sectors are the buckets -->
@@ -40,40 +59,69 @@
                        Text="Nothing waits on anything yet. Open a goal and use “Do in order” on its steps, or “Wait for another goal”, and the chain shows up here." />
         </Grid>
 
-        <!-- List: the same goals, grouped by the same rings -->
+        <!-- List: the same goals, grouped by the same rings. Hover a row for edit, put away and delete. -->
         <ScrollViewer IsVisible="{Binding AsList}">
-            <ItemsControl ItemsSource="{Binding Groups}" MaxWidth="860" HorizontalAlignment="Stretch">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate x:DataType="vm:GoalGroup">
-                        <StackPanel Margin="0,0,0,14">
-                            <TextBlock Classes="section-header" Text="{Binding Label}" />
-                            <ItemsControl ItemsSource="{Binding Rows}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="vm:GoalRowViewModel">
-                                        <Border Classes="line">
-                                            <Button Classes="link" Command="{Binding OpenCommand}">
-                                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
-                                                    <Border Width="10" Height="10" CornerRadius="5" Background="{Binding Accent}" VerticalAlignment="Center" />
-                                                    <StackPanel Grid.Column="1" Spacing="1">
-                                                        <TextBlock Classes="title" Text="{Binding Title}" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-                                                        <TextBlock Classes="field-hint" Text="{Binding Subtitle}" />
-                                                    </StackPanel>
-                                                    <StackPanel Grid.Column="2" Spacing="4" Width="210" VerticalAlignment="Center">
-                                                        <TextBlock Classes="field-hint" Text="{Binding Headline}" HorizontalAlignment="Right"
-                                                                   TextTrimming="CharacterEllipsis" />
-                                                        <ProgressBar Classes="orrery-progress" Value="{Binding Fraction}" Maximum="100"
-                                                                     IsVisible="{Binding HasFraction}" Foreground="{Binding Accent}" />
+            <StackPanel MaxWidth="1100" HorizontalAlignment="Stretch" Margin="0,0,0,24">
+                <ItemsControl ItemsSource="{Binding Groups}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:GoalGroup">
+                            <StackPanel Margin="0,0,0,14">
+                                <TextBlock Classes="section-header" Text="{Binding Label}" />
+                                <ItemsControl ItemsSource="{Binding Rows}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:GoalRowViewModel">
+                                            <Border Classes="line">
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <Button Classes="link" Command="{Binding OpenCommand}" HorizontalAlignment="Stretch"
+                                                            HorizontalContentAlignment="Stretch">
+                                                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                                            <Border Width="10" Height="10" CornerRadius="5" Background="{Binding Accent}" VerticalAlignment="Center" />
+                                                            <StackPanel Grid.Column="1" Spacing="1">
+                                                                <TextBlock Classes="title" Text="{Binding Title}" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                                                <TextBlock Classes="field-hint" Text="{Binding Subtitle}" TextTrimming="CharacterEllipsis" />
+                                                            </StackPanel>
+                                                            <StackPanel Grid.Column="2" Spacing="4" Width="200" VerticalAlignment="Center">
+                                                                <TextBlock Classes="field-hint" Text="{Binding Headline}" HorizontalAlignment="Right"
+                                                                           TextTrimming="CharacterEllipsis" />
+                                                                <ProgressBar Classes="orrery-progress" Value="{Binding Fraction}" Maximum="100"
+                                                                             IsVisible="{Binding HasFraction}" Foreground="{Binding Accent}" />
+                                                            </StackPanel>
+                                                        </Grid>
+                                                    </Button>
+                                                    <StackPanel Grid.Column="1" Classes="tools" Orientation="Horizontal" Spacing="0" Margin="8,0,0,0"
+                                                                VerticalAlignment="Center">
+                                                        <Button Classes="icon" Command="{Binding EditCommand}" ToolTip.Tip="Edit">
+                                                            <PathIcon Data="{StaticResource IconEdit}" />
+                                                        </Button>
+                                                        <Button Classes="icon" Command="{Binding ArchiveCommand}" IsVisible="{Binding CanArchive}"
+                                                                ToolTip.Tip="Put away (keeps it, hides it)">
+                                                            <PathIcon Data="{StaticResource IconBox}" />
+                                                        </Button>
+                                                        <Button Classes="icon" Command="{Binding RestoreCommand}" IsVisible="{Binding IsArchived}"
+                                                                ToolTip.Tip="Bring it back">
+                                                            <PathIcon Data="{StaticResource IconRestore}" />
+                                                        </Button>
+                                                        <Button Classes="icon danger" Command="{Binding DeleteCommand}" ToolTip.Tip="Delete">
+                                                            <PathIcon Data="{StaticResource IconTrash}" />
+                                                        </Button>
                                                     </StackPanel>
                                                 </Grid>
-                                            </Button>
-                                        </Border>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <Button Classes="ghost" Command="{Binding TogglePutAwayCommand}" IsVisible="{Binding HasPutAway}"
+                        HorizontalAlignment="Left" Margin="-9,4,0,0">
+                    <StackPanel Orientation="Horizontal" Spacing="7">
+                        <PathIcon Data="{StaticResource IconBox}" Width="12" Height="12" />
+                        <TextBlock Text="{Binding PutAwayCount, StringFormat='Put away ({0})'}" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
         </ScrollViewer>
         </Grid>
     </DockPanel>

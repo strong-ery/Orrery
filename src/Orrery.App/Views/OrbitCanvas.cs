@@ -14,8 +14,8 @@ namespace Orrery.App.Views;
 
 /// <summary>
 /// The orbit map, seen at a slant. The rings are how soon a goal will want you (inner = now, outer = someday) and the
-/// three sectors are the buckets, so how lopsided your life is shows at a glance. A planet's size is its pressure and
-/// the arc around it is progress. Each planet is lit by the sun in the middle, so the side facing today is bright.
+/// three sectors are the buckets, so how lopsided your life is shows at a glance. A planet's size is how much work is left, how
+/// brightly it glows is how pressing it is, and the arc around it is progress. Each planet is lit by the sun in the middle, so the side facing today is bright.
 /// Positions depend only on bucket, ring and name, so nothing jumps between visits.
 /// </summary>
 public sealed class OrbitCanvas : Control
@@ -69,6 +69,11 @@ public sealed class OrbitCanvas : Control
     };
 
     private readonly List<(OrbitBody Body, Point Center, double Radius)> _placed = [];
+    private readonly Dictionary<Guid, (Point At, double Radius)> _shown = [];
+    private readonly Dictionary<Guid, double> _fractions = [];
+    private readonly List<(Guid Id, double Start)> _pulses = [];
+    private double _lastLayout;
+    private double _focus;
     private Guid? _hover;
     private Point _pointer;
 
@@ -125,11 +130,31 @@ public sealed class OrbitCanvas : Control
         return h % 1000 / 1000.0;
     }
 
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+        if (change.Property != BodiesProperty || Bodies is not { } bodies)
+            return;
+        // A little ring goes out from any planet whose progress just moved: the app noticing that you did something.
+        foreach (var b in bodies)
+        {
+            var now = b.Fraction ?? 0;
+            if (_fractions.TryGetValue(b.Id, out var before) && now > before + 0.0005)
+                _pulses.Add((b.Id, Phase));
+            _fractions[b.Id] = now;
+        }
+    }
+
     private void Layout()
     {
         _placed.Clear();
+        var dt = Math.Clamp(Phase - _lastLayout, 0, 0.1);
+        _lastLayout = Phase;
         if (Bodies is not { Count: > 0 } bodies)
+        {
+            _shown.Clear();
             return;
+        }
         var (center, r) = Frame();
 
         foreach (var cell in bodies.GroupBy(b => (b.Role, b.Horizon)))
@@ -146,13 +171,24 @@ public sealed class OrbitCanvas : Control
                 var angle = start + (i + 0.5) / ordered.Count * span + drift;
                 var p = Slant(center, radius, angle);
                 // Nearer (lower on screen) is a little bigger, farther a little smaller.
-                var depth = 1.0;
-                _placed.Add((ordered[i], p, BodyRadius(ordered[i]) * depth));
+                var radiusNow = BodyRadius(ordered[i]);
+                // Glide to the new spot when a goal changes ring or size (looking ahead, finishing a step) instead of jumping.
+                if (_shown.TryGetValue(ordered[i].Id, out var was))
+                {
+                    var k = 1 - Math.Exp(-dt * 8);
+                    p = new Point(was.At.X + (p.X - was.At.X) * k, was.At.Y + (p.Y - was.At.Y) * k);
+                    radiusNow = was.Radius + (radiusNow - was.Radius) * k;
+                }
+                _shown[ordered[i].Id] = (p, radiusNow);
+                _placed.Add((ordered[i], p, radiusNow));
             }
         }
+        foreach (var gone in _shown.Keys.Where(k => bodies.All(b => b.Id != k)).ToList())
+            _shown.Remove(gone);
     }
 
-    private static double BodyRadius(OrbitBody b) => 16 + Math.Clamp(b.Pressure, 0, 1) * 14;
+    /// <summary>Bigger means more work left. How loudly it glows is a separate thing: that is pressure.</summary>
+    private static double BodyRadius(OrbitBody b) => 14 + Math.Clamp(b.Effort, 0, 1) * 17;
 
     // --- Pointer ------------------------------------------------------------------------------------
 
@@ -226,11 +262,31 @@ public sealed class OrbitCanvas : Control
         // Painter's order: what is behind the sun first, then the sun, then what is in front of it.
         var behind = _placed.Where(x => x.Center.Y < center.Y).OrderBy(x => x.Center.Y).ToList();
         var front = _placed.Where(x => x.Center.Y >= center.Y).OrderBy(x => x.Center.Y).ToList();
-        foreach (var (body, c, radius) in behind)
-            DrawBody(context, body, c, radius, center);
+
+        // With a goal open, everything not tied to it steps back so it is plain what you are looking at.
+        _focus += ((SelectedId is not null ? 1.0 : 0.0) - _focus) * 0.18;
+        var chosen = Bodies?.FirstOrDefault(b => b.Id == SelectedId);
+        bool Related(OrbitBody b) => chosen is null || b.Id == chosen.Id || chosen.DependsOn.Contains(b.Id) || b.DependsOn.Contains(chosen.Id);
+        void Draw((OrbitBody Body, Point Center, double Radius) x)
+        {
+            using (context.PushOpacity(1 - _focus * (Related(x.Body) ? 0 : 0.5)))
+                DrawBody(context, x.Body, x.Center, x.Radius, center);
+        }
+        foreach (var x in behind)
+            Draw(x);
         DrawSun(context, center, r);
-        foreach (var (body, c, radius) in front)
-            DrawBody(context, body, c, radius, center);
+        foreach (var x in front)
+            Draw(x);
+
+        _pulses.RemoveAll(p => Phase - p.Start > 1.1);
+        foreach (var (id, start) in _pulses)
+        {
+            if (_placed.FirstOrDefault(x => x.Body.Id == id) is not { Body: not null } at)
+                continue;
+            var t = (Phase - start) / 1.1;
+            var grow = at.Radius + 4 + 26 * (1 - Math.Pow(1 - t, 3));
+            context.DrawEllipse(null, new Pen(Brush(Brass, 0.7 * (1 - t)), 2), at.Center, grow, grow);
+        }
 
         var labelRects = new List<Rect>();
         var order = _placed.OrderByDescending(x => x.Body.Id == _hover ? 2 : x.Body.Id == SelectedId ? 1 : 0)
@@ -755,6 +811,15 @@ public sealed class OrbitCanvas : Control
         // Moons in front of the planet.
         foreach (var m in moons.Where(m => m.Depth >= 0))
             DrawMoon(context, m.At, m.State, accent, 1);
+
+        if (body.TodayItems > 0)
+        {
+            // A small brass pip: this one has something on today's list.
+            var pip = new Point(c.X + radius * 0.78, c.Y - radius * 0.78);
+            context.DrawEllipse(Brush(Color.Parse("#0B0D1A")), null, pip, 8.5, 8.5);
+            context.DrawEllipse(Brush(Brass), null, pip, 6.8, 6.8);
+            DrawText(context, body.TodayItems.ToString(CultureInfo.InvariantCulture), 9, "#1B1406", pip, centered: true, bold: true);
+        }
 
         if (body.Id == SelectedId)
         {

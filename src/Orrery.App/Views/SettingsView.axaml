@@ -1,0 +1,133 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Orrery.App.ViewModels"
+             x:Class="Orrery.App.Views.SettingsView"
+             x:DataType="vm:SettingsViewModel">
+    <ScrollViewer>
+        <StackPanel MaxWidth="660" HorizontalAlignment="Left" Margin="32,24,32,32" Spacing="22">
+            <StackPanel Spacing="2">
+                <TextBlock Classes="page-title" Text="Settings" />
+                <TextBlock Classes="field-hint" FontSize="12" Text="Changes save as you make them." />
+            </StackPanel>
+
+            <!-- Reminders -->
+            <StackPanel Spacing="10">
+                <TextBlock Classes="section-header" Text="REMINDERS" Margin="0" />
+                <Border Classes="card" Padding="20,16">
+                    <StackPanel Spacing="16">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Spacing="2">
+                                <TextBlock Text="Remind me about things" FontWeight="SemiBold" />
+                                <TextBlock Classes="field-hint" TextWrapping="Wrap"
+                                           Text="A small card in the corner of the screen. Orrery keeps running in the tray so these can arrive." />
+                            </StackPanel>
+                            <ToggleSwitch Grid.Column="1" IsChecked="{Binding RemindersOn}" OnContent="" OffContent="" VerticalAlignment="Center" />
+                        </Grid>
+
+                        <StackPanel Spacing="16" IsEnabled="{Binding RemindersOn}">
+                            <Border Height="1" Background="{DynamicResource AppCardBorderBrush}" />
+
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                                <StackPanel Spacing="2">
+                                    <TextBlock Text="Due today, or about to slip" FontWeight="SemiBold" />
+                                    <TextBlock Classes="field-hint" TextWrapping="Wrap" Text="Deadlines and anything you must do. Worth interrupting you for." />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                                    <ComboBox Classes="orrery-combo" Width="150" ItemsSource="{Binding RepeatNames}" SelectedIndex="{Binding DeadlineRepeat}"
+                                              IsEnabled="{Binding Deadlines}" />
+                                    <ToggleSwitch IsChecked="{Binding Deadlines}" OnContent="" OffContent="" />
+                                </StackPanel>
+                            </Grid>
+
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                                <StackPanel Spacing="2">
+                                    <TextBlock Text="Still on today's list" FontWeight="SemiBold" />
+                                    <TextBlock Classes="field-hint" TextWrapping="Wrap" Text="A gentle one late in the day for what you have not got to yet." />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                                    <ComboBox Classes="orrery-combo" Width="150" ItemsSource="{Binding RepeatNames}" SelectedIndex="{Binding EveningRepeat}"
+                                              IsEnabled="{Binding Evening}" />
+                                    <ToggleSwitch IsChecked="{Binding Evening}" OnContent="" OffContent="" />
+                                </StackPanel>
+                            </Grid>
+
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                                <StackPanel Spacing="2">
+                                    <TextBlock Text="A little of what you love" FontWeight="SemiBold" />
+                                    <TextBlock Classes="field-hint" TextWrapping="Wrap" Text="Passions that have gone quiet. Never about anything you have to do." />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                                    <ComboBox Classes="orrery-combo" Width="150" ItemsSource="{Binding RepeatNames}" SelectedIndex="{Binding PassionRepeat}"
+                                              IsEnabled="{Binding Passions}" />
+                                    <ToggleSwitch IsChecked="{Binding Passions}" OnContent="" OffContent="" />
+                                </StackPanel>
+                            </Grid>
+
+                            <Border Height="1" Background="{DynamicResource AppCardBorderBrush}" />
+
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                                <StackPanel Spacing="2">
+                                    <TextBlock Text="No more than" FontWeight="SemiBold" />
+                                    <TextBlock Classes="field-hint" Text="Across everything, in one day." />
+                                </StackPanel>
+                                <ComboBox Grid.Column="1" Classes="orrery-combo" Width="150" ItemsSource="{Binding PerDayNames}" SelectedIndex="{Binding PerDayIndex}" />
+                            </Grid>
+
+                            <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="10">
+                                <StackPanel Spacing="2">
+                                    <TextBlock Text="Only between" FontWeight="SemiBold" />
+                                    <TextBlock Classes="field-hint" Text="Quiet the rest of the time." />
+                                </StackPanel>
+                                <ComboBox Grid.Column="1" Classes="orrery-combo" Width="110" ItemsSource="{Binding FromNames}" SelectedIndex="{Binding FromIndex}" />
+                                <TextBlock Grid.Column="2" Text="and" Classes="field-hint" VerticalAlignment="Center" />
+                                <ComboBox Grid.Column="3" Classes="orrery-combo" Width="110" ItemsSource="{Binding UntilNames}" SelectedIndex="{Binding UntilIndex}" />
+                            </Grid>
+
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                                <StackPanel Spacing="2">
+                                    <TextBlock Text="Gentle reminders start at" FontWeight="SemiBold" />
+                                    <TextBlock Classes="field-hint" Text="Before this, only the urgent ones come through." />
+                                </StackPanel>
+                                <ComboBox Grid.Column="1" Classes="orrery-combo" Width="150" ItemsSource="{Binding GentleNames}" SelectedIndex="{Binding GentleIndex}" />
+                            </Grid>
+
+                            <Button Classes="action" Content="Show me a sample" Command="{Binding TestReminderCommand}" HorizontalAlignment="Left" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <!-- Today -->
+            <StackPanel Spacing="10">
+                <TextBlock Classes="section-header" Text="TODAY" Margin="0" />
+                <Border Classes="card" Padding="20,16">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="How long the list can get" FontWeight="SemiBold" />
+                            <TextBlock Classes="field-hint" TextWrapping="Wrap" Text="Anything pressing still shows up, even past this." />
+                        </StackPanel>
+                        <ComboBox Grid.Column="1" Classes="orrery-combo" Width="150" ItemsSource="{Binding ListSizeNames}" SelectedIndex="{Binding ListSizeIndex}" />
+                    </Grid>
+                </Border>
+            </StackPanel>
+
+            <!-- Data -->
+            <StackPanel Spacing="10">
+                <TextBlock Classes="section-header" Text="YOUR DATA" Margin="0" />
+                <Border Classes="card" Padding="20,16">
+                    <StackPanel Spacing="10">
+                        <TextBlock Classes="field-hint" TextWrapping="Wrap"
+                                   Text="Everything lives in one file on this computer. No account, nothing sent anywhere." />
+                        <TextBlock Text="{Binding DataPath}" FontSize="12" Opacity="0.8" TextWrapping="Wrap" />
+                        <Button Classes="action" HorizontalAlignment="Left" Command="{Binding OpenDataFolderCommand}">
+                            <StackPanel Orientation="Horizontal" Spacing="7">
+                                <PathIcon Data="{StaticResource IconFolder}" Width="13" Height="13" />
+                                <TextBlock Text="Open the folder" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

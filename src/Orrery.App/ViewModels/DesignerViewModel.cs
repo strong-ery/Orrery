@@ -43,6 +43,15 @@ public partial class DesignerViewModel : ObservableObject
     [ObservableProperty] private string _targetText = "";
     [ObservableProperty] private bool _hasDeadline;
     [ObservableProperty] private DateTimeOffset? _deadlineDate;
+
+    /// <summary>The same date as a plain DateTime, which is what the calendar control binds to.</summary>
+    public DateTime? DeadlineDay
+    {
+        get => DeadlineDate?.DateTime;
+        set => DeadlineDate = value is { } v ? new DateTimeOffset(v.Date) : null;
+    }
+
+    partial void OnDeadlineDateChanged(DateTimeOffset? value) => OnPropertyChanged(nameof(DeadlineDay));
     [ObservableProperty] private int _rhythmIndex;
     [ObservableProperty] private string _everyDaysText = "7";
     [ObservableProperty] private string _perWeekText = "";

@@ -203,6 +203,9 @@ public partial class FocusViewModel : ObservableObject
         _main.Changed();
     }
 
+    /// <summary>Drops a running session without logging it, for when its goal has been deleted.</summary>
+    public void Abandon() => Clear();
+
     private void Clear()
     {
         _timer.Stop();

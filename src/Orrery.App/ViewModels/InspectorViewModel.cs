@@ -445,11 +445,14 @@ public partial class InspectorViewModel : ObservableObject
     [RelayCommand]
     private void Archive()
     {
-        if (CurrentGoal is not { } goal)
-            return;
-        goal.Archived = true;
-        _goalId = null;
-        IsOpen = false;
-        _main.Changed();
+        if (_goalId is { } id)
+            _main.ArchiveGoal(id);
+    }
+
+    [RelayCommand]
+    private void Delete()
+    {
+        if (_goalId is { } id)
+            _main.DeleteGoal(id);
     }
 }

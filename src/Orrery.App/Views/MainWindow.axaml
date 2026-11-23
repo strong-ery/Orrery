@@ -17,16 +17,44 @@
         <DataTemplate DataType="vm:DesignerViewModel"><views:DesignerView /></DataTemplate>
         <DataTemplate DataType="vm:HistoryViewModel"><views:HistoryView /></DataTemplate>
         <DataTemplate DataType="vm:CalendarViewModel"><views:CalendarView /></DataTemplate>
+        <DataTemplate DataType="vm:SettingsViewModel"><views:SettingsView /></DataTemplate>
     </Window.DataTemplates>
 
     <Grid>
     <DockPanel>
         <Grid x:Name="TitleBar" DockPanel.Dock="Top" Height="38" ColumnDefinitions="214,*,214"
               PointerPressed="OnTitleBarPointerPressed" DoubleTapped="OnTitleBarDoubleTapped">
-            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="9" Margin="14,0,0,0" VerticalAlignment="Center">
-                <views:OrreryMark Width="20" Height="20" />
-                <TextBlock Text="orrery" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
-            </StackPanel>
+            <Button Grid.Column="0" Classes="top-menu-trigger" Margin="8,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Left">
+                <StackPanel Orientation="Horizontal" Spacing="9">
+                    <views:OrreryMark Width="20" Height="20" />
+                    <TextBlock Text="orrery" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
+                    <PathIcon Data="{StaticResource IconDown}" Width="10" Height="10" Opacity="0.55" VerticalAlignment="Center" />
+                </StackPanel>
+                <Button.Flyout>
+                    <MenuFlyout Placement="BottomEdgeAlignedLeft" FlyoutPresenterClasses="orrery-menu">
+                        <MenuItem Header="New goal…" Classes="orrery-item" Command="{Binding ShowDesignerCommand}">
+                            <MenuItem.Icon><PathIcon Data="{StaticResource IconAdd}" Width="14" Height="14" /></MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Header="Add a step or goal…" Classes="orrery-item" Command="{Binding Capture.OpenCommand}" InputGesture="Ctrl+K">
+                            <MenuItem.Icon><PathIcon Data="{StaticResource IconBolt}" Width="14" Height="14" /></MenuItem.Icon>
+                        </MenuItem>
+                        <Separator />
+                        <MenuItem Header="{Binding RemindersLabel}" Classes="orrery-item" Command="{Binding ToggleRemindersCommand}">
+                            <MenuItem.Icon><PathIcon Data="{StaticResource IconBell}" Width="14" Height="14" /></MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Header="Open data folder" Classes="orrery-item" Click="OnOpenDataFolder">
+                            <MenuItem.Icon><PathIcon Data="{StaticResource IconFolder}" Width="14" Height="14" /></MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Header="Settings…" Classes="orrery-item" Command="{Binding ShowSettingsCommand}">
+                            <MenuItem.Icon><PathIcon Data="{StaticResource IconSettings}" Width="14" Height="14" /></MenuItem.Icon>
+                        </MenuItem>
+                        <Separator />
+                        <MenuItem Header="Quit Orrery" Classes="orrery-item" Command="{Binding QuitAppCommand}">
+                            <MenuItem.Icon><PathIcon Data="{StaticResource IconExit}" Width="14" Height="14" /></MenuItem.Icon>
+                        </MenuItem>
+                    </MenuFlyout>
+                </Button.Flyout>
+            </Button>
 
             <!-- Quick add: type a line, see what it will do, press Enter. Ctrl+K from anywhere. -->
             <Button Grid.Column="1" Classes="quick-button" Width="340" Height="28" HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -53,51 +81,71 @@
 
         <views:FocusBar DockPanel.Dock="Bottom" DataContext="{Binding Focus}" IsVisible="{Binding IsVisible}" />
 
-        <Grid ColumnDefinitions="214,*,Auto">
-            <Border Grid.Column="0" Background="{DynamicResource AppSidebarBrush}"
+        <Grid ColumnDefinitions="Auto,*,Auto">
+            <Border Grid.Column="0" Width="{Binding SidebarWidth}" ClipToBounds="True" Background="{DynamicResource AppSidebarBrush}"
                     BorderBrush="{DynamicResource AppCardBorderBrush}" BorderThickness="0,0,1,0">
-                <StackPanel Margin="12,14" Spacing="4">
-                    <!-- The one action, set apart from the places you go -->
-                    <Button Classes="newgoal" Classes.active="{Binding IsDesigner}" Command="{Binding ShowDesignerCommand}" Margin="0,0,0,12">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <PathIcon Data="{StaticResource IconAdd}" />
-                            <TextBlock Text="New goal" />
-                        </StackPanel>
-                    </Button>
-                    <Button Classes="nav" Classes.active="{Binding IsToday}" Command="{Binding ShowTodayCommand}">
-                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10" MinWidth="160">
-                            <PathIcon Data="{StaticResource IconToday}" />
-                            <TextBlock Grid.Column="1" Text="Today" />
-                            <TextBlock Grid.Column="2" Classes="badge" Text="{Binding TodayPage.ToGo}" IsVisible="{Binding TodayPage.HasToGo}"
-                                       VerticalAlignment="Center" />
-                        </Grid>
-                    </Button>
-                    <Button Classes="nav" Classes.active="{Binding IsGoals}" Command="{Binding ShowGoalsCommand}">
+                <Border.Transitions>
+                    <Transitions><DoubleTransition Property="Width" Duration="0:0:0.22" Easing="CubicEaseOut" /></Transitions>
+                </Border.Transitions>
+                <Grid RowDefinitions="*,Auto" Margin="12,14">
+                    <StackPanel Spacing="4">
+                        <!-- The one action, set apart from the places you go -->
+                        <Button Classes="newgoal" Classes.active="{Binding IsDesigner}" Command="{Binding ShowDesignerCommand}" Margin="0,0,0,12"
+                                ToolTip.Tip="New goal">
+                            <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                                <PathIcon Data="{StaticResource IconAdd}" />
+                                <TextBlock Text="New goal" IsVisible="{Binding Wide}" />
+                            </StackPanel>
+                        </Button>
+                        <Button Classes="nav" Classes.compact="{Binding Compact}" Classes.active="{Binding IsToday}" Command="{Binding ShowTodayCommand}"
+                                ToolTip.Tip="Today">
+                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                                <PathIcon Data="{StaticResource IconToday}" />
+                                <TextBlock Grid.Column="1" Text="Today" IsVisible="{Binding Wide}" />
+                                <TextBlock Grid.Column="2" Classes="badge" Text="{Binding TodayPage.ToGo}" IsVisible="{Binding TodayPage.HasToGo}"
+                                           VerticalAlignment="Center" />
+                            </Grid>
+                        </Button>
+                        <Button Classes="nav" Classes.compact="{Binding Compact}" Classes.active="{Binding IsGoals}" Command="{Binding ShowGoalsCommand}"
+                                ToolTip.Tip="Goals">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <PathIcon Data="{StaticResource IconGoals}" />
+                                <TextBlock Text="Goals" IsVisible="{Binding Wide}" />
+                            </StackPanel>
+                        </Button>
+                        <Button Classes="nav" Classes.compact="{Binding Compact}" Classes.active="{Binding IsCalendar}" Command="{Binding ShowCalendarCommand}"
+                                ToolTip.Tip="Calendar">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <PathIcon Data="{StaticResource IconCalendar}" />
+                                <TextBlock Text="Calendar" IsVisible="{Binding Wide}" />
+                            </StackPanel>
+                        </Button>
+                        <Button Classes="nav" Classes.compact="{Binding Compact}" Classes.active="{Binding IsHistory}" Command="{Binding ShowHistoryCommand}"
+                                ToolTip.Tip="History">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <PathIcon Data="{StaticResource IconHistory}" />
+                                <TextBlock Text="History" IsVisible="{Binding Wide}" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                    <Button Grid.Row="1" Classes="nav" Classes.compact="{Binding Compact}" Classes.active="{Binding IsSettings}"
+                            Command="{Binding ShowSettingsCommand}" ToolTip.Tip="Settings">
                         <StackPanel Orientation="Horizontal" Spacing="10">
-                            <PathIcon Data="{StaticResource IconGoals}" />
-                            <TextBlock Text="Goals" />
+                            <PathIcon Data="{StaticResource IconSettings}" />
+                            <TextBlock Text="Settings" IsVisible="{Binding Wide}" />
                         </StackPanel>
                     </Button>
-                    <Button Classes="nav" Classes.active="{Binding IsCalendar}" Command="{Binding ShowCalendarCommand}">
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <PathIcon Data="{StaticResource IconCalendar}" />
-                            <TextBlock Text="Calendar" />
-                        </StackPanel>
-                    </Button>
-                    <Button Classes="nav" Classes.active="{Binding IsHistory}" Command="{Binding ShowHistoryCommand}">
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <PathIcon Data="{StaticResource IconHistory}" />
-                            <TextBlock Text="History" />
-                        </StackPanel>
-                    </Button>
-                </StackPanel>
+                </Grid>
             </Border>
 
             <ContentControl Grid.Column="1" Content="{Binding Current}" />
 
-            <Border Grid.Column="2" Width="410" IsVisible="{Binding Inspector.IsOpen}"
+            <Border Grid.Column="2" Width="{Binding InspectorWidth}" IsVisible="{Binding Inspector.IsOpen}"
                     Background="{DynamicResource AppSidebarBrush}"
                     BorderBrush="{DynamicResource AppCardBorderBrush}" BorderThickness="1,0,0,0">
+                <Border.Transitions>
+                    <Transitions><DoubleTransition Property="Width" Duration="0:0:0.18" Easing="CubicEaseOut" /></Transitions>
+                </Border.Transitions>
                 <views:InspectorView DataContext="{Binding Inspector}" />
             </Border>
         </Grid>
@@ -217,5 +265,16 @@
             </StackPanel>
         </Border>
     </Grid>
+
+    <!-- After a delete or put away: undo for a few seconds. -->
+    <Border Classes="toast" IsVisible="{Binding HasUndo}" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,76">
+        <StackPanel Orientation="Horizontal" Spacing="14">
+            <TextBlock Text="{Binding UndoText}" VerticalAlignment="Center" FontSize="13" />
+            <Button Classes="action" Content="Undo" Command="{Binding UndoCommand}" />
+            <Button Classes="icon" Command="{Binding DismissUndoCommand}" ToolTip.Tip="Dismiss">
+                <PathIcon Data="{StaticResource IconClose}" />
+            </Button>
+        </StackPanel>
+    </Border>
     </Grid>
 </Window>

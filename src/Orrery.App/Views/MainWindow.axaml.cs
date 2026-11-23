@@ -6,7 +6,13 @@ namespace Orrery.App.Views;
 
 public partial class MainWindow : Window
 {
-    public MainWindow() => InitializeComponent();
+    public MainWindow()
+    {
+        InitializeComponent();
+        SizeChanged += (_, e) => (DataContext as ViewModels.MainViewModel)?.FitToWidth(e.NewSize.Width);
+    }
+
+    private void OnOpenDataFolder(object? sender, RoutedEventArgs e) => (DataContext as ViewModels.MainViewModel)?.OpenDataFolder();
 
     /// <summary>Raised when the window is closed but the app carries on in the tray.</summary>
     public event Action? HiddenToTray;
@@ -56,6 +62,7 @@ public partial class MainWindow : Window
         base.OnDataContextChanged(e);
         if (_hooked is not null)
             _hooked.Opened -= FocusTitle;
+        (DataContext as ViewModels.MainViewModel)?.FitToWidth(Bounds.Width > 0 ? Bounds.Width : Width);
         _hooked = (DataContext as ViewModels.MainViewModel)?.Capture;
         if (_hooked is not null)
             _hooked.Opened += FocusTitle;

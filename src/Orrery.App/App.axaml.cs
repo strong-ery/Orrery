@@ -36,6 +36,7 @@ public partial class App : Application
                 _main.Inspect(goal, step);
             });
             _nudges.Start();
+            _main.SendTestReminder = () => _nudges.Show("Reminder", "This is what a reminder looks like.", null);
             SetUpTray();
         }
 
@@ -52,7 +53,7 @@ public partial class App : Application
         w.Activate();
     }
 
-    private void Quit()
+    public void QuitApp()
     {
         Quitting = true;
         _desktop?.Shutdown();
@@ -87,7 +88,7 @@ public partial class App : Application
         };
 
         var quit = new NativeMenuItem("Quit Orrery");
-        quit.Click += (_, _) => Quit();
+        quit.Click += (_, _) => QuitApp();
 
         var tray = new TrayIcon
         {

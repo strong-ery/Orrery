@@ -124,6 +124,28 @@ the right-hand panel restates the answers as sentences.
 * A step can be moved to another goal from its editor, with everything inside it. What it waits for, and what waits
   for it, stay attached, since steps can depend on steps in any goal.
 
+## Managing goals
+
+* Every goal row (list view) has edit, put away and delete on hover; the inspector has the same. "New goal" sits in the Goals header.
+* Delete removes the goal, its steps, its history and every link pointing at it. Undo is offered for ten seconds for delete and put away (`MainViewModel.Undo`, a JSON snapshot taken just before).
+* "Put away" (`Goal.Archived`) hides a goal without losing it; the list ends with a "Put away (n)" toggle to bring them back. Finished goals collect under FINISHED.
+
+## Orbit map, second pass
+
+Circular, top-down. A planet's size is how much work is left (log scale of remaining minutes), its glow is pressure, a brass pip with a number means it has that many things on today's list, and a ring goes out from a planet when its progress moves. Open a goal and everything not tied to it steps back. The slider under the map looks ahead up to 60 days: planets glide between rings as deadlines close in.
+
+## Waiting view
+
+Columns are "first / then / after that". Each box says where it stands: steps done in a section, how far a goal has got, or what it is waiting for, with a hairline progress bar. "Up next" (brass) marks ready boxes that hold others up. Pointing at a box lights its chain with an eased fade that lingers across gaps, so it does not blink as the pointer moves.
+
+## Reminders and settings
+
+Title-bar menu (click "orrery") and the Settings page. Each reminder kind (due today, still on today's list, passions) has its own switch and its own "again after"; plus a daily cap, quiet hours and when the gentle ones start. All of it lives in `Settings` and is read by `Nudges.Due`.
+
+## Window size
+
+Side panels ease between wide and narrow with the window: the sidebar becomes an icon rail below 1120 px, the inspector scales with the window, tile rows wrap (`TileGrid`), and the designer's summary drops under the questions when narrow.
+
 ## Not built yet
 
 

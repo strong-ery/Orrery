@@ -246,7 +246,8 @@
                         <TextBlock Text="Edit goal" />
                     </StackPanel>
                 </Button>
-                <Button Classes="ghost" Content="Archive" Command="{Binding ArchiveCommand}" />
+                <Button Classes="ghost" Content="Put away" Command="{Binding ArchiveCommand}" ToolTip.Tip="Hide it without losing it" />
+                <Button Classes="ghost danger" Content="Delete" Command="{Binding DeleteCommand}" ToolTip.Tip="Remove it and its history" />
             </StackPanel>
         </StackPanel>
     </ScrollViewer>

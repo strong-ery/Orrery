@@ -26,6 +26,9 @@ public static class JsonStore
         return JsonSerializer.Deserialize<OrreryData>(stream, Options);
     }
 
+    public static string ToJson(OrreryData data) => JsonSerializer.Serialize(data, Options);
+    public static OrreryData? FromJson(string json) => JsonSerializer.Deserialize<OrreryData>(json, Options);
+
     /// <summary>Writes to a temp file first, so a crash mid-save can't leave a half-written file behind.</summary>
     public static void Save(OrreryData data, string? path = null)
     {

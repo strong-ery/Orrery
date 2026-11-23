@@ -152,6 +152,22 @@ public sealed class Settings
     /// <summary>Whether Orrery may interrupt you with a nudge.</summary>
     public bool Nudges { get; set; } = true;
 
+    /// <summary>Which reminders you want. Each can be turned off on its own.</summary>
+    public bool NudgeDeadlines { get; set; } = true;
+    public bool NudgeEvening { get; set; } = true;
+    public bool NudgePassions { get; set; } = true;
+
+    /// <summary>How many reminders in a day at most, and how long before the same goal may remind you again.</summary>
+    public int NudgeMaxPerDay { get; set; } = 4;
+    public double NudgeRepeatUrgentHours { get; set; } = 2;
+    public double NudgeRepeatGentleHours { get; set; } = 4;
+    public double NudgeRepeatPassionHours { get; set; } = 4;
+
+    /// <summary>Hours of the day (0 to 24) between which reminders are allowed, and when the gentle ones start.</summary>
+    public double NudgeFromHour { get; set; } = 10;
+    public double NudgeUntilHour { get; set; } = 21.5;
+    public double NudgeGentleFromHour { get; set; } = 17;
+
     /// <summary>When each goal was last nudged about, so the same thing isn't repeated every few minutes.</summary>
     public Dictionary<Guid, DateTime> NudgeLog { get; set; } = [];
 

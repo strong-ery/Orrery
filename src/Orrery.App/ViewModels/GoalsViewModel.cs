@@ -30,6 +30,7 @@ public partial class GoalRowViewModel : ObservableObject
     public GoalRowViewModel(OrreryData data, Goal goal, DateOnly today)
     {
         Id = goal.Id;
+        IsArchived = goal.Archived;
         var category = data.CategoryOf(goal);
         Role = category?.Role ?? CategoryRole.Obligation;
         Title = goal.Title;
@@ -87,13 +88,39 @@ public partial class GoalRowViewModel : ObservableObject
         DependsOnIds = goal.DependsOnGoals.ToList();
 
         var leaves = goal.Leaves().ToList();
+        var remaining = leaves.Count > 0
+            ? leaves.Where(s => !s.Done).Sum(s => s.EstimateMinutes ?? 30)
+            : goal.Rhythm is { Kind: RhythmKind.Cadence, PerWeek: > 0 } ? goal.Rhythm.PerWeek : 45;
+        Effort = Math.Clamp(Math.Log(1 + remaining / 30.0) / Math.Log(1 + 600 / 30.0), 0, 1);
         StepSummary = leaves.Count == 0 ? "" : $"{leaves.Count(s => s.Done)}/{leaves.Count} steps";
     }
 
     public Action<Guid>? OnOpen { get; set; }
+    public Action<Guid>? OnEdit { get; set; }
+    public Action<Guid>? OnArchive { get; set; }
+    public Action<Guid>? OnRestore { get; set; }
+    public Action<Guid>? OnDelete { get; set; }
 
     [RelayCommand]
     private void Open() => OnOpen?.Invoke(Id);
+
+    [RelayCommand]
+    private void Edit() => OnEdit?.Invoke(Id);
+
+    [RelayCommand]
+    private void Archive() => OnArchive?.Invoke(Id);
+
+    [RelayCommand]
+    private void Restore() => OnRestore?.Invoke(Id);
+
+    [RelayCommand]
+    private void Delete() => OnDelete?.Invoke(Id);
+
+    /// <summary>How much work is left, 0 to 1 on a log scale (about ten hours is the top). Drives a planet's size.</summary>
+    public double Effort { get; }
+
+    public bool IsArchived { get; }
+    public bool CanArchive => !IsArchived;
 
     public Guid Id { get; }
     public CategoryRole Role { get; }
@@ -130,7 +157,7 @@ public enum MoonState { Done, Open, Blocked }
 public sealed record OrbitBody(
     Guid Id, string Title, Color Accent, CategoryRole Role, Horizon Horizon,
     double Pressure, double? Fraction, string Line1, string Line2,
-    IReadOnlyList<MoonState> Moons, IReadOnlyList<Guid> DependsOn);
+    IReadOnlyList<MoonState> Moons, IReadOnlyList<Guid> DependsOn, double Effort = 0.3, int TodayItems = 0);
 
 public partial class GoalsViewModel : ObservableObject
 {
@@ -161,6 +188,33 @@ public partial class GoalsViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _graphIsEmpty;
+
+    [ObservableProperty]
+    private string _flowSummary = "";
+
+    /// <summary>Days ahead the orbit map is showing. Zero is today.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(LookAheadText), nameof(IsLookingAhead))]
+    private double _lookAhead;
+
+    public bool IsLookingAhead => LookAhead >= 1;
+
+    public string LookAheadText => LookAhead < 1 ? "" :
+        $"In {(int)LookAhead} days · {MainViewModel.Today.AddDays((int)LookAhead):MMM d}";
+
+    partial void OnLookAheadChanged(double value)
+    {
+        var rounded = Math.Round(value);
+        if (rounded != value)
+        {
+            LookAhead = rounded;
+            return;
+        }
+        Refresh();
+    }
+
+    [RelayCommand]
+    private void ResetLookAhead() => LookAhead = 0;
 
     [ObservableProperty]
     private bool _isEmpty;
@@ -210,40 +264,95 @@ public partial class GoalsViewModel : ObservableObject
         _main.Inspect(id);
     }
 
+    [ObservableProperty]
+    private bool _showPutAway;
+
+    [ObservableProperty]
+    private int _putAwayCount;
+
+    public bool HasPutAway => PutAwayCount > 0;
+
+    partial void OnPutAwayCountChanged(int value) => OnPropertyChanged(nameof(HasPutAway));
+
+    [RelayCommand]
+    private void TogglePutAway()
+    {
+        ShowPutAway = !ShowPutAway;
+        Refresh();
+    }
+
+    [RelayCommand]
+    private void NewGoal() => _main.ShowDesignerCommand.Execute(null);
+
+    [RelayCommand]
+    private void AddStep() => _main.Capture.Open();
+
+    private GoalRowViewModel Wire(GoalRowViewModel row)
+    {
+        row.OnOpen = Open;
+        row.OnEdit = _main.EditGoal;
+        row.OnArchive = _main.ArchiveGoal;
+        row.OnRestore = _main.RestoreGoal;
+        row.OnDelete = _main.DeleteGoal;
+        return row;
+    }
+
     public void Refresh()
     {
         var data = _main.Data;
         var today = MainViewModel.Today;
-        var rows = data.Goals
-            .Where(g => !g.Archived && !Progress.IsComplete(g, data.Contributions))
-            .Select(g => new GoalRowViewModel(data, g, today))
-            .ToList();
-
-        foreach (var row in rows)
-            row.OnOpen = Open;
+        var live = data.Goals.Where(g => !g.Archived).Select(g => Wire(new GoalRowViewModel(data, g, today))).ToList();
+        var rows = live.Where(r => !r.IsComplete).ToList();
+        var finished = live.Where(r => r.IsComplete).ToList();
+        var putAway = data.Goals.Where(g => g.Archived).Select(g => Wire(new GoalRowViewModel(data, g, today)))
+            .OrderBy(r => r.Title, StringComparer.OrdinalIgnoreCase).ToList();
+        PutAwayCount = putAway.Count;
+        if (putAway.Count == 0)
+            ShowPutAway = false;
 
         Groups.Clear();
         foreach (var group in rows
                      .OrderBy(r => r.Horizon).ThenBy(r => r.Title, StringComparer.OrdinalIgnoreCase)
                      .GroupBy(r => r.Horizon))
             Groups.Add(new GoalGroup(Horizons.Label(group.Key), group.ToList()));
+        if (finished.Count > 0)
+            Groups.Add(new GoalGroup("FINISHED", finished.OrderBy(r => r.Title, StringComparer.OrdinalIgnoreCase).ToList()));
+        if (ShowPutAway)
+            Groups.Add(new GoalGroup("PUT AWAY", putAway));
 
-        Bodies = rows
+        // Looking ahead re-reads every goal as if it were that many days from now: rings and pressure both move.
+        var ahead = today.AddDays((int)LookAhead);
+        var plan = Planner.Suggest(data, new PlanRequest(today, data.Settings.MaxToday, data.Settings.Bias, data.Settings.LowEnergy));
+        var bodyRows = LookAhead == 0
+            ? rows
+            : data.Goals.Where(g => !g.Archived && !Progress.IsComplete(g, data.Contributions))
+                .Select(g => new GoalRowViewModel(data, g, ahead)).ToList();
+        Bodies = bodyRows
             .OrderBy(r => r.Title, StringComparer.OrdinalIgnoreCase)
             .Select(row => new OrbitBody(row.Id, row.Title, row.AccentColor, row.Role, row.Horizon, row.Pressure,
-                row.HasFraction ? row.Fraction / 100 : null, row.Subtitle, row.Headline, row.Moons, row.DependsOnIds))
+                row.HasFraction ? row.Fraction / 100 : null, row.Subtitle, row.Headline, row.Moons, row.DependsOnIds,
+                row.Effort, LookAhead == 0 ? plan.Count(p => p.GoalId == row.Id) : 0))
             .ToList();
 
-        TodayCount = Planner.Suggest(data, new PlanRequest(today, data.Settings.MaxToday, data.Settings.Bias, data.Settings.LowEnergy)).Count;
+        TodayCount = plan.Count;
 
         Flow = FlowGraph.Build(data, today, g => Progress.IsComplete(g, data.Contributions));
         GraphIsEmpty = Flow.Nodes.Count == 0;
         GoalColors = data.Goals.ToDictionary(g => g.Id, g => Palette.ColorFor(data.CategoryOf(g)));
+        FlowSummary = Flow.Nodes.Count == 0 ? "" :
+            string.Join(" · ", new[]
+            {
+                Flow.Nodes.Count(n => n.State == NodeState.Open) is > 0 and var r1 ? $"{r1} ready" : null,
+                Flow.Nodes.Count(n => n.State == NodeState.Blocked) is > 0 and var w ? $"{w} waiting" : null,
+                Flow.Nodes.Count(n => n.State == NodeState.Done) is > 0 and var d ? $"{d} done" : null,
+            }.Where(x => x is not null));
 
         DoneToday = data.Contributions.Where(c => c.Day == today).Select(c => c.GoalId).Distinct().Count();
 
-        IsEmpty = rows.Count == 0;
-        var now = rows.Count(r => r.Horizon == Horizon.Now);
-        Summary = IsEmpty ? "" : $"{rows.Count} goals · {now} wanting you now";
+        IsEmpty = live.Count == 0 && putAway.Count == 0;
+        var pressing = rows.Count(r => r.Horizon == Horizon.Now);
+        var count = live.Count;
+        Summary = IsEmpty ? "" : (count == 1 ? "1 goal" : $"{count} goals")
+            + (pressing == 0 ? " · nothing pressing" : $" · {pressing} need{(pressing == 1 ? "s" : "")} you today");
     }
 }
