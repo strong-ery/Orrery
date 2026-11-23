@@ -27,7 +27,7 @@ public sealed partial class CalendarItemViewModel : ObservableObject
         Kind = e.Kind switch
         {
             CalendarKind.Deadline => "Deadline",
-            CalendarKind.Due => "Due",
+            CalendarKind.Due => "Due by",
             CalendarKind.Available => "Opens up",
             _ => "Worked on",
         };

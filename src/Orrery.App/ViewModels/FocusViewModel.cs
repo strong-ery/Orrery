@@ -48,6 +48,9 @@ public partial class FocusViewModel : ObservableObject
 
     public bool HasGoalTitle => GoalTitle.Length > 0;
     [ObservableProperty] private string _elapsedText = "0:00";
+    [ObservableProperty] private double _ring;
+    [ObservableProperty] private string _paceText = "";
+    private int? _estimateMinutes;
     [ObservableProperty] private string _tag = "";
     [ObservableProperty] private string _amountText = "";
     [ObservableProperty] private bool _showAmount;
@@ -80,6 +83,7 @@ public partial class FocusViewModel : ObservableObject
         Title = step?.Title ?? goal.Title;
         GoalTitle = step is null ? "" : step.ParentId is not null && goal.ParentOf(step) is { } sec ? $"{goal.Title} › {sec.Title}" : goal.Title;
         Tag = state.Tag;
+        _estimateMinutes = step?.EstimateMinutes;
         IsPaused = state.PausedAt is not null;
         IsWrapUp = false;
         IsActive = true;
@@ -95,6 +99,20 @@ public partial class FocusViewModel : ObservableObject
         ElapsedText = t.TotalHours >= 1
             ? $"{(int)t.TotalHours}:{t.Minutes:00}:{t.Seconds:00}"
             : $"{t.Minutes}:{t.Seconds:00}";
+
+        // With an estimate the ring fills toward it. Without one it turns once every 25 minutes, a gentle
+        // marker of time passing rather than a target.
+        if (_estimateMinutes is { } est && est > 0)
+        {
+            Ring = Math.Min(100, t.TotalMinutes / est * 100);
+            var left = est - (int)t.TotalMinutes;
+            PaceText = left > 0 ? $"about {left} min left of ~{est}" : $"{-left} min over the ~{est} min estimate";
+        }
+        else
+        {
+            Ring = t.TotalSeconds % 1500 / 1500 * 100;
+            PaceText = t.TotalMinutes >= 25 ? $"{(int)(t.TotalMinutes / 25)} × 25 min so far" : "no estimate on this one";
+        }
     }
 
     partial void OnTagChanged(string value)

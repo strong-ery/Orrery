@@ -371,9 +371,42 @@
   <!-- The focus bar along the bottom of the window. -->
   <Style Selector="Border.focus-bar">
     <Setter Property="Background" Value="{DynamicResource AppDialogBackgroundBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AppCardBorderBrush}" />
+    <Setter Property="BorderThickness" Value="0,1,0,0" />
+    <Setter Property="Padding" Value="24,14" />
+  </Style>
+  <!-- A borderless text field that looks like a line of text until you click into it. -->
+  <Style Selector="TextBox.quiet">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0,0,0,1" />
+    <Setter Property="CornerRadius" Value="0" />
+    <Setter Property="Padding" Value="0,3" />
+    <Setter Property="FontSize" Value="12" />
+  </Style>
+  <Style Selector="Button.icon.big">
+    <Setter Property="Width" Value="40" />
+    <Setter Property="Height" Value="40" />
+  </Style>
+  <Style Selector="Button.icon.big PathIcon">
+    <Setter Property="Width" Value="16" />
+    <Setter Property="Height" Value="16" />
+  </Style>
+  <!-- A yes/no answer shown as a pill that fills in when it is on. -->
+  <Style Selector="ToggleButton.check-chip">
+    <Setter Property="Padding" Value="14,7" />
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="Cursor" Value="Hand" />
+  </Style>
+  <Style Selector="ToggleButton.check-chip /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AppPlaceholderBackgroundBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AppCardBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="16" />
+  </Style>
+  <Style Selector="ToggleButton.check-chip:checked /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AppAccentBrush}" />
     <Setter Property="BorderBrush" Value="{DynamicResource AppAccentBrush}" />
-    <Setter Property="BorderThickness" Value="0,2,0,0" />
-    <Setter Property="Padding" Value="20,10" />
+    <Setter Property="TextElement.Foreground" Value="{DynamicResource AppOnAccentBrush}" />
   </Style>
   <Style Selector="Border.quick-box">
     <Setter Property="Background" Value="{DynamicResource AppSubtleBackgroundBrush}" />
