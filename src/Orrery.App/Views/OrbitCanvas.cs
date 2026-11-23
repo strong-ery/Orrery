@@ -13,9 +13,10 @@ using Orrery.Core.Models;
 namespace Orrery.App.Views;
 
 /// <summary>
-/// The orbit map. The rings are how soon a goal will want you (inner = now, outer = someday) and the three
-/// sectors are the buckets, so how lopsided your life is shows at a glance. A body's size is its pressure and the
-/// arc around it is progress. Positions depend only on bucket, ring and name, so nothing jumps between visits.
+/// The orbit map, seen at a slant. The rings are how soon a goal will want you (inner = now, outer = someday) and the
+/// three sectors are the buckets, so how lopsided your life is shows at a glance. A planet's size is its pressure and
+/// the arc around it is progress. Each planet is lit by the sun in the middle, so the side facing today is bright.
+/// Positions depend only on bucket, ring and name, so nothing jumps between visits.
 /// </summary>
 public sealed class OrbitCanvas : Control
 {
@@ -47,6 +48,9 @@ public sealed class OrbitCanvas : Control
     private static readonly Horizon[] Rings = [Horizon.Now, Horizon.Week, Horizon.Month, Horizon.Later];
     private static readonly double[] RingFractions = [0.30, 0.52, 0.74, 0.96];
 
+    /// <summary>The map is a disc seen from above and to the side: flat circles become ellipses this tall.</summary>
+    private const double Tilt = 0.68;
+
     // Where each bucket's sector starts, in degrees clockwise from east. Obligations sit at the top.
     private static readonly Dictionary<CategoryRole, double> SectorStart = new()
     {
@@ -69,13 +73,13 @@ public sealed class OrbitCanvas : Control
     private Point _pointer;
 
     private readonly Stopwatch _clock = Stopwatch.StartNew();
-    private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromMilliseconds(40) };
+    private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromMilliseconds(33) };
 
     public OrbitCanvas()
     {
         ClipToBounds = true;
         Focusable = true;
-        // A slow drift: pressing goals breathe, moons turn. Nothing moves that you would have to chase.
+        // A slow drift: planets creep along their rings, moons turn, the sun breathes. Nothing you would have to chase.
         _timer.Tick += (_, _) =>
         {
             if (IsEffectivelyVisible)
@@ -99,8 +103,27 @@ public sealed class OrbitCanvas : Control
 
     // --- Layout -------------------------------------------------------------------------------------
 
+    /// <summary>The map's middle and its radius along the long axis. The slant means the width does most of the work.</summary>
     private (Point Center, double R) Frame() =>
-        (new Point(Bounds.Width / 2, Bounds.Height / 2), Math.Max(40, Math.Min(Bounds.Height / 2 - 30, Bounds.Width / 2 - 20)));
+        (new Point(Bounds.Width / 2, Bounds.Height / 2 + 4),
+         Math.Max(60, Math.Min(Bounds.Width / 2 - 78, (Bounds.Height / 2 - 40) / Tilt)));
+
+    /// <summary>A point on the slanted disc: a radius and an angle in degrees.</summary>
+    private static Point Slant(Point c, double radius, double degrees)
+    {
+        var rad = degrees * Math.PI / 180;
+        return new Point(c.X + radius * Math.Cos(rad), c.Y + Tilt * radius * Math.Sin(rad));
+    }
+
+    /// <summary>Draws flat circles and wedges as if lying on the disc: scales everything about the middle.</summary>
+    private static Matrix Flatten(Point c) =>
+        Matrix.CreateTranslation(-c.X, -c.Y) * Matrix.CreateScale(1, Tilt) * Matrix.CreateTranslation(c.X, c.Y);
+
+    private static double Unit(Guid id)
+    {
+        var h = (uint)id.GetHashCode();
+        return h % 1000 / 1000.0;
+    }
 
     private void Layout()
     {
@@ -118,15 +141,18 @@ public sealed class OrbitCanvas : Control
             var span = SectorSpan - 2 * SectorPad;
             for (var i = 0; i < ordered.Count; i++)
             {
-                var angle = start + (i + 0.5) / ordered.Count * span;
-                var rad = angle * Math.PI / 180;
-                var p = new Point(center.X + radius * Math.Cos(rad), center.Y + radius * Math.Sin(rad));
-                _placed.Add((ordered[i], p, BodyRadius(ordered[i])));
+                // A few degrees of slow drift each way, so the map is alive without anything ever moving far.
+                var drift = 2.4 * Math.Sin(Phase * 0.11 + Unit(ordered[i].Id) * 6.28);
+                var angle = start + (i + 0.5) / ordered.Count * span + drift;
+                var p = Slant(center, radius, angle);
+                // Nearer (lower on screen) is a little bigger, farther a little smaller.
+                var depth = 1 + 0.16 * Math.Clamp((p.Y - center.Y) / (r * Tilt), -1, 1);
+                _placed.Add((ordered[i], p, BodyRadius(ordered[i]) * depth));
             }
         }
     }
 
-    private static double BodyRadius(OrbitBody b) => 11 + Math.Clamp(b.Pressure, 0, 1) * 9;
+    private static double BodyRadius(OrbitBody b) => 16 + Math.Clamp(b.Pressure, 0, 1) * 14;
 
     // --- Pointer ------------------------------------------------------------------------------------
 
@@ -152,21 +178,13 @@ public sealed class OrbitCanvas : Control
         _pointer = e.GetPosition(this);
         var hit = HitTest(_pointer);
         Cursor = hit is null ? Cursor.Default : new Cursor(StandardCursorType.Hand);
-        if (hit != _hover)
-        {
-            _hover = hit;
-            InvalidateVisual();
-        }
+        _hover = hit;
     }
 
     protected override void OnPointerExited(PointerEventArgs e)
     {
         base.OnPointerExited(e);
-        if (_hover is not null)
-        {
-            _hover = null;
-            InvalidateVisual();
-        }
+        _hover = null;
     }
 
     protected override void OnPointerPressed(PointerPressedEventArgs e)
@@ -181,60 +199,42 @@ public sealed class OrbitCanvas : Control
     private static readonly Color Brass = Color.Parse("#E8B64C");
     private static readonly Color Ink = Color.Parse("#7C8CFF");
 
+    private static Color A(Color c, double alpha) => Color.FromArgb((byte)Math.Clamp(alpha * 255, 0, 255), c.R, c.G, c.B);
+    private static SolidColorBrush Brush(Color c, double alpha = 1) => new(A(c, alpha));
+
     public override void Render(DrawingContext context)
     {
         context.FillRectangle(Brushes.Transparent, new Rect(Bounds.Size)); // so the whole area takes pointer input
         var (center, r) = Frame();
         Layout();
 
+        DrawNebula(context, center, r);
         DrawStars(context);
-
-        // Sectors: the faintest wash of each bucket's colour, edged by a hairline. Territory, not decoration.
-        foreach (var (role, (_, color)) in Buckets)
-        {
-            var a0 = SectorStart[role];
-            var a1 = SectorStart[role] + SectorSpan;
-            context.DrawGeometry(new SolidColorBrush(Color.FromArgb(0x0B, color.R, color.G, color.B)), null,
-                Wedge(center, r * RingFractions[0] * 0.55, r, a0, a1));
-            var edge = new Pen(new SolidColorBrush(Color.FromArgb(0x30, Ink.R, Ink.G, Ink.B)), 1);
-            context.DrawLine(edge, Pt(center, r * RingFractions[0] * 0.55, a0), Pt(center, r + 6, a0));
-        }
-
-        // Rings: hairlines only. The scale is the information; nothing is filled in.
-        var ringPen = new Pen(new SolidColorBrush(Color.FromArgb(0x3A, Ink.R, Ink.G, Ink.B)), 1);
-        for (var i = 0; i < Rings.Length; i++)
-        {
-            var radius = r * RingFractions[i];
-            context.DrawEllipse(null, ringPen, center, radius, radius);
-            DrawTicks(context, center, radius, i);
-        }
-
-        // Each ring is named once, on the downward spoke where no planet is allowed to sit.
-        for (var i = 0; i < Rings.Length; i++)
-            DrawText(context, Horizons.Label(Rings[i]).ToUpperInvariant(), 8, "#7F88BC",
-                new Point(center.X, center.Y + r * RingFractions[i]), centered: true, background: true);
+        DrawDisc(context, center, r);
 
         // Bucket names sit on the rim: quiet text, with the bucket's colour only as a small dot.
         foreach (var (role, (name, color)) in Buckets)
         {
-            var mid = (SectorStart[role] + SectorSpan / 2) * Math.PI / 180;
-            var p = new Point(center.X + (r + 22) * Math.Cos(mid), center.Y + (r + 18) * Math.Sin(mid));
+            var p = Slant(center, r + 30, SectorStart[role] + SectorSpan / 2);
             var label = Format(name, 9.5, "#A3AAD2", 200, bold: true);
-            context.DrawEllipse(new SolidColorBrush(color), null, new Point(p.X - label.Width / 2 - 8, p.Y), 3, 3);
+            context.DrawEllipse(new SolidColorBrush(color), null, new Point(p.X - label.Width / 2 - 9, p.Y), 3, 3);
             context.DrawText(label, new Point(p.X - label.Width / 2, p.Y - label.Height / 2));
         }
 
         DrawLinks(context, center);
-        DrawCore(context, center, r);
+
+        // Painter's order: what is behind the sun first, then the sun, then what is in front of it.
+        var behind = _placed.Where(x => x.Center.Y < center.Y).OrderBy(x => x.Center.Y).ToList();
+        var front = _placed.Where(x => x.Center.Y >= center.Y).OrderBy(x => x.Center.Y).ToList();
+        foreach (var (body, c, radius) in behind)
+            DrawBody(context, body, c, radius, center);
+        DrawSun(context, center, r);
+        foreach (var (body, c, radius) in front)
+            DrawBody(context, body, c, radius, center);
 
         var labelRects = new List<Rect>();
         var order = _placed.OrderByDescending(x => x.Body.Id == _hover ? 2 : x.Body.Id == SelectedId ? 1 : 0)
             .ThenByDescending(x => x.Body.Pressure).ToList();
-
-        // Bodies first, so labels never sit under one.
-        foreach (var (body, c, radius) in _placed)
-            DrawBody(context, body, c, radius);
-
         foreach (var (body, c, radius) in order)
         {
             var forced = body.Id == _hover || body.Id == SelectedId;
@@ -250,106 +250,150 @@ public sealed class OrbitCanvas : Control
             DrawTooltip(context, hovered.Body, hovered.Center, hovered.Radius);
     }
 
-    /// <summary>
-    /// The middle of the map is today, drawn as a dial rather than a sun. The big number is what is still to do.
-    /// The brass arc is how much of today's list is already done, and the ring of hour marks around it is the
-    /// waking day (07:00 to 23:00) with a notch at the current time, so "how much is left" and "how much day
-    /// is left" sit side by side.
-    /// </summary>
-    private void DrawCore(DrawingContext context, Point center, double r)
+    // --- Background ---------------------------------------------------------------------------------
+
+    /// <summary>Far-off colour: a faint cloud of each bucket's hue behind its own side of the map.</summary>
+    private void DrawNebula(DrawingContext context, Point center, double r)
     {
-        var face = Math.Clamp(r * 0.135, 36, 56);
-        var brass = new SolidColorBrush(Brass);
-
-        // The corona: a wide, soft warmth that breathes very slowly, and a few hairline rays. It is the one warm
-        // thing on the map, so the eye goes to "today" first.
-        var breathe = 0.5 + 0.5 * Math.Sin(Phase * 0.8);
-        context.DrawEllipse(new RadialGradientBrush
-        {
-            GradientStops =
+        void Cloud(Point at, double radius, Color color, double alpha) =>
+            context.DrawEllipse(new RadialGradientBrush
             {
-                new GradientStop(Color.FromArgb((byte)(0x46 + 0x14 * breathe), Brass.R, Brass.G, Brass.B), 0.3),
-                new GradientStop(Color.FromArgb(0x14, Brass.R, Brass.G, Brass.B), 0.62),
-                new GradientStop(Color.FromArgb(0x00, Brass.R, Brass.G, Brass.B), 1),
-            },
-        }, null, center, face * 3.4, face * 3.4);
-        var ray = new Pen(new SolidColorBrush(Color.FromArgb(0x26, Brass.R, Brass.G, Brass.B)), 1);
-        for (var i = 0; i < 24; i++)
+                GradientStops =
+                {
+                    new GradientStop(A(color, alpha), 0),
+                    new GradientStop(A(color, alpha * 0.35), 0.55),
+                    new GradientStop(A(color, 0), 1),
+                },
+            }, null, at, radius, radius * 0.72);
+
+        foreach (var (role, (_, color)) in Buckets)
+            Cloud(Slant(center, r * 0.7, SectorStart[role] + SectorSpan / 2), r * 0.5, color, 0.10);
+        Cloud(center, r * 0.92, Color.Parse("#3A3F9C"), 0.14);
+        Cloud(center, r * 0.6, Brass, 0.07);
+    }
+
+    private sealed record Star(double X, double Y, double Size, double Alpha, int Layer, double Speed, bool Warm, bool Glint);
+    private static readonly List<Star> Sky = MakeSky();
+
+    private static List<Star> MakeSky()
+    {
+        var rng = new Random(11);
+        var stars = new List<Star>();
+        for (var i = 0; i < 300; i++)
         {
-            var a = i * 15 + Phase * 1.5;
-            var len = i % 2 == 0 ? 1.9 : 1.5;
-            context.DrawLine(ray, Pt(center, face + 16, a), Pt(center, face * len + 16, a));
+            var layer = i % 3; // 0 is far and still, 2 is near and drifts most
+            stars.Add(new Star(rng.NextDouble(), rng.NextDouble(), 0.4 + rng.NextDouble() * (0.6 + layer * 0.5),
+                0.16 + rng.NextDouble() * 0.5, layer, 0.4 + rng.NextDouble() * 0.7, i % 7 == 0, i % 31 == 0));
         }
-        var total = CoreCount + CoreDone;
-        var done = total == 0 ? 1.0 : (double)CoreDone / total;
+        return stars;
+    }
 
-        context.DrawEllipse(new RadialGradientBrush
+    /// <summary>Three layers of stars that slide a few pixels against each other as the pointer moves.</summary>
+    private void DrawStars(DrawingContext context)
+    {
+        var dx = (_pointer.X - Bounds.Width / 2) / Math.Max(1, Bounds.Width);
+        var dy = (_pointer.Y - Bounds.Height / 2) / Math.Max(1, Bounds.Height);
+        var i = 0;
+        foreach (var s in Sky)
         {
-            GradientStops = { new GradientStop(Color.Parse("#2C2210"), 0), new GradientStop(Color.Parse("#0F1226"), 1) },
-        }, new Pen(new SolidColorBrush(Color.FromArgb(0x90, Brass.R, Brass.G, Brass.B)), 1.2), center, face, face);
-
-        // Progress: a thin track with the finished part in brass.
-        var arcR = face - 5;
-        context.DrawEllipse(null, new Pen(new SolidColorBrush(Color.FromArgb(0x2A, Brass.R, Brass.G, Brass.B)), 2), center, arcR, arcR);
-        if (done >= 0.999)
-            context.DrawEllipse(null, new Pen(brass, 2), center, arcR, arcR);
-        else if (done > 0.01)
-        {
-            var g = new StreamGeometry();
-            using (var ctx = g.Open())
+            var shift = (s.Layer - 1) * 9;
+            var x = s.X * Bounds.Width - dx * shift;
+            var y = s.Y * Bounds.Height - dy * shift;
+            var twinkle = 0.65 + 0.35 * Math.Sin(Phase * s.Speed + i++);
+            var color = s.Warm ? Color.Parse("#FFE2A8") : Color.Parse("#C8D0FF");
+            context.DrawEllipse(Brush(color, s.Alpha * twinkle), null, new Point(x, y), s.Size, s.Size);
+            if (s.Glint)
             {
-                ctx.BeginFigure(Pt(center, arcR, -90), false);
-                ctx.ArcTo(Pt(center, arcR, -90 + done * 360), new Size(arcR, arcR), 0, done > 0.5, SweepDirection.Clockwise);
-                ctx.EndFigure(false);
+                var pen = new Pen(Brush(color, s.Alpha * twinkle * 0.5), 0.8);
+                context.DrawLine(pen, new Point(x - 5, y), new Point(x + 5, y));
+                context.DrawLine(pen, new Point(x, y - 5), new Point(x, y + 5));
             }
-            context.DrawGeometry(null, new Pen(brass, 2, lineCap: PenLineCap.Round), g);
-        }
-
-        // The day: sixteen hour marks outside the face; the current hour is a longer brass notch.
-        var now = DateTime.Now;
-        var hourNow = Math.Clamp(now.Hour + now.Minute / 60.0 - 7, 0, 16);
-        var dayPen = new Pen(new SolidColorBrush(Color.FromArgb(0x55, Ink.R, Ink.G, Ink.B)), 1);
-        for (var h = 0; h < 16; h++)
-        {
-            var a = -90 + h * 360.0 / 16;
-            context.DrawLine(dayPen, Pt(center, face + 5, a), Pt(center, face + (h % 4 == 0 ? 11 : 8), a));
-        }
-        var notch = -90 + hourNow * 360.0 / 16;
-        context.DrawLine(new Pen(brass, 2, lineCap: PenLineCap.Round), Pt(center, face + 4, notch), Pt(center, face + 13, notch));
-
-        var left = CoreCount.ToString(CultureInfo.InvariantCulture);
-        if (CoreCount == 0 && total > 0)
-        {
-            DrawText(context, "Clear", 13, "#E8B64C", new Point(center.X, center.Y - 3), centered: true, bold: true);
-            DrawText(context, "FOR TODAY", 7.5, "#8B93C4", new Point(center.X, center.Y + 10), centered: true);
-        }
-        else
-        {
-            DrawText(context, left, 28, "#F2F4FF", new Point(center.X, center.Y - 5), centered: true, bold: true);
-            DrawText(context, "LEFT TODAY", 7.5, "#8B93C4", new Point(center.X, center.Y + 15), centered: true);
         }
     }
 
-    /// <summary>A fixed, seeded scatter of stars with a slow twinkle. A few have a tiny cross, so it reads as sky.</summary>
-    private void DrawStars(DrawingContext context)
+    // --- The disc: sectors, rings, dust -------------------------------------------------------------
+
+    private void DrawDisc(DrawingContext context, Point center, double r)
     {
-        var rng = new Random(11);
-        for (var i = 0; i < 130; i++)
+        using (context.PushTransform(Flatten(center)))
         {
-            var x = rng.NextDouble() * Bounds.Width;
-            var y = rng.NextDouble() * Bounds.Height;
-            var size = 0.5 + rng.NextDouble() * 1.0;
-            var twinkle = 0.65 + 0.35 * Math.Sin(Phase * (0.4 + rng.NextDouble() * 0.6) + i);
-            var alpha = (byte)(0x2A + rng.NextDouble() * 0x40 * twinkle);
-            var warm = i % 9 == 0;
-            var color = warm ? Color.FromArgb(alpha, 0xFF, 0xE2, 0xA8) : Color.FromArgb(alpha, 0xC8, 0xD0, 0xFF);
-            context.DrawEllipse(new SolidColorBrush(color), null, new Point(x, y), size, size);
-            if (i % 17 == 0)
+            // The plate everything sits on: a soft pool of light that fades toward the edge.
+            context.DrawEllipse(new RadialGradientBrush
             {
-                var glint = new Pen(new SolidColorBrush(Color.FromArgb((byte)(alpha / 2), color.R, color.G, color.B)), 0.8);
-                context.DrawLine(glint, new Point(x - 4, y), new Point(x + 4, y));
-                context.DrawLine(glint, new Point(x, y - 4), new Point(x, y + 4));
+                Center = new RelativePoint(center, RelativeUnit.Absolute),
+                GradientOrigin = new RelativePoint(center, RelativeUnit.Absolute),
+                RadiusX = new RelativeScalar(r * 1.04, RelativeUnit.Absolute),
+                RadiusY = new RelativeScalar(r * 1.04, RelativeUnit.Absolute),
+                GradientStops =
+                {
+                    new GradientStop(A(Color.Parse("#2A2F6E"), 0.38), 0),
+                    new GradientStop(A(Color.Parse("#1B1F4A"), 0.30), 0.55),
+                    new GradientStop(A(Color.Parse("#10132E"), 0.10), 1),
+                },
+            }, new Pen(Brush(Ink, 0.22), 1.2), center, r * 1.04, r * 1.04);
+
+            // Sectors: each bucket's territory, tinted from the sun outward.
+            foreach (var (role, (_, color)) in Buckets)
+            {
+                var a0 = SectorStart[role];
+                var a1 = a0 + SectorSpan;
+                var wash = new RadialGradientBrush
+                {
+                    Center = new RelativePoint(center, RelativeUnit.Absolute),
+                    GradientOrigin = new RelativePoint(center, RelativeUnit.Absolute),
+                    RadiusX = new RelativeScalar(r, RelativeUnit.Absolute),
+                    RadiusY = new RelativeScalar(r, RelativeUnit.Absolute),
+                    GradientStops =
+                    {
+                        new GradientStop(A(color, 0.02), 0.15),
+                        new GradientStop(A(color, 0.07), 0.6),
+                        new GradientStop(A(color, 0.10), 1),
+                    },
+                };
+                context.DrawGeometry(wash, null, Wedge(center, r * RingFractions[0] * 0.5, r * 1.04, a0, a1));
+                var edge = new Pen(Brush(Ink, 0.22), 1);
+                context.DrawLine(edge, PtFlat(center, r * RingFractions[0] * 0.5, a0), PtFlat(center, r * 1.04 + 6, a0));
             }
+
+            // Rings: a soft underglow and a hairline, with a slow bright arc travelling each one.
+            for (var i = 0; i < Rings.Length; i++)
+            {
+                var radius = r * RingFractions[i];
+                context.DrawEllipse(null, new Pen(Brush(Ink, 0.06), 7), center, radius, radius);
+                context.DrawEllipse(null, new Pen(Brush(Ink, 0.34), 1), center, radius, radius);
+                DrawTicks(context, center, radius, i);
+                DrawComet(context, center, radius, i);
+            }
+
+            // Dust on the outer ring, so the edge of the map reads as a belt rather than a line.
+            var rng = new Random(5);
+            for (var i = 0; i < 140; i++)
+            {
+                var a = rng.NextDouble() * 360 + Phase * 0.4;
+                var off = (rng.NextDouble() - 0.5) * r * 0.05;
+                var p = PtFlat(center, r * RingFractions[3] + off, a);
+                context.DrawEllipse(Brush(Color.Parse("#B5BEFF"), 0.10 + rng.NextDouble() * 0.2), null, p, 0.5 + rng.NextDouble() * 0.8, 0.5 + rng.NextDouble() * 0.8);
+            }
+        }
+
+        // Each ring is named once, on the downward spoke where no planet is allowed to sit.
+        for (var i = 0; i < Rings.Length; i++)
+            DrawText(context, Horizons.Label(Rings[i]).ToUpperInvariant(), 8, "#8E97CC",
+                new Point(center.X, center.Y + Tilt * r * RingFractions[i]), centered: true, background: true);
+    }
+
+    /// <summary>A short fading streak that circles a ring, as if something were slowly passing.</summary>
+    private void DrawComet(DrawingContext context, Point center, double radius, int ring)
+    {
+        var head = Phase * (9 - ring * 1.8) + ring * 70;
+        const int steps = 14;
+        for (var s = 0; s < steps; s++)
+        {
+            var a0 = head - s * 2.2;
+            var a1 = head - (s + 1) * 2.2;
+            var fade = 1 - (double)s / steps;
+            context.DrawLine(new Pen(Brush(Color.Parse("#BFC8FF"), 0.5 * fade * fade), 1.4 * (0.5 + fade * 0.5), lineCap: PenLineCap.Round),
+                PtFlat(center, radius, a0), PtFlat(center, radius, a1));
         }
     }
 
@@ -359,11 +403,11 @@ public sealed class OrbitCanvas : Control
         var count = ring switch { 0 => 7, 1 => 28, 2 => 30, _ => 0 };
         if (count == 0)
             return;
-        var pen = new Pen(new SolidColorBrush(Color.Parse("#287C8CFF")), 1);
+        var pen = new Pen(Brush(Ink, 0.22), 1);
         for (var i = 0; i < count; i++)
         {
             var a = i * 360.0 / count;
-            context.DrawLine(pen, Pt(center, radius - 3, a), Pt(center, radius + 3, a));
+            context.DrawLine(pen, PtFlat(center, radius - 3.5, a), PtFlat(center, radius + 3.5, a));
         }
     }
 
@@ -372,14 +416,171 @@ public sealed class OrbitCanvas : Control
         var g = new StreamGeometry();
         using (var ctx = g.Open())
         {
-            ctx.BeginFigure(Pt(c, outer, a0), true);
-            ctx.ArcTo(Pt(c, outer, a1), new Size(outer, outer), 0, false, SweepDirection.Clockwise);
-            ctx.LineTo(Pt(c, inner, a1));
-            ctx.ArcTo(Pt(c, inner, a0), new Size(inner, inner), 0, false, SweepDirection.CounterClockwise);
+            ctx.BeginFigure(PtFlat(c, outer, a0), true);
+            ctx.ArcTo(PtFlat(c, outer, a1), new Size(outer, outer), 0, false, SweepDirection.Clockwise);
+            ctx.LineTo(PtFlat(c, inner, a1));
+            ctx.ArcTo(PtFlat(c, inner, a0), new Size(inner, inner), 0, false, SweepDirection.CounterClockwise);
             ctx.EndFigure(true);
         }
         return g;
     }
+
+    // --- The sun ------------------------------------------------------------------------------------
+
+    /// <summary>
+    /// Today, as a star. The big number is what is still to do. A bright arc around it shows how much of today's list
+    /// is done, and a slanted ring of sixteen marks is the waking day (07:00 to 23:00) with a bead where the time is now.
+    /// </summary>
+    private void DrawSun(DrawingContext context, Point center, double r)
+    {
+        var face = Math.Clamp(r * 0.12, 32, 52);
+        var breathe = 0.5 + 0.5 * Math.Sin(Phase * 0.8);
+
+        // Bloom: three widening layers of warmth.
+        void Glow(double radius, Color color, double alpha) =>
+            context.DrawEllipse(new RadialGradientBrush
+            {
+                GradientStops =
+                {
+                    new GradientStop(A(color, alpha), 0.2),
+                    new GradientStop(A(color, alpha * 0.4), 0.55),
+                    new GradientStop(A(color, 0), 1),
+                },
+            }, null, center, radius, radius);
+        Glow(face * 5.0, Color.Parse("#E8963C"), 0.16 + 0.04 * breathe);
+        Glow(face * 3.0, Color.Parse("#F2B04C"), 0.28 + 0.06 * breathe);
+        Glow(face * 1.9, Color.Parse("#FFD27A"), 0.42);
+
+        // Streamers: long soft spikes that turn slowly, two sets against each other.
+        for (var set = 0; set < 2; set++)
+        {
+            var count = set == 0 ? 11 : 7;
+            for (var i = 0; i < count; i++)
+            {
+                var a = i * 360.0 / count + Phase * (set == 0 ? 2.2 : -3.4) + set * 17;
+                var len = face * (set == 0 ? 2.5 : 1.9) * (0.85 + 0.15 * Math.Sin(Phase * 0.7 + i * 1.7));
+                var half = set == 0 ? 3.2 : 4.4;
+                var g = new StreamGeometry();
+                using (var ctx = g.Open())
+                {
+                    ctx.BeginFigure(Pt(center, face * 0.8, a - half), true);
+                    ctx.LineTo(Pt(center, face + len, a));
+                    ctx.LineTo(Pt(center, face * 0.8, a + half));
+                    ctx.EndFigure(true);
+                }
+                context.DrawGeometry(Brush(Color.Parse("#FFD98A"), set == 0 ? 0.10 : 0.07), null, g);
+            }
+        }
+
+        // The slanted day ring, back half first so the star sits inside it.
+        var hourNow = Math.Clamp(DateTime.Now.Hour + DateTime.Now.Minute / 60.0 - 7, 0, 16);
+        var ringR = face * 1.62;
+        void RingHalf(bool backHalf)
+        {
+            for (var h = 0; h < 64; h++)
+            {
+                var a0 = -90 + h * 360.0 / 64;
+                var a1 = a0 + 360.0 / 64;
+                var mid = (a0 + a1) / 2 * Math.PI / 180;
+                var isBack = Math.Sin(mid) < 0;
+                if (isBack != backHalf)
+                    continue;
+                context.DrawLine(new Pen(Brush(Color.Parse("#F0C877"), isBack ? 0.22 : 0.5), 1.3),
+                    Slant(center, ringR, a0), Slant(center, ringR, a1 + 0.4));
+            }
+            for (var h = 0; h < 16; h++)
+            {
+                var a = -90 + h * 360.0 / 16;
+                var isBack = Math.Sin(a * Math.PI / 180) < 0;
+                if (isBack != backHalf)
+                    continue;
+                var len = h % 4 == 0 ? 6 : 3.5;
+                context.DrawLine(new Pen(Brush(Color.Parse("#F0C877"), isBack ? 0.3 : 0.7), 1),
+                    Slant(center, ringR - len * 0.5, a), Slant(center, ringR + len, a));
+            }
+        }
+        RingHalf(true);
+
+        // The star: white-hot in the middle, orange at the limb.
+        var disc = new RadialGradientBrush
+        {
+            GradientOrigin = new RelativePoint(0.42, 0.4, RelativeUnit.Relative),
+            RadiusX = RelativeScalar.Parse("62%"),
+            RadiusY = RelativeScalar.Parse("62%"),
+            GradientStops =
+            {
+                new GradientStop(Color.Parse("#FFF8E0"), 0),
+                new GradientStop(Color.Parse("#FFDF8C"), 0.38),
+                new GradientStop(Color.Parse("#F2A93C"), 0.78),
+                new GradientStop(Color.Parse("#C9691A"), 1),
+            },
+        };
+        context.DrawEllipse(disc, null, center, face, face);
+
+        // Granulation: soft cells drifting across the surface, kept inside the disc.
+        using (context.PushGeometryClip(new EllipseGeometry(new Rect(center.X - face, center.Y - face, face * 2, face * 2))))
+        {
+            for (var i = 0; i < 9; i++)
+            {
+                var a = i * 40 + Phase * (3 + i % 3);
+                var d = face * (0.15 + 0.55 * ((i * 37) % 10) / 10.0);
+                var p = Pt(center, d, a);
+                var bright = i % 2 == 0;
+                context.DrawEllipse(Brush(bright ? Color.Parse("#FFFFFF") : Color.Parse("#B8560F"), bright ? 0.18 : 0.14), null,
+                    p, face * (0.18 + 0.05 * (i % 3)), face * (0.12 + 0.04 * (i % 3)));
+            }
+            // Limb darkening: the edge of a star is always dimmer than its middle.
+            context.DrawEllipse(new RadialGradientBrush
+            {
+                GradientStops =
+                {
+                    new GradientStop(Color.FromArgb(0, 0x7A, 0x30, 0x08), 0.6),
+                    new GradientStop(Color.FromArgb(0x70, 0x7A, 0x30, 0x08), 1),
+                },
+            }, null, center, face, face);
+        }
+
+        // Progress: a thin bright arc just outside the star.
+        var total = CoreCount + CoreDone;
+        var done = total == 0 ? 1.0 : (double)CoreDone / total;
+        var arcR = face + 5;
+        context.DrawEllipse(null, new Pen(Brush(Color.Parse("#FFE6A8"), 0.2), 2), center, arcR, arcR);
+        if (done >= 0.999)
+            context.DrawEllipse(null, new Pen(Brush(Color.Parse("#FFF1C9")), 2.2), center, arcR, arcR);
+        else if (done > 0.01)
+        {
+            var g = new StreamGeometry();
+            using (var ctx = g.Open())
+            {
+                ctx.BeginFigure(Pt(center, arcR, -90), false);
+                ctx.ArcTo(Pt(center, arcR, -90 + done * 360), new Size(arcR, arcR), 0, done > 0.5, SweepDirection.Clockwise);
+                ctx.EndFigure(false);
+            }
+            context.DrawGeometry(null, new Pen(Brush(Color.Parse("#FFF1C9")), 2.2, lineCap: PenLineCap.Round), g);
+        }
+
+        RingHalf(false);
+
+        // The bead: where the day is right now, riding the ring.
+        var nowAngle = -90 + hourNow * 360.0 / 16;
+        var bead = Slant(center, ringR, nowAngle);
+        context.DrawEllipse(Brush(Color.Parse("#FFE6A8"), 0.3), null, bead, 7, 7);
+        context.DrawEllipse(Brush(Color.Parse("#FFFFFF")), null, bead, 2.8, 2.8);
+
+        var left = CoreCount.ToString(CultureInfo.InvariantCulture);
+        if (CoreCount == 0 && total > 0)
+        {
+            DrawText(context, "Clear", 14, "#3A2208", new Point(center.X, center.Y - 4), centered: true, bold: true);
+            DrawText(context, "FOR TODAY", 7.5, "#5A3A12", new Point(center.X, center.Y + 11), centered: true);
+        }
+        else
+        {
+            DrawText(context, left, 28, "#2E1A06", new Point(center.X, center.Y - 5), centered: true, bold: true);
+            DrawText(context, "LEFT TODAY", 7.5, "#5A3A12", new Point(center.X, center.Y + 15), centered: true);
+        }
+    }
+
+    // --- Planets ------------------------------------------------------------------------------------
 
     /// <summary>Goal-level dependencies as arcs from what must finish to what waits. Faint until you point at one.</summary>
     private void DrawLinks(DrawingContext context, Point center)
@@ -391,8 +592,8 @@ public sealed class OrbitCanvas : Control
                 if (_placed.FirstOrDefault(p => p.Body.Id == depId) is not { Body: not null } dep)
                     continue;
                 var emphasised = body.Id == _hover || body.Id == SelectedId || dep.Body.Id == _hover || dep.Body.Id == SelectedId;
-                var color = emphasised ? Color.Parse("#E8B64C") : Color.Parse("#7C8CFF");
-                var brush = new SolidColorBrush(Color.FromArgb((byte)(emphasised ? 0xC8 : 0x40), color.R, color.G, color.B));
+                var color = emphasised ? Brass : Ink;
+                var brush = Brush(color, emphasised ? 0.8 : 0.28);
                 var pen = new Pen(brush, emphasised ? 1.6 : 1, new DashStyle([3, 3], 0));
 
                 var from = dep.Center;
@@ -428,105 +629,182 @@ public sealed class OrbitCanvas : Control
         }
     }
 
-    private void DrawBody(DrawingContext context, OrbitBody body, Point c, double radius)
+    /// <summary>
+    /// One planet, lit by the sun. The bright side faces the middle of the map, a soft terminator darkens the far
+    /// side, and a few bands (different for every goal) give each one its own surface. Moons orbit on the same slant
+    /// as the map, passing behind and in front.
+    /// </summary>
+    private void DrawBody(DrawingContext context, OrbitBody body, Point c, double radius, Point sun)
     {
         var accent = body.Accent;
         var hot = body.Pressure >= Planner.MustDo;
         var hovered = body.Id == _hover;
         var done = body.Fraction is >= 0.999;
+        var seed = Unit(body.Id);
 
-        // Pressing goals get a close, quiet halo; there is no glow on anything that is not asking for you.
-        if (hot || hovered)
-        {
-            var breathe = hovered ? 1 : 0.5 + 0.5 * Math.Sin(Phase * 1.8 + c.X * 0.01);
-            var halo = new RadialGradientBrush
-            {
-                GradientStops =
-                {
-                    new GradientStop(Color.FromArgb((byte)(0x34 + 0x1C * breathe), accent.R, accent.G, accent.B), 0.55),
-                    new GradientStop(Color.FromArgb(0x00, accent.R, accent.G, accent.B), 1),
-                },
-            };
-            context.DrawEllipse(halo, null, c, radius + 11, radius + 11);
-        }
+        // Which way the light comes from: toward the sun.
+        var lx = sun.X - c.X;
+        var ly = sun.Y - c.Y;
+        var ll = Math.Max(1, Math.Sqrt(lx * lx + ly * ly));
+        lx /= ll;
+        ly /= ll;
 
-        // A matte disc with a lit upper edge: enough to feel solid, not enough to feel like a toy.
-        var disc = new RadialGradientBrush
+        // An atmosphere, always faint; pressing goals and the one under the pointer glow properly.
+        var breathe = hovered ? 1 : 0.5 + 0.5 * Math.Sin(Phase * 1.6 + seed * 6);
+        var glow = hovered ? 0.5 : hot ? 0.28 + 0.12 * breathe : 0.10;
+        context.DrawEllipse(new RadialGradientBrush
         {
-            Center = new RelativePoint(0.5, 0.5, RelativeUnit.Relative),
-            GradientOrigin = new RelativePoint(0.35, 0.3, RelativeUnit.Relative),
-            RadiusX = RelativeScalar.Parse("75%"),
-            RadiusY = RelativeScalar.Parse("75%"),
             GradientStops =
             {
-                new GradientStop(Lighten(accent, 0.5), 0),
-                new GradientStop(accent, 0.5),
-                new GradientStop(Darken(accent, 0.55), 1),
+                new GradientStop(A(accent, glow), 0.5),
+                new GradientStop(A(accent, 0), 1),
+            },
+        }, null, c, radius * (hot || hovered ? 2.2 : 1.7), radius * (hot || hovered ? 2.2 : 1.7));
+
+        // Moons on the far side of the planet go first, so the planet covers them.
+        var moonOrbit = radius + 17;
+        var moons = new List<(Point At, double Depth, MoonState State)>();
+        if (body.Moons.Count > 0)
+        {
+            var spin = Phase * 5 + seed * 90;
+            for (var i = 0; i < body.Moons.Count; i++)
+            {
+                var a = spin + i * 360.0 / body.Moons.Count;
+                moons.Add((Slant(c, moonOrbit, a), Math.Sin(a * Math.PI / 180), body.Moons[i]));
+            }
+            using (context.PushTransform(Flatten(c)))
+                context.DrawEllipse(null, new Pen(Brush(accent, 0.2), 1), c, moonOrbit, moonOrbit);
+            foreach (var m in moons.Where(m => m.Depth < 0))
+                DrawMoon(context, m.At, m.State, accent, 0.7);
+        }
+
+        // The sphere itself, brightest where it faces the sun.
+        var sphere = new RadialGradientBrush
+        {
+            Center = new RelativePoint(0.5, 0.5, RelativeUnit.Relative),
+            GradientOrigin = new RelativePoint(0.5 + 0.3 * lx, 0.5 + 0.3 * ly, RelativeUnit.Relative),
+            RadiusX = RelativeScalar.Parse("80%"),
+            RadiusY = RelativeScalar.Parse("80%"),
+            GradientStops =
+            {
+                new GradientStop(Lighten(accent, 0.62), 0),
+                new GradientStop(Lighten(accent, 0.12), 0.32),
+                new GradientStop(accent, 0.55),
+                new GradientStop(Darken(accent, 0.55), 0.9),
+                new GradientStop(Darken(accent, 0.75), 1),
             },
         };
-        context.DrawEllipse(disc, new Pen(new SolidColorBrush(Darken(accent, 0.5)), 1), c, radius, radius);
+        var disc = new Rect(c.X - radius, c.Y - radius, radius * 2, radius * 2);
+        context.DrawEllipse(sphere, null, c, radius, radius);
 
-        // A small specular glint: the one detail that makes a flat disc read as a sphere.
-        context.DrawEllipse(new SolidColorBrush(Color.FromArgb(0x55, 255, 255, 255)), null,
-            new Point(c.X - radius * 0.35, c.Y - radius * 0.38), radius * 0.2, radius * 0.14);
+        using (context.PushGeometryClip(new EllipseGeometry(disc)))
+        {
+            // Bands, tilted a different way for each goal.
+            var bands = 2 + (int)(seed * 3);
+            var turn = (seed * 70 - 35) * Math.PI / 180;
+            using (context.PushTransform(Matrix.CreateTranslation(-c.X, -c.Y) * Matrix.CreateRotation(turn) * Matrix.CreateTranslation(c.X, c.Y)))
+            {
+                for (var k = 0; k < bands; k++)
+                {
+                    var y = c.Y - radius + (k + 0.6) * 2 * radius / (bands + 0.4);
+                    var thick = radius * (0.14 + 0.1 * ((k * 7 + (int)(seed * 10)) % 3) / 2.0);
+                    var dark = k % 2 == 0;
+                    context.DrawRectangle(Brush(dark ? Darken(accent, 0.6) : Lighten(accent, 0.5), dark ? 0.26 : 0.2), null,
+                        new Rect(c.X - radius - 2, y, radius * 2 + 4, thick));
+                }
+                // One storm, somewhere.
+                context.DrawEllipse(Brush(Lighten(accent, 0.55), 0.22), null,
+                    new Point(c.X + radius * (seed - 0.5) * 0.9, c.Y + radius * (0.25 - seed * 0.5)), radius * 0.2, radius * 0.11);
+            }
+
+            // The night side: a shadow that deepens away from the sun.
+            context.DrawEllipse(new RadialGradientBrush
+            {
+                Center = new RelativePoint(0.5 + 0.18 * lx, 0.5 + 0.18 * ly, RelativeUnit.Relative),
+                GradientOrigin = new RelativePoint(0.5 + 0.18 * lx, 0.5 + 0.18 * ly, RelativeUnit.Relative),
+                RadiusX = RelativeScalar.Parse("88%"),
+                RadiusY = RelativeScalar.Parse("88%"),
+                GradientStops =
+                {
+                    new GradientStop(Color.FromArgb(0, 4, 5, 14), 0.5),
+                    new GradientStop(Color.FromArgb(0xB4, 4, 5, 14), 1),
+                },
+            }, null, c, radius + 1, radius + 1);
+        }
+
+        // Rim light on the side facing the sun, and a small highlight just inside it.
+        var lightAngle = Math.Atan2(ly, lx) * 180 / Math.PI;
+        var rim = new StreamGeometry();
+        using (var ctx = rim.Open())
+        {
+            ctx.BeginFigure(Pt(c, radius - 0.4, lightAngle - 75), false);
+            ctx.ArcTo(Pt(c, radius - 0.4, lightAngle + 75), new Size(radius, radius), 0, false, SweepDirection.Clockwise);
+            ctx.EndFigure(false);
+        }
+        context.DrawGeometry(null, new Pen(Brush(Lighten(accent, 0.75), 0.75), 1.3, lineCap: PenLineCap.Round), rim);
+        context.DrawEllipse(Brush(Color.Parse("#FFFFFF"), 0.28), null, new Point(c.X + lx * radius * 0.42, c.Y + ly * radius * 0.42), radius * 0.2, radius * 0.14);
 
         if (done)
             DrawText(context, "✓", radius * 1.1, "#0B0D1A", c, centered: true, bold: true);
 
-        // Progress is the hairline orbit around the planet, filled clockwise from the top.
+        // Progress is a thin orbit lying flat around the planet, filled clockwise from the top.
         if (body.Fraction is { } fraction)
         {
-            var arcR = radius + 5;
-            context.DrawEllipse(null, new Pen(new SolidColorBrush(Color.FromArgb(0x30, accent.R, accent.G, accent.B)), 1.5), c, arcR, arcR);
-            if (fraction > 0.01)
+            using (context.PushTransform(Flatten(c)))
             {
-                var pen = new Pen(new SolidColorBrush(Lighten(accent, 0.2)), 2, lineCap: PenLineCap.Round);
-                if (fraction >= 0.999)
-                    context.DrawEllipse(null, pen, c, arcR, arcR);
-                else
+                var arcR = radius + 6;
+                context.DrawEllipse(null, new Pen(Brush(accent, 0.28), 1.5), c, arcR, arcR);
+                if (fraction > 0.01)
                 {
-                    var g = new StreamGeometry();
-                    using (var ctx = g.Open())
+                    var pen = new Pen(Brush(Lighten(accent, 0.3)), 2.2, lineCap: PenLineCap.Round);
+                    if (fraction >= 0.999)
+                        context.DrawEllipse(null, pen, c, arcR, arcR);
+                    else
                     {
-                        ctx.BeginFigure(Pt(c, arcR, -90), false);
-                        ctx.ArcTo(Pt(c, arcR, -90 + fraction * 360), new Size(arcR, arcR), 0, fraction > 0.5, SweepDirection.Clockwise);
-                        ctx.EndFigure(false);
+                        var g = new StreamGeometry();
+                        using (var ctx = g.Open())
+                        {
+                            ctx.BeginFigure(PtFlat(c, arcR, -90), false);
+                            ctx.ArcTo(PtFlat(c, arcR, -90 + fraction * 360), new Size(arcR, arcR), 0, fraction > 0.5, SweepDirection.Clockwise);
+                            ctx.EndFigure(false);
+                        }
+                        context.DrawGeometry(null, pen, g);
                     }
-                    context.DrawGeometry(null, pen, g);
                 }
             }
         }
 
-        // Moons: one per section (or step). Filled = finished, open ring = ready, dotted = waiting on something.
-        if (body.Moons.Count > 0)
-        {
-            var orbit = radius + 16;
-            context.DrawEllipse(null, new Pen(new SolidColorBrush(Color.FromArgb(0x1E, accent.R, accent.G, accent.B)), 1), c, orbit, orbit);
-            var spin = Phase * 4;
-            for (var i = 0; i < body.Moons.Count; i++)
-            {
-                var at = Pt(c, orbit, spin + i * 360.0 / body.Moons.Count);
-                switch (body.Moons[i])
-                {
-                    case MoonState.Done:
-                        context.DrawEllipse(new SolidColorBrush(accent), null, at, 3.4, 3.4);
-                        break;
-                    case MoonState.Open:
-                        context.DrawEllipse(new SolidColorBrush(Color.Parse("#0B0D1A")),
-                            new Pen(new SolidColorBrush(Lighten(accent, 0.15)), 1.4), at, 3.2, 3.2);
-                        break;
-                    default:
-                        context.DrawEllipse(null,
-                            new Pen(new SolidColorBrush(Color.FromArgb(0x80, accent.R, accent.G, accent.B)), 1, new DashStyle([1.2, 1.4], 0)), at, 3.2, 3.2);
-                        break;
-                }
-            }
-        }
+        // Moons in front of the planet.
+        foreach (var m in moons.Where(m => m.Depth >= 0))
+            DrawMoon(context, m.At, m.State, accent, 1);
 
         if (body.Id == SelectedId)
         {
-            var extent = radius + (body.Moons.Count > 0 ? 25 : 11);
-            context.DrawEllipse(null, new Pen(new SolidColorBrush(Brass), 1.4), c, extent, extent);
+            var extent = radius + (body.Moons.Count > 0 ? 26 : 12);
+            using (context.PushTransform(Flatten(c)))
+                context.DrawEllipse(null, new Pen(Brush(Brass), 1.5), c, extent, extent);
+            context.DrawEllipse(null, new Pen(Brush(Brass, 0.35), 1), c, radius + 4, radius + 4);
+        }
+    }
+
+    /// <summary>A small moon: lit, hollow (ready), or dotted (waiting on something).</summary>
+    private static void DrawMoon(DrawingContext context, Point at, MoonState state, Color accent, double alpha)
+    {
+        switch (state)
+        {
+            case MoonState.Done:
+                context.DrawEllipse(new RadialGradientBrush
+                {
+                    GradientOrigin = new RelativePoint(0.35, 0.3, RelativeUnit.Relative),
+                    GradientStops = { new GradientStop(A(Lighten(accent, 0.6), alpha), 0), new GradientStop(A(accent, alpha), 1) },
+                }, null, at, 3.8, 3.8);
+                break;
+            case MoonState.Open:
+                context.DrawEllipse(Brush(Color.Parse("#0B0D1A"), alpha), new Pen(Brush(Lighten(accent, 0.2), alpha), 1.4), at, 3.5, 3.5);
+                break;
+            default:
+                context.DrawEllipse(null, new Pen(Brush(accent, 0.55 * alpha), 1, new DashStyle([1.2, 1.4], 0)), at, 3.5, 3.5);
+                break;
         }
     }
 
@@ -536,6 +814,8 @@ public sealed class OrbitCanvas : Control
     private static Color Darken(Color c, double amount) => Color.FromRgb(
         (byte)(c.R * (1 - amount)), (byte)(c.G * (1 - amount)), (byte)(c.B * (1 - amount)));
 
+    // --- Labels and tooltip -------------------------------------------------------------------------
+
     /// <summary>
     /// Tries right, left, below, above in turn and takes the first spot that touches no other label or body. A
     /// label that fits nowhere is left out until you hover it, which beats a pile of overlapping text.
@@ -543,11 +823,11 @@ public sealed class OrbitCanvas : Control
     private Rect? PlaceLabel(OrbitBody body, Point c, double radius, Point center, List<Rect> taken, bool forced, out FormattedText? text)
     {
         var maxWidth = Math.Min(170, Math.Max(80, Bounds.Width / 2 - 24));
-        var ft = Format(body.Title, 12.5, forced ? "#E8B64C" : "#E4E7F6", maxWidth, bold: forced);
+        var ft = Format(body.Title, 13, forced ? "#E8B64C" : "#E4E7F6", maxWidth, bold: forced);
         text = ft;
         var w = ft.Width;
         var h = ft.Height;
-        var gap = radius + (body.Moons.Count > 0 ? 25 : 9);
+        var gap = radius + (body.Moons.Count > 0 ? 27 : 11);
         var rightFirst = c.X >= center.X - 2;
 
         var spots = new List<Rect>
@@ -614,7 +894,7 @@ public sealed class OrbitCanvas : Control
         var ft = Format(text, size, color, 400, bold);
         var origin = centered ? new Point(at.X - ft.Width / 2, at.Y - ft.Height / 2) : at;
         if (background)
-            context.DrawRectangle(new SolidColorBrush(Color.Parse("#E50B0D1A")), null,
+            context.DrawRectangle(new SolidColorBrush(Color.Parse("#D00B0D1A")), null,
                 new Rect(origin.X - 4, origin.Y - 1, ft.Width + 8, ft.Height + 2), 4, 4);
         context.DrawText(ft, origin);
     }
@@ -628,6 +908,9 @@ public sealed class OrbitCanvas : Control
             MaxLineCount = 1,
             Trimming = TextTrimming.CharacterEllipsis,
         };
+
+    /// <summary>A point on a flat circle, for drawing inside a <see cref="Flatten"/> transform.</summary>
+    private static Point PtFlat(Point c, double r, double degrees) => Pt(c, r, degrees);
 
     private static Point Pt(Point c, double r, double degrees)
     {
