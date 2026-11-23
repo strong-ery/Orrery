@@ -470,6 +470,37 @@
     <Setter Property="Background" Value="#0C6B7CFF" />
   </Style>
 
+  <!-- The handle for dragging a row, and the mark showing where it will land. -->
+  <Style Selector="Border.grip">
+    <Setter Property="Width" Value="18" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Cursor" Value="SizeAll" />
+    <Setter Property="VerticalAlignment" Value="Stretch" />
+    <Setter Property="Opacity" Value="0.3" />
+  </Style>
+  <Style Selector="Border.grip:pointerover">
+    <Setter Property="Opacity" Value="0.9" />
+  </Style>
+  <Style Selector="Border.grip PathIcon">
+    <Setter Property="Width" Value="14" />
+    <Setter Property="Height" Value="14" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+  <Style Selector="Border.line.drop">
+    <Setter Property="BorderBrush" Value="{DynamicResource AppAccentBrush}" />
+    <Setter Property="BorderThickness" Value="0,0,0,2" />
+  </Style>
+  <Style Selector="Border.line.dropup">
+    <Setter Property="BorderBrush" Value="{DynamicResource AppAccentBrush}" />
+    <Setter Property="BorderThickness" Value="0,2,0,1" />
+  </Style>
+  <Style Selector="Border.hero.drop">
+    <Setter Property="BorderBrush" Value="{DynamicResource AppAccentBrush}" />
+  </Style>
+  <Style Selector="Border.dragging">
+    <Setter Property="Opacity" Value="0.45" />
+  </Style>
+
   <!-- The one place brass appears as text: what something asks of you. -->
   <Style Selector="TextBlock.demand">
     <Setter Property="Foreground" Value="{DynamicResource AppAccentBrush}" />

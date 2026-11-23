@@ -78,6 +78,34 @@ public class PlanOrderTests
     }
 
     [Fact]
+    public void Dropping_inside_the_same_group_puts_the_item_where_it_was_dropped()
+    {
+        var a = Item("a", Duty, 5);
+        var b = Item("b", Duty, 4);
+        var c = Item("c", Chore, 3);
+        var game = Item("game", Want, 1);
+        var arranged = PlanOrder.Arrange([a, b, c, game], []);
+
+        var keys = PlanOrder.MoveTo(arranged, PlanOrder.KeyOf(c), 0);
+
+        Assert.Equal([PlanOrder.KeyOf(c), PlanOrder.KeyOf(a), PlanOrder.KeyOf(b), PlanOrder.KeyOf(game)], keys);
+    }
+
+    [Fact]
+    public void Dropping_past_the_other_group_stops_at_the_edge_of_its_own()
+    {
+        var a = Item("a", Duty, 5);
+        var b = Item("b", Duty, 4);
+        var game = Item("game", Want, 1);
+        var more = Item("more", Want, 0.5);
+        var arranged = PlanOrder.Arrange([a, b, game, more], []);
+
+        Assert.Equal(1, PlanOrder.ClampTarget(arranged, PlanOrder.KeyOf(a), 3));
+        Assert.Equal(2, PlanOrder.ClampTarget(arranged, PlanOrder.KeyOf(more), 0));
+        Assert.Null(PlanOrder.MoveTo(arranged, PlanOrder.KeyOf(game), 0));
+    }
+
+    [Fact]
     public void Moving_off_either_end_does_nothing()
     {
         var a = Item("a", Duty, 5);

@@ -135,6 +135,17 @@ public partial class CaptureViewModel : ObservableObject
     [RelayCommand]
     private void Close() => IsOpen = false;
 
+    /// <summary>For a goal that needs more than a name and a bucket: carries what was typed over to the full designer.</summary>
+    [RelayCommand]
+    private void MoreDetail()
+    {
+        var name = Title.Trim();
+        IsOpen = false;
+        _main.ShowDesignerCommand.Execute(null);
+        if (name.Length > 0)
+            _main.DesignerPage.Title = name;
+    }
+
     [RelayCommand]
     private void PickKind(string kind)
     {

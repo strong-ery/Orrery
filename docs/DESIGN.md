@@ -113,7 +113,7 @@ the right-hand panel restates the answers as sentences.
 
 ## Today's order and "not today"
 
-* The planner decides what is on today's list; you decide the order. Rows have earlier/later buttons (shown on hover).
+* The planner decides what is on today's list; you decide the order. Drag a row by its grip (or use "Later in the day" on the top card).
 * One rule never bends: responsibilities (obligations and routines) stay ahead of passions. A responsibility can be
   moved later in the day, among the other responsibilities, but never past a passion, and a passion can never go above
   a responsibility. The disabled button's tooltip says why. The mix slider changes what makes the list, not this rule.
@@ -126,7 +126,7 @@ the right-hand panel restates the answers as sentences.
 
 ## Not built yet
 
-* Drag-and-drop for today's order (the buttons do the same job)
+
 * Real graphs on History (it has streak ribbons and last-7-days effort bars) and click-through from them
 * An `.ico` for the exe (the tray and window icon are drawn at runtime from the same mark)
 * A weekly review screen

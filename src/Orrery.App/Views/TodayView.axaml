@@ -101,7 +101,7 @@
             </StackPanel>
 
             <!-- The one thing to do next -->
-            <ContentControl Content="{Binding Hero}" IsVisible="{Binding HasHero}">
+            <ContentControl x:Name="HeroHost" Content="{Binding Hero}" IsVisible="{Binding HasHero}">
                 <ContentControl.ContentTemplate>
                     <DataTemplate x:DataType="vm:PlanRowViewModel">
                         <Border Classes="hero" Background="{DynamicResource AppSubtleBackgroundBrush}">
@@ -114,6 +114,10 @@
                                         <Border Width="7" Height="7" CornerRadius="4" Background="{Binding Accent}" VerticalAlignment="Center" />
                                         <TextBlock Text="{Binding CategoryName}" FontSize="10" FontWeight="SemiBold" Opacity="0.6"
                                                    VerticalAlignment="Center" />
+                                        <Border Classes="grip" ToolTip.Tip="Drag to change the order" Margin="6,0,0,0"
+                                                PointerPressed="OnGripPressed" PointerMoved="OnGripMoved" PointerReleased="OnGripReleased">
+                                            <PathIcon Data="{StaticResource IconGrip}" />
+                                        </Border>
                                     </StackPanel>
                                     <TextBlock Classes="field-hint" Text="{Binding GoalTitle}" IsVisible="{Binding HasGoalTitle}" FontSize="12" />
                                     <Button Classes="link" Command="{Binding InspectCommand}">
@@ -168,18 +172,22 @@
             <!-- Then -->
             <StackPanel Spacing="0" IsVisible="{Binding HasRest}">
                 <TextBlock Classes="section-header" Text="THEN" />
-                <ItemsControl ItemsSource="{Binding Rest}">
+                <ItemsControl x:Name="RestList" ItemsSource="{Binding Rest}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="vm:PlanRowViewModel">
                             <StackPanel>
                                 <TextBlock Classes="section-header" Text="FOR YOU" Margin="0,18,0,2" IsVisible="{Binding StartsPassions}" />
                                 <Border Classes="line">
-                                    <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto,Auto" ColumnSpacing="12">
-                                        <Button Classes="check" Command="{Binding CompleteCommand}" ToolTip.Tip="{Binding CheckTip}" VerticalAlignment="Center">
+                                    <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto,Auto,Auto" ColumnSpacing="12">
+                                        <Border Classes="grip" ToolTip.Tip="Drag to change the order"
+                                                PointerPressed="OnGripPressed" PointerMoved="OnGripMoved" PointerReleased="OnGripReleased">
+                                            <PathIcon Data="{StaticResource IconGrip}" />
+                                        </Border>
+                                        <Button Grid.Column="1" Classes="check" Command="{Binding CompleteCommand}" ToolTip.Tip="{Binding CheckTip}" VerticalAlignment="Center">
                                             <PathIcon Data="{StaticResource IconCheck}" />
                                         </Button>
-                                        <Border Grid.Column="1" Width="3" CornerRadius="2" Background="{Binding Accent}" />
-                                        <Button Grid.Column="2" Classes="link" Command="{Binding InspectCommand}">
+                                        <Border Grid.Column="2" Width="3" CornerRadius="2" Background="{Binding Accent}" />
+                                        <Button Grid.Column="3" Classes="link" Command="{Binding InspectCommand}">
                                             <StackPanel Spacing="2">
                                                 <TextBlock Classes="title" Text="{Binding Title}" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
                                                 <StackPanel Orientation="Horizontal" Spacing="10">
@@ -188,20 +196,14 @@
                                                 </StackPanel>
                                             </StackPanel>
                                         </Button>
-                                        <TextBlock Grid.Column="3" Classes="field-hint" Text="{Binding UnlockNote}" IsVisible="{Binding HasUnlock}"
+                                        <TextBlock Grid.Column="4" Classes="field-hint" Text="{Binding UnlockNote}" IsVisible="{Binding HasUnlock}"
                                                    VerticalAlignment="Center" TextWrapping="NoWrap" />
-                                        <StackPanel Grid.Column="4" Classes="tools" Orientation="Horizontal" VerticalAlignment="Center">
-                                            <Button Classes="icon" Command="{Binding MoveUpCommand}" IsEnabled="{Binding CanMoveUp}" ToolTip.Tip="{Binding UpTip}">
-                                                <PathIcon Data="{StaticResource IconUp}" />
-                                            </Button>
-                                            <Button Classes="icon" Command="{Binding MoveDownCommand}" IsEnabled="{Binding CanMoveDown}" ToolTip.Tip="{Binding DownTip}">
-                                                <PathIcon Data="{StaticResource IconDown}" />
-                                            </Button>
+                                        <StackPanel Grid.Column="5" Classes="tools" Orientation="Horizontal" VerticalAlignment="Center">
                                             <Button Classes="icon" Command="{Binding PutOffCommand}" ToolTip.Tip="Not today: hide it until tomorrow">
                                                 <PathIcon Data="{StaticResource IconLater}" />
                                             </Button>
                                         </StackPanel>
-                                        <Button Grid.Column="5" Classes="icon" Command="{Binding StartCommand}" IsEnabled="{Binding CanStart}"
+                                        <Button Grid.Column="6" Classes="icon" Command="{Binding StartCommand}" IsEnabled="{Binding CanStart}"
                                                 ToolTip.Tip="Start working on this" VerticalAlignment="Center">
                                             <PathIcon Data="{StaticResource IconPlay}" />
                                         </Button>

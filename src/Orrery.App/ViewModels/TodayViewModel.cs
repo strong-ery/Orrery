@@ -225,6 +225,19 @@ public partial class TodayViewModel : ObservableObject
         _main.Changed();
     }
 
+    /// <summary>Where a dragged row would really land, so the page can show it before the drop.</summary>
+    public int ClampTarget(Guid key, int target) => PlanOrder.ClampTarget(_arranged, key, target);
+
+    /// <summary>Drops a row at a position in the list (0 is "up next"). A passion stops short of the responsibilities.</summary>
+    public void MoveTo(Guid key, int target)
+    {
+        if (PlanOrder.MoveTo(_arranged, key, target) is not { } keys)
+            return;
+        _main.Data.Settings.PlanOrder = keys;
+        _main.Data.Settings.PlanOrderDay = MainViewModel.Today;
+        _main.Changed();
+    }
+
     public void Refresh()
     {
         var today = MainViewModel.Today;

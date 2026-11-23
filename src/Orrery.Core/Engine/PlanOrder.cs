@@ -50,6 +50,36 @@ public static class PlanOrder
         return keys;
     }
 
+    /// <summary>
+    /// Where a dragged item may land: the position asked for, held inside the run of items of its own kind. Dropping
+    /// a passion above every responsibility lands it just below the last one, and the other way round.
+    /// </summary>
+    public static int ClampTarget(IReadOnlyList<PlanItem> arranged, Guid key, int target)
+    {
+        var at = IndexOf(arranged, key);
+        if (at < 0)
+            return target;
+        var kind = IsResponsibility(arranged[at]);
+        var first = Enumerable.Range(0, arranged.Count).First(i => IsResponsibility(arranged[i]) == kind);
+        var last = Enumerable.Range(0, arranged.Count).Last(i => IsResponsibility(arranged[i]) == kind);
+        return Math.Clamp(target, first, last);
+    }
+
+    /// <summary>The order after dropping an item at a position (clamped by <see cref="ClampTarget"/>), or null if nothing changes.</summary>
+    public static List<Guid>? MoveTo(IReadOnlyList<PlanItem> arranged, Guid key, int target)
+    {
+        var at = IndexOf(arranged, key);
+        if (at < 0)
+            return null;
+        target = ClampTarget(arranged, key, target);
+        if (target == at)
+            return null;
+        var keys = arranged.Select(KeyOf).ToList();
+        keys.RemoveAt(at);
+        keys.Insert(target, key);
+        return keys;
+    }
+
     /// <summary>Why a move was refused, or null if it is allowed.</summary>
     public static string? WhyNot(IReadOnlyList<PlanItem> arranged, Guid key, int delta)
     {

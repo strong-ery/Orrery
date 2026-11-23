@@ -206,7 +206,11 @@
                 </StackPanel>
 
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                    <TextBlock Text="{Binding Hint}" Classes="field-hint" VerticalAlignment="Center" />
+                    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Margin="-9,0,0,0">
+                        <Button Classes="ghost" Content="Set it up in more detail…" Command="{Binding MoreDetailCommand}"
+                                IsVisible="{Binding IsGoal}" ToolTip.Tip="Opens the full goal designer with this name filled in" />
+                        <TextBlock Text="{Binding Hint}" Classes="field-hint" VerticalAlignment="Center" Margin="9,0,0,0" />
+                    </StackPanel>
                     <Button Grid.Column="1" Classes="action primary" Content="{Binding CommitLabel}" Command="{Binding CommitCommand}"
                             IsEnabled="{Binding CanCommit}" Padding="20,9" />
                 </Grid>
