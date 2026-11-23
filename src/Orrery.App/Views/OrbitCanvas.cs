@@ -49,7 +49,7 @@ public sealed class OrbitCanvas : Control
     private static readonly double[] RingFractions = [0.30, 0.52, 0.74, 0.96];
 
     /// <summary>The map is a disc seen from above and to the side: flat circles become ellipses this tall.</summary>
-    private const double Tilt = 0.68;
+    private const double Tilt = 1.0;
 
     // Where each bucket's sector starts, in degrees clockwise from east. Obligations sit at the top.
     private static readonly Dictionary<CategoryRole, double> SectorStart = new()
@@ -146,7 +146,7 @@ public sealed class OrbitCanvas : Control
                 var angle = start + (i + 0.5) / ordered.Count * span + drift;
                 var p = Slant(center, radius, angle);
                 // Nearer (lower on screen) is a little bigger, farther a little smaller.
-                var depth = 1 + 0.16 * Math.Clamp((p.Y - center.Y) / (r * Tilt), -1, 1);
+                var depth = 1.0;
                 _placed.Add((ordered[i], p, BodyRadius(ordered[i]) * depth));
             }
         }
@@ -216,9 +216,9 @@ public sealed class OrbitCanvas : Control
         foreach (var (role, (name, color)) in Buckets)
         {
             var p = Slant(center, r + 30, SectorStart[role] + SectorSpan / 2);
-            var label = Format(name, 9.5, "#A3AAD2", 200, bold: true);
-            context.DrawEllipse(new SolidColorBrush(color), null, new Point(p.X - label.Width / 2 - 9, p.Y), 3, 3);
-            context.DrawText(label, new Point(p.X - label.Width / 2, p.Y - label.Height / 2));
+            DrawSpaced(context, name.ToUpperInvariant(), 10, "#A3AAD2", new Point(p.X + 5, p.Y));
+            var width = name.Length * 7.2 + 8;
+            context.DrawEllipse(new SolidColorBrush(color), null, new Point(p.X + 5 - width / 2 - 8, p.Y), 3, 3);
         }
 
         DrawLinks(context, center);
@@ -238,11 +238,16 @@ public sealed class OrbitCanvas : Control
         foreach (var (body, c, radius) in order)
         {
             var forced = body.Id == _hover || body.Id == SelectedId;
-            var rect = PlaceLabel(body, c, radius, center, labelRects, forced, out var text);
+            var rect = PlaceLabel(body, c, radius, center, labelRects, forced, out var text, out var caption);
             if (rect is { } rr)
             {
                 labelRects.Add(rr);
-                context.DrawText(text!, rr.TopLeft);
+                context.DrawRectangle(new SolidColorBrush(Color.Parse("#CC0B0D1A")),
+                    new Pen(Brush(forced ? Brass : Ink, forced ? 0.6 : 0.16), 1), rr, 8, 8);
+                context.DrawRectangle(new SolidColorBrush(body.Accent), null,
+                    new Rect(rr.X + 6, rr.Y + 8, 3, rr.Height - 16), 1.5, 1.5);
+                context.DrawText(text!, new Point(rr.X + 15, rr.Y + 4));
+                context.DrawText(caption!, new Point(rr.X + 15, rr.Y + 4 + text!.Height));
             }
         }
 
@@ -267,9 +272,9 @@ public sealed class OrbitCanvas : Control
             }, null, at, radius, radius * 0.72);
 
         foreach (var (role, (_, color)) in Buckets)
-            Cloud(Slant(center, r * 0.7, SectorStart[role] + SectorSpan / 2), r * 0.5, color, 0.10);
-        Cloud(center, r * 0.92, Color.Parse("#3A3F9C"), 0.14);
-        Cloud(center, r * 0.6, Brass, 0.07);
+            Cloud(Slant(center, r * 0.7, SectorStart[role] + SectorSpan / 2), r * 0.5, color, 0.06);
+        Cloud(center, r * 0.92, Color.Parse("#3A3F9C"), 0.09);
+        Cloud(center, r * 0.6, Brass, 0.04);
     }
 
     private sealed record Star(double X, double Y, double Size, double Alpha, int Layer, double Speed, bool Warm, bool Glint);
@@ -279,7 +284,7 @@ public sealed class OrbitCanvas : Control
     {
         var rng = new Random(11);
         var stars = new List<Star>();
-        for (var i = 0; i < 300; i++)
+        for (var i = 0; i < 170; i++)
         {
             var layer = i % 3; // 0 is far and still, 2 is near and drifts most
             stars.Add(new Star(rng.NextDouble(), rng.NextDouble(), 0.4 + rng.NextDouble() * (0.6 + layer * 0.5),
@@ -326,11 +331,11 @@ public sealed class OrbitCanvas : Control
                 RadiusY = new RelativeScalar(r * 1.04, RelativeUnit.Absolute),
                 GradientStops =
                 {
-                    new GradientStop(A(Color.Parse("#2A2F6E"), 0.38), 0),
-                    new GradientStop(A(Color.Parse("#1B1F4A"), 0.30), 0.55),
-                    new GradientStop(A(Color.Parse("#10132E"), 0.10), 1),
+                    new GradientStop(A(Color.Parse("#232862"), 0.16), 0),
+                    new GradientStop(A(Color.Parse("#171B44"), 0.12), 0.55),
+                    new GradientStop(A(Color.Parse("#10132E"), 0.04), 1),
                 },
-            }, new Pen(Brush(Ink, 0.22), 1.2), center, r * 1.04, r * 1.04);
+            }, new Pen(Brush(Ink, 0.14), 1), center, r * 1.04, r * 1.04);
 
             // Sectors: each bucket's territory, tinted from the sun outward.
             foreach (var (role, (_, color)) in Buckets)
@@ -345,56 +350,29 @@ public sealed class OrbitCanvas : Control
                     RadiusY = new RelativeScalar(r, RelativeUnit.Absolute),
                     GradientStops =
                     {
-                        new GradientStop(A(color, 0.02), 0.15),
-                        new GradientStop(A(color, 0.07), 0.6),
-                        new GradientStop(A(color, 0.10), 1),
+                        new GradientStop(A(color, 0.01), 0.15),
+                        new GradientStop(A(color, 0.04), 0.6),
+                        new GradientStop(A(color, 0.06), 1),
                     },
                 };
                 context.DrawGeometry(wash, null, Wedge(center, r * RingFractions[0] * 0.5, r * 1.04, a0, a1));
-                var edge = new Pen(Brush(Ink, 0.22), 1);
+                var edge = new Pen(Brush(Ink, 0.14), 1);
                 context.DrawLine(edge, PtFlat(center, r * RingFractions[0] * 0.5, a0), PtFlat(center, r * 1.04 + 6, a0));
             }
 
-            // Rings: a soft underglow and a hairline, with a slow bright arc travelling each one.
+            // Rings: hairlines and nothing else. The scale is the information.
             for (var i = 0; i < Rings.Length; i++)
             {
                 var radius = r * RingFractions[i];
-                context.DrawEllipse(null, new Pen(Brush(Ink, 0.06), 7), center, radius, radius);
-                context.DrawEllipse(null, new Pen(Brush(Ink, 0.34), 1), center, radius, radius);
+                context.DrawEllipse(null, new Pen(Brush(Ink, 0.24), 1), center, radius, radius);
                 DrawTicks(context, center, radius, i);
-                DrawComet(context, center, radius, i);
-            }
-
-            // Dust on the outer ring, so the edge of the map reads as a belt rather than a line.
-            var rng = new Random(5);
-            for (var i = 0; i < 140; i++)
-            {
-                var a = rng.NextDouble() * 360 + Phase * 0.4;
-                var off = (rng.NextDouble() - 0.5) * r * 0.05;
-                var p = PtFlat(center, r * RingFractions[3] + off, a);
-                context.DrawEllipse(Brush(Color.Parse("#B5BEFF"), 0.10 + rng.NextDouble() * 0.2), null, p, 0.5 + rng.NextDouble() * 0.8, 0.5 + rng.NextDouble() * 0.8);
             }
         }
 
         // Each ring is named once, on the downward spoke where no planet is allowed to sit.
         for (var i = 0; i < Rings.Length; i++)
-            DrawText(context, Horizons.Label(Rings[i]).ToUpperInvariant(), 8, "#8E97CC",
-                new Point(center.X, center.Y + Tilt * r * RingFractions[i]), centered: true, background: true);
-    }
-
-    /// <summary>A short fading streak that circles a ring, as if something were slowly passing.</summary>
-    private void DrawComet(DrawingContext context, Point center, double radius, int ring)
-    {
-        var head = Phase * (9 - ring * 1.8) + ring * 70;
-        const int steps = 14;
-        for (var s = 0; s < steps; s++)
-        {
-            var a0 = head - s * 2.2;
-            var a1 = head - (s + 1) * 2.2;
-            var fade = 1 - (double)s / steps;
-            context.DrawLine(new Pen(Brush(Color.Parse("#BFC8FF"), 0.5 * fade * fade), 1.4 * (0.5 + fade * 0.5), lineCap: PenLineCap.Round),
-                PtFlat(center, radius, a0), PtFlat(center, radius, a1));
-        }
+            DrawSpaced(context, Horizons.Label(Rings[i]).ToUpperInvariant(), 8.5, "#7F88BC",
+                new Point(center.X, center.Y + Tilt * r * RingFractions[i]), plate: true);
     }
 
     private static void DrawTicks(DrawingContext context, Point center, double radius, int ring)
@@ -447,9 +425,9 @@ public sealed class OrbitCanvas : Control
                     new GradientStop(A(color, 0), 1),
                 },
             }, null, center, radius, radius);
-        Glow(face * 5.0, Color.Parse("#E8963C"), 0.16 + 0.04 * breathe);
-        Glow(face * 3.0, Color.Parse("#F2B04C"), 0.28 + 0.06 * breathe);
-        Glow(face * 1.9, Color.Parse("#FFD27A"), 0.42);
+        Glow(face * 3.6, Color.Parse("#E8963C"), 0.10 + 0.03 * breathe);
+        Glow(face * 2.4, Color.Parse("#F2B04C"), 0.20 + 0.04 * breathe);
+        Glow(face * 1.7, Color.Parse("#FFD27A"), 0.32);
 
         // Streamers: long soft spikes that turn slowly, two sets against each other.
         for (var set = 0; set < 2; set++)
@@ -468,7 +446,7 @@ public sealed class OrbitCanvas : Control
                     ctx.LineTo(Pt(center, face * 0.8, a + half));
                     ctx.EndFigure(true);
                 }
-                context.DrawGeometry(Brush(Color.Parse("#FFD98A"), set == 0 ? 0.10 : 0.07), null, g);
+                context.DrawGeometry(Brush(Color.Parse("#FFD98A"), set == 0 ? 0.06 : 0.04), null, g);
             }
         }
 
@@ -651,7 +629,7 @@ public sealed class OrbitCanvas : Control
 
         // An atmosphere, always faint; pressing goals and the one under the pointer glow properly.
         var breathe = hovered ? 1 : 0.5 + 0.5 * Math.Sin(Phase * 1.6 + seed * 6);
-        var glow = hovered ? 0.5 : hot ? 0.28 + 0.12 * breathe : 0.10;
+        var glow = hovered ? 0.45 : hot ? 0.26 + 0.1 * breathe : 0.04;
         context.DrawEllipse(new RadialGradientBrush
         {
             GradientStops =
@@ -820,13 +798,18 @@ public sealed class OrbitCanvas : Control
     /// Tries right, left, below, above in turn and takes the first spot that touches no other label or body. A
     /// label that fits nowhere is left out until you hover it, which beats a pile of overlapping text.
     /// </summary>
-    private Rect? PlaceLabel(OrbitBody body, Point c, double radius, Point center, List<Rect> taken, bool forced, out FormattedText? text)
+    private Rect? PlaceLabel(OrbitBody body, Point c, double radius, Point center, List<Rect> taken, bool forced,
+        out FormattedText? text, out FormattedText? caption)
     {
         var maxWidth = Math.Min(170, Math.Max(80, Bounds.Width / 2 - 24));
-        var ft = Format(body.Title, 13, forced ? "#E8B64C" : "#E4E7F6", maxWidth, bold: forced);
+        var hot = body.Pressure >= Planner.MustDo;
+        var ft = Format(body.Title, 14, forced ? "#E8B64C" : "#F0F2FF", maxWidth, bold: true);
+        var capText = !string.IsNullOrWhiteSpace(body.Line2) ? body.Line2 : body.Line1;
+        var cap = Format(capText ?? "", 11.5, hot ? "#E8B64C" : "#8E97CC", maxWidth);
         text = ft;
-        var w = ft.Width;
-        var h = ft.Height;
+        caption = cap;
+        var w = Math.Max(ft.Width, cap.Width) + 20;
+        var h = ft.Height + cap.Height + 8;
         var gap = radius + (body.Moons.Count > 0 ? 27 : 11);
         var rightFirst = c.X >= center.X - 2;
 
@@ -888,20 +871,30 @@ public sealed class OrbitCanvas : Control
         context.DrawText(line2, new Point(x + 18, y + 15 + title.Height + line1.Height));
     }
 
-    private static void DrawText(DrawingContext context, string text, double size, string color, Point at,
-        bool centered = false, bool bold = false, bool background = false)
+    private void DrawText(DrawingContext context, string text, double size, string color, Point at,
+        bool centered = false, bool bold = false)
     {
         var ft = Format(text, size, color, 400, bold);
         var origin = centered ? new Point(at.X - ft.Width / 2, at.Y - ft.Height / 2) : at;
-        if (background)
-            context.DrawRectangle(new SolidColorBrush(Color.Parse("#D00B0D1A")), null,
-                new Rect(origin.X - 4, origin.Y - 1, ft.Width + 8, ft.Height + 2), 4, 4);
         context.DrawText(ft, origin);
     }
 
-    private static FormattedText Format(string text, double size, string color, double maxWidth, bool bold = false) =>
+    /// <summary>Small caps-style label: upper case, letter-spaced, centred on a point, optionally on a faint plate.</summary>
+    private void DrawSpaced(DrawingContext context, string text, double size, string color, Point at, bool plate = false)
+    {
+        var spaced = string.Join(' ', text.Select(ch => ch.ToString()));
+        var ft = Format(spaced, size, color, 400, bold: true);
+        var origin = new Point(at.X - ft.Width / 2, at.Y - ft.Height / 2);
+        if (plate)
+            context.DrawRectangle(new SolidColorBrush(Color.Parse("#B00B0D1A")), null,
+                new Rect(origin.X - 6, origin.Y - 1, ft.Width + 12, ft.Height + 2), 5, 5);
+        context.DrawText(ft, origin);
+    }
+
+    /// <summary>Text in the app's own font, so the map reads as part of the same interface.</summary>
+    private FormattedText Format(string text, double size, string color, double maxWidth, bool bold = false) =>
         new(text, CultureInfo.CurrentUICulture, FlowDirection.LeftToRight,
-            new Typeface(Typeface.Default.FontFamily, FontStyle.Normal, bold ? FontWeight.SemiBold : FontWeight.Normal),
+            new Typeface(Avalonia.Controls.Documents.TextElement.GetFontFamily(this), FontStyle.Normal, bold ? FontWeight.SemiBold : FontWeight.Normal),
             size, new SolidColorBrush(Color.Parse(color)))
         {
             MaxTextWidth = maxWidth,
