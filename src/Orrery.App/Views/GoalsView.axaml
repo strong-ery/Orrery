@@ -27,7 +27,7 @@
         <Grid>
         <!-- Orbit: rings are how soon it'll want you, sectors are the buckets -->
         <views:OrbitCanvas IsVisible="{Binding AsOrbit}" Bodies="{Binding Bodies}" SelectedId="{Binding SelectedId}"
-                           BodyCommand="{Binding OpenCommand}" CoreCount="{Binding TodayCount}" />
+                           BodyCommand="{Binding OpenCommand}" CoreCount="{Binding TodayCount}" CoreDone="{Binding DoneToday}" />
 
         <!-- Waiting: dependencies, left to right -->
         <Grid IsVisible="{Binding AsGraph}">

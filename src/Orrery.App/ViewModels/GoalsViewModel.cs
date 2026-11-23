@@ -166,6 +166,9 @@ public partial class GoalsViewModel : ObservableObject
     private int _todayCount;
 
     [ObservableProperty]
+    private int _doneToday;
+
+    [ObservableProperty]
     private Guid? _selectedId;
 
     [ObservableProperty]
@@ -233,6 +236,8 @@ public partial class GoalsViewModel : ObservableObject
         Flow = FlowGraph.Build(data, today, g => Progress.IsComplete(g, data.Contributions));
         GraphIsEmpty = Flow.Nodes.Count == 0;
         GoalColors = data.Goals.ToDictionary(g => g.Id, g => Palette.ColorFor(data.CategoryOf(g)));
+
+        DoneToday = data.Contributions.Where(c => c.Day == today).Select(c => c.GoalId).Distinct().Count();
 
         IsEmpty = rows.Count == 0;
         var now = rows.Count(r => r.Horizon == Horizon.Now);
