@@ -47,6 +47,34 @@ public sealed class TimelineCanvas : Control
 
     private Guid? _hover;
 
+    // The zoom eases from one span to the other instead of jumping.
+    private double _shown = -1;
+    private readonly Avalonia.Threading.DispatcherTimer _ease = new() { Interval = TimeSpan.FromMilliseconds(16) };
+
+    public TimelineCanvas() => _ease.Tick += (_, _) =>
+    {
+        var gap = SpanDays - _shown;
+        if (Math.Abs(gap) < 0.4)
+        {
+            _shown = SpanDays;
+            _ease.Stop();
+        }
+        else
+        {
+            _shown += gap * 0.17;
+        }
+        InvalidateVisual();
+    };
+
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+        if (change.Property == SpanDaysProperty && _shown >= 0)
+            _ease.Start();
+    }
+
+    private double Shown => _shown < 0 ? (_shown = SpanDays) : _shown;
+
     protected override Size MeasureOverride(Size availableSize)
     {
         var width = double.IsInfinity(availableSize.Width) ? 900 : availableSize.Width;
@@ -60,7 +88,7 @@ public sealed class TimelineCanvas : Control
     private double LabelW => Math.Clamp(FullWidth * 0.2, 170, 250);
     private double Left => Pad + LabelW + 14;
     private double Right => FullWidth - Pad - EndRoom;
-    private double PerDay => (Right - Left) / (SpanDays + Back);
+    private double PerDay => (Right - Left) / (Shown + Back);
 
     private static DateOnly Today => DateOnly.FromDateTime(DateTime.Now);
     private double XOf(DateOnly day) => Left + (day.DayNumber - Today.DayNumber + Back) * PerDay;
@@ -140,7 +168,7 @@ public sealed class TimelineCanvas : Control
     private void DrawAxis(DrawingContext context, DateOnly today, double height)
     {
         var from = today.AddDays(-Back);
-        var to = today.AddDays(SpanDays);
+        var to = today.AddDays((int)Math.Ceiling(Shown));
         var weekly = SpanDays <= 90;
 
         for (var d = from; d <= to; d = d.AddDays(1))

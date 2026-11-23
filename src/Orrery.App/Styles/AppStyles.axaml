@@ -375,6 +375,21 @@
   <Style Selector="ProgressBar.orrery-progress /template/ Border#PART_Indicator">
     <Setter Property="CornerRadius" Value="3" />
   </Style>
+  <!-- Hover and press colours fade rather than snap. -->
+  <Style Selector="Button /template/ ContentPresenter">
+    <Setter Property="Transitions">
+      <Transitions>
+        <BrushTransition Property="Background" Duration="0:0:0.14" />
+        <BrushTransition Property="BorderBrush" Duration="0:0:0.14" />
+      </Transitions>
+    </Setter>
+  </Style>
+  <Style Selector="ProgressBar /template/ Border#PART_Indicator">
+    <Setter Property="Transitions">
+      <Transitions><DoubleTransition Property="Width" Duration="0:0:0.35" Easing="CubicEaseOut" /></Transitions>
+    </Setter>
+  </Style>
+
   <!-- Calendar planning: a thin load bar per day, brass until the day is over-full. -->
   <Style Selector="ProgressBar.load">
     <Setter Property="Height" Value="3" />

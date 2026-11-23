@@ -352,6 +352,24 @@ public partial class MainViewModel : ObservableObject
         Changed();
     }
 
+    /// <summary>
+    /// Removes one entry from the record of things done. A step that was ticked by it goes back to open; a repeating goal
+    /// becomes due again. Undo is offered, but the entry can also simply be found again in History.
+    /// </summary>
+    public void TakeBack(Guid contributionId)
+    {
+        if (Data.Contributions.FirstOrDefault(c => c.Id == contributionId) is not { } entry)
+            return;
+        var goal = FindGoal(entry.GoalId);
+        var step = goal?.Steps.FirstOrDefault(s => s.Id == entry.StepId);
+        _undoSnapshot = JsonStore.ToJson(Data);
+        Data.Contributions.Remove(entry);
+        if (step is { Done: true } && !Data.Contributions.Any(c => c.StepId == step.Id))
+            step.Done = false;
+        Changed();
+        OfferUndo($"Took back “{step?.Title ?? goal?.Title ?? "that"}”");
+    }
+
     /// <summary>Deletes a goal for good: its steps, its history, and every link that pointed at it. Undo is offered for ten seconds.</summary>
     public void DeleteGoal(Guid id)
     {

@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Orrery.Core.Engine;
 using Orrery.Core.Models;
 
@@ -36,6 +37,39 @@ public sealed record EffortBar(string Title, IBrush Dot, string Label, double Pe
 
 public sealed record Stat(string Value, string Label);
 
+/// <summary>One line of the record: a day heading, or something that was done that day.</summary>
+public sealed partial class LogItem : ObservableObject
+{
+    private readonly Action<Guid>? _takeBack;
+
+    public LogItem(string heading)
+    {
+        IsHeader = true;
+        Title = heading;
+    }
+
+    public LogItem(Guid id, string title, string sub, string detail, IBrush dot, Action<Guid> takeBack)
+    {
+        Id = id;
+        Title = title;
+        Sub = sub;
+        Detail = detail;
+        Dot = dot;
+        _takeBack = takeBack;
+    }
+
+    public Guid Id { get; }
+    public bool IsHeader { get; }
+    public bool IsEntry => !IsHeader;
+    public string Title { get; } = "";
+    public string Sub { get; } = "";
+    public string Detail { get; } = "";
+    public IBrush? Dot { get; }
+
+    [RelayCommand]
+    private void TakeBack() => _takeBack?.Invoke(Id);
+}
+
 /// <summary>
 /// Looking back. One accent colour throughout: brass means "this happened". A bucket's own colour only appears as
 /// a small dot beside its name, so the page reads as shapes and numbers before it reads as colours.
@@ -62,6 +96,26 @@ public partial class HistoryViewModel : ObservableObject
     [ObservableProperty] private bool _hasEffort;
     [ObservableProperty] private bool _hasAnyActivity;
     [ObservableProperty] private string _chartCaption = "";
+
+    // --- The whole record ---
+    private const int FirstDays = 30, MoreDays = 90, SearchCap = 400;
+    private int _logDays = FirstDays;
+
+    public ObservableCollection<LogItem> Log { get; } = [];
+
+    [ObservableProperty] private string _search = "";
+    [ObservableProperty] private bool _hasOlder;
+    [ObservableProperty] private bool _logIsEmpty;
+    [ObservableProperty] private string _logSummary = "";
+
+    partial void OnSearchChanged(string value) => RefreshLog();
+
+    [RelayCommand]
+    private void ShowOlder()
+    {
+        _logDays += MoreDays;
+        RefreshLog();
+    }
 
     public void Refresh()
     {
@@ -133,5 +187,55 @@ public partial class HistoryViewModel : ObservableObject
                 $"{Planner.Format(total)} {goal.Measure.UnitLabel}".Trim(),
                 total / top * 100));
         HasEffort = Effort.Count > 0;
+
+        RefreshLog();
+    }
+
+    /// <summary>Everything ever done, newest first, grouped by day. Searching looks through all of it.</summary>
+    private void RefreshLog()
+    {
+        var data = _main.Data;
+        var today = MainViewModel.Today;
+        var query = Search.Trim();
+        var searching = query.Length > 0;
+
+        string TitleOf(Contribution c, Goal? g) =>
+            g?.Steps.FirstOrDefault(s => s.Id == c.StepId)?.Title ?? g?.Title ?? "(removed goal)";
+
+        var rows = data.Contributions
+            .Select(c => (Entry: c, Goal: data.Goals.FirstOrDefault(g => g.Id == c.GoalId)))
+            .Where(x => !searching || TitleOf(x.Entry, x.Goal).Contains(query, StringComparison.OrdinalIgnoreCase)
+                        || (x.Goal?.Title.Contains(query, StringComparison.OrdinalIgnoreCase) ?? false))
+            .OrderByDescending(x => x.Entry.Day).ThenByDescending(x => x.Entry.At)
+            .ToList();
+
+        var cutoff = today.AddDays(-_logDays);
+        var shown = searching ? rows.Take(SearchCap).ToList() : rows.Where(x => x.Entry.Day >= cutoff).ToList();
+        HasOlder = !searching && rows.Count > shown.Count;
+
+        Log.Clear();
+        DateOnly? last = null;
+        foreach (var (c, goal) in shown)
+        {
+            if (last != c.Day)
+            {
+                last = c.Day;
+                Log.Add(new LogItem(c.Day == today ? "Today" : c.Day == today.AddDays(-1) ? "Yesterday"
+                    : c.Day.ToString(c.Day.Year == today.Year ? "dddd, MMMM d" : "dddd, MMMM d, yyyy", CultureInfo.CurrentCulture)));
+            }
+            var title = TitleOf(c, goal);
+            var sub = goal is not null && title != goal.Title ? goal.Title : data.CategoryOf(goal!)?.Name ?? "";
+            var unit = goal?.Measure.UnitLabel ?? "";
+            var detail = c.Minutes > 0 ? $"{Planner.Format(c.Minutes)} min"
+                : goal?.Measure.Kind is MeasureKind.Amount && c.Amount > 0 ? $"{Planner.Format(c.Amount)} {unit}".Trim()
+                : "";
+            Log.Add(new LogItem(c.Id, title, sub, detail, Palette.For(goal is null ? null : data.CategoryOf(goal)), _main.TakeBack));
+        }
+
+        LogIsEmpty = Log.Count == 0;
+        var total = data.Contributions.Count;
+        LogSummary = searching
+            ? (rows.Count == 1 ? "1 match" : $"{rows.Count} matches")
+            : total == 1 ? "1 thing done, ever" : $"{total} things done, ever";
     }
 }

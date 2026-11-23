@@ -98,6 +98,41 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
             </StackPanel>
+
+            <!-- Everything, in order -->
+            <StackPanel Spacing="8">
+                <Grid ColumnDefinitions="*,Auto,240" ColumnSpacing="14">
+                    <TextBlock Classes="section-header" Text="EVERYTHING YOU HAVE DONE" Margin="0" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="1" Classes="field-hint" Text="{Binding LogSummary}" VerticalAlignment="Center" />
+                    <TextBox Grid.Column="2" Text="{Binding Search}" Watermark="Search" />
+                </Grid>
+                <TextBlock Classes="field-hint" FontSize="13" IsVisible="{Binding LogIsEmpty}"
+                           Text="Nothing here yet, or nothing matches." />
+                <ItemsControl ItemsSource="{Binding Log}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:LogItem">
+                            <Grid>
+                                <TextBlock IsVisible="{Binding IsHeader}" Text="{Binding Title}" FontWeight="SemiBold" FontSize="13"
+                                           Margin="0,16,0,2" />
+                                <Border Classes="line" IsVisible="{Binding IsEntry}" Padding="2,8">
+                                    <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="12">
+                                        <Border Width="8" Height="8" CornerRadius="4" Background="{Binding Dot}" VerticalAlignment="Center" />
+                                        <StackPanel Grid.Column="1" Spacing="0">
+                                            <TextBlock Text="{Binding Title}" FontSize="13" TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Text="{Binding Sub}" Classes="field-hint" FontSize="11" TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="2" Text="{Binding Detail}" Classes="field-hint" VerticalAlignment="Center" />
+                                        <Button Grid.Column="3" Classes="ghost" Command="{Binding TakeBackCommand}" Content="Take back"
+                                                VerticalAlignment="Center" />
+                                    </Grid>
+                                </Border>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <Button Classes="action" Content="Show older" Command="{Binding ShowOlderCommand}" IsVisible="{Binding HasOlder}"
+                        HorizontalAlignment="Left" Margin="0,8,0,0" />
+            </StackPanel>
         </StackPanel>
     </ScrollViewer>
 </UserControl>
