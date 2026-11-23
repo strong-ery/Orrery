@@ -208,6 +208,42 @@ public partial class MainViewModel : ObservableObject
         Changed();
     }
 
+    /// <summary>"Not today": the step (or the goal's own entry) steps out of the way until tomorrow.</summary>
+    public void PutOffItem(PlanItem item)
+    {
+        if (FindGoal(item.GoalId) is not { } goal)
+            return;
+        if (item.StepId is { } id && goal.Steps.FirstOrDefault(s => s.Id == id) is { } step)
+            PutOff.ForStep(step, Today);
+        else
+            PutOff.ForGoal(goal, Today);
+        Changed();
+    }
+
+    /// <summary>Turns a step that keeps being put off into a section with a small first piece, and opens it.</summary>
+    public void SplitStep(Guid goalId, Guid stepId)
+    {
+        if (FindGoal(goalId) is not { } goal || goal.Steps.FirstOrDefault(s => s.Id == stepId) is not { } step)
+            return;
+        var first = PutOff.Split(goal, step);
+        Changed();
+        if (first is not null)
+            Inspect(goalId, first.Id);
+    }
+
+    /// <summary>Moves a step, and anything inside it, to another goal.</summary>
+    public void MoveStepToGoal(Guid fromGoalId, Guid stepId, Guid toGoalId)
+    {
+        if (FindGoal(fromGoalId) is not { } from || FindGoal(toGoalId) is not { } to
+            || from.Steps.FirstOrDefault(s => s.Id == stepId) is not { } step)
+            return;
+        if (from.MoveToGoal(to, step))
+        {
+            Changed();
+            Inspect(toGoalId, stepId);
+        }
+    }
+
     public void RemoveStep(Guid goalId, Guid stepId)
     {
         if (FindGoal(goalId) is not { } goal)

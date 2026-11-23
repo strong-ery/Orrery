@@ -30,7 +30,7 @@
 
             <!-- Quick add: type a line, see what it will do, press Enter. Ctrl+K from anywhere. -->
             <Button Grid.Column="1" Classes="quick-button" Width="340" Height="28" HorizontalAlignment="Center" VerticalAlignment="Center"
-                    Command="{Binding Capture.OpenCommand}" Click="OnQuickAddClicked">
+                    Command="{Binding Capture.OpenCommand}">
                 <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="9">
                     <PathIcon Data="{StaticResource IconAdd}" Width="11" Height="11" Opacity="0.65" VerticalAlignment="Center" />
                     <TextBlock Grid.Column="1" Text="Add a step or a goal" FontSize="12" Opacity="0.75" VerticalAlignment="Center" />
@@ -57,11 +57,20 @@
             <Border Grid.Column="0" Background="{DynamicResource AppSidebarBrush}"
                     BorderBrush="{DynamicResource AppCardBorderBrush}" BorderThickness="0,0,1,0">
                 <StackPanel Margin="12,14" Spacing="4">
-                    <Button Classes="nav" Classes.active="{Binding IsToday}" Command="{Binding ShowTodayCommand}">
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <PathIcon Data="{StaticResource IconToday}" />
-                            <TextBlock Text="Today" />
+                    <!-- The one action, set apart from the places you go -->
+                    <Button Classes="newgoal" Classes.active="{Binding IsDesigner}" Command="{Binding ShowDesignerCommand}" Margin="0,0,0,12">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <PathIcon Data="{StaticResource IconAdd}" />
+                            <TextBlock Text="New goal" />
                         </StackPanel>
+                    </Button>
+                    <Button Classes="nav" Classes.active="{Binding IsToday}" Command="{Binding ShowTodayCommand}">
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10" MinWidth="160">
+                            <PathIcon Data="{StaticResource IconToday}" />
+                            <TextBlock Grid.Column="1" Text="Today" />
+                            <TextBlock Grid.Column="2" Classes="badge" Text="{Binding TodayPage.ToGo}" IsVisible="{Binding TodayPage.HasToGo}"
+                                       VerticalAlignment="Center" />
+                        </Grid>
                     </Button>
                     <Button Classes="nav" Classes.active="{Binding IsGoals}" Command="{Binding ShowGoalsCommand}">
                         <StackPanel Orientation="Horizontal" Spacing="10">
@@ -75,12 +84,6 @@
                             <TextBlock Text="Calendar" />
                         </StackPanel>
                     </Button>
-                    <Button Classes="nav" Classes.active="{Binding IsDesigner}" Command="{Binding ShowDesignerCommand}">
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <PathIcon Data="{StaticResource IconAdd}" />
-                            <TextBlock Text="New goal" />
-                        </StackPanel>
-                    </Button>
                     <Button Classes="nav" Classes.active="{Binding IsHistory}" Command="{Binding ShowHistoryCommand}">
                         <StackPanel Orientation="Horizontal" Spacing="10">
                             <PathIcon Data="{StaticResource IconHistory}" />
@@ -92,7 +95,7 @@
 
             <ContentControl Grid.Column="1" Content="{Binding Current}" />
 
-            <Border Grid.Column="2" Width="380" IsVisible="{Binding Inspector.IsOpen}"
+            <Border Grid.Column="2" Width="410" IsVisible="{Binding Inspector.IsOpen}"
                     Background="{DynamicResource AppSidebarBrush}"
                     BorderBrush="{DynamicResource AppCardBorderBrush}" BorderThickness="1,0,0,0">
                 <views:InspectorView DataContext="{Binding Inspector}" />

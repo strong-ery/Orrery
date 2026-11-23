@@ -39,7 +39,9 @@ public partial class GoalRowViewModel : ObservableObject
 
         var log = data.Contributions;
         var fraction = Progress.Fraction(goal, log);
-        HasFraction = fraction is not null;
+        // A plain one-off with no steps is just done or not. A ring stuck at 0% says nothing, so it gets words instead.
+        var plainDone = goal.Measure.Kind == MeasureKind.Done && !goal.Leaves().Any();
+        HasFraction = fraction is not null && !plainDone;
         Fraction = (fraction ?? 0) * 100;
 
         var unit = goal.Measure.UnitLabel;
@@ -47,11 +49,12 @@ public partial class GoalRowViewModel : ObservableObject
         var week = Progress.Between(goal, log, today.AddDays(-6), today);
         ProgressText = fraction switch
         {
+            not null when plainDone => Progress.IsComplete(goal, log) ? "Done" : "Not done yet",
             not null when Progress.Target(goal) > 0 =>
                 $"{Planner.Format(current)} / {Planner.Format(Progress.Target(goal))} {unit}".Replace("  ", " ").Trim()
                 + $" · {Math.Round(fraction.Value * 100)}%",
-            not null => current > 0 ? "done" : "not done",
-            _ when goal.Measure.Kind == MeasureKind.Done => week > 0 ? "done recently" : "not done recently",
+            not null => current > 0 ? "Done" : "Not done yet",
+            _ when goal.Measure.Kind == MeasureKind.Done => week > 0 ? "Done recently" : "Not done recently",
             _ => $"{Planner.Format(week)} {unit} in the last 7 days".Replace("  ", " "),
         };
 

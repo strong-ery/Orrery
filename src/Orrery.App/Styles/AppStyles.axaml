@@ -435,6 +435,104 @@
     <Setter Property="BoxShadow" Value="0 12 32 0 #80000000" />
   </Style>
 
+  <!-- Three levels of button: primary (brass fill), action (quiet fill), ghost (text only). -->
+  <Style Selector="Button.ghost">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="7" />
+    <Setter Property="Padding" Value="9,5" />
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Opacity" Value="0.7" />
+    <Setter Property="Cursor" Value="Hand" />
+  </Style>
+  <Style Selector="Button.ghost /template/ ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+  <Style Selector="Button.ghost:pointerover">
+    <Setter Property="Opacity" Value="1" />
+  </Style>
+  <Style Selector="Button.ghost:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AppHoverBrush}" />
+  </Style>
+  <Style Selector="Button.ghost:disabled">
+    <Setter Property="Opacity" Value="0.3" />
+  </Style>
+
+  <!-- Row tools stay out of sight until the pointer is over the row. -->
+  <Style Selector="StackPanel.tools">
+    <Setter Property="Opacity" Value="0" />
+  </Style>
+  <Style Selector="Border.line:pointerover StackPanel.tools">
+    <Setter Property="Opacity" Value="1" />
+  </Style>
+  <Style Selector="Border.line:pointerover">
+    <Setter Property="Background" Value="#0C6B7CFF" />
+  </Style>
+
+  <!-- The one place brass appears as text: what something asks of you. -->
+  <Style Selector="TextBlock.demand">
+    <Setter Property="Foreground" Value="{DynamicResource AppAccentBrush}" />
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+
+  <!-- The sidebar's one action, apart from the places you go. -->
+  <Style Selector="Button.newgoal">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AppAccentBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="9" />
+    <Setter Property="Padding" Value="12,9" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Cursor" Value="Hand" />
+  </Style>
+  <Style Selector="Button.newgoal /template/ ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="#66E8B64C" />
+    <Setter Property="CornerRadius" Value="9" />
+  </Style>
+  <Style Selector="Button.newgoal:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="#1AE8B64C" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AppAccentBrush}" />
+  </Style>
+  <Style Selector="Button.newgoal PathIcon">
+    <Setter Property="Foreground" Value="{DynamicResource AppAccentBrush}" />
+    <Setter Property="Width" Value="13" />
+    <Setter Property="Height" Value="13" />
+  </Style>
+
+  <!-- A count beside a nav item. -->
+  <Style Selector="TextBlock.badge">
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Opacity" Value="0.55" />
+    <Setter Property="FontFeatures" Value="+tnum" />
+  </Style>
+
+  <!-- Opens an "options" area that stays closed until asked for. -->
+  <Style Selector="ToggleButton.disclose">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="0,4" />
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="Opacity" Value="0.65" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="HorizontalAlignment" Value="Left" />
+  </Style>
+  <Style Selector="ToggleButton.disclose /template/ ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+  <Style Selector="ToggleButton.disclose:pointerover">
+    <Setter Property="Opacity" Value="1" />
+  </Style>
+  <Style Selector="ToggleButton.disclose:checked">
+    <Setter Property="Opacity" Value="1" />
+  </Style>
+
   <!-- Ribbon cells on the history page. -->
   <Style Selector="Border.day-cell">
     <Setter Property="Width" Value="14" />

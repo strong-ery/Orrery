@@ -114,6 +114,9 @@ public sealed class Goal
 
     public DateOnly Created { get; set; } = DateOnly.FromDateTime(DateTime.Today);
     public bool Archived { get; set; }
+
+    /// <summary>Put off until this day. Only used when the goal has no steps of its own to put off.</summary>
+    public DateOnly? SnoozedUntil { get; set; }
 }
 
 /// <summary>One piece of progress: minutes worked, units logged, a step finished, a chore done.</summary>
@@ -154,6 +157,10 @@ public sealed class Settings
 
     /// <summary>Set once the "Orrery keeps running in the tray" note has been shown.</summary>
     public bool TrayHintShown { get; set; }
+
+    /// <summary>The order you arranged today's list in, by step (or goal) id. Only good for <see cref="PlanOrderDay"/>.</summary>
+    public List<Guid> PlanOrder { get; set; } = [];
+    public DateOnly? PlanOrderDay { get; set; }
 
     /// <summary>A focus session in progress. Stored so closing the app doesn't lose the timer.</summary>
     public FocusState? Focus { get; set; }

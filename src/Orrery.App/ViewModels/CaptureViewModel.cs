@@ -126,7 +126,11 @@ public partial class CaptureViewModel : ObservableObject
         OnPropertyChanged(nameof(ShowDeadline));
         Refresh();
         IsOpen = true;
+        Opened?.Invoke();
     }
+
+    /// <summary>Raised when the form opens, so the window can put the cursor in the name field.</summary>
+    public event Action? Opened;
 
     [RelayCommand]
     private void Close() => IsOpen = false;

@@ -16,7 +16,10 @@ public sealed record PlanItem(
     double Pressure,
     double Score,
     string Reason,
-    Demand Demand);
+    Demand Demand,
+    string DemandNote = "",
+    int Unlocks = 0,
+    int DeferCount = 0);
 
 /// <summary>
 /// Picks today's list. It knows nothing about what a goal is: it reads each goal's pressure and demand, the
@@ -38,6 +41,9 @@ public static class Planner
         {
             if (goal.Archived || Progress.IsComplete(goal, log))
                 continue;
+
+            if (goal.SnoozedUntil is { } snoozed && snoozed > today && !goal.Leaves().Any())
+                continue; // put off until another day
 
             var demand = Demands.For(goal, log, today);
             if (demand.IsDemanding && demand.IsMet)
@@ -116,8 +122,9 @@ public static class Planner
     private static PlanItem Make(Goal goal, Step? step, Category? category, double pressure, int unlocks, Demand demand, DateOnly today)
     {
         var reasons = new List<string>();
+        var demandNote = demand.IsDemanding ? DescribeDemand(goal, demand) : "";
         if (demand.IsDemanding)
-            reasons.Add(DescribeDemand(goal, demand));
+            reasons.Add(demandNote);
         if (unlocks > 0)
             reasons.Add(unlocks == 1 ? "1 step is waiting on this" : $"{unlocks} steps are waiting on this");
         if (step is { DeferCount: >= 3 })
@@ -136,7 +143,10 @@ public static class Planner
             pressure,
             pressure * 10 + Math.Min(unlocks, 5) * 0.3,
             string.Join(" · ", reasons),
-            demand);
+            demand,
+            demandNote,
+            unlocks,
+            step?.DeferCount ?? 0);
     }
 
     /// <summary>"Needs 2.1 % today", "Due today" and so on, in the goal's own words.</summary>

@@ -5,16 +5,16 @@
              x:Class="Orrery.App.Views.InspectorView"
              x:DataType="vm:InspectorViewModel">
     <ScrollViewer>
-        <StackPanel Margin="20,16,20,24" Spacing="16">
+        <StackPanel Margin="22,18,22,26" Spacing="20">
 
-            <!-- Header -->
+            <!-- Header: what this is -->
             <Grid ColumnDefinitions="*,Auto">
                 <StackPanel Spacing="5">
                     <StackPanel Orientation="Horizontal" Spacing="7">
                         <Border Width="8" Height="8" CornerRadius="4" Background="{Binding Row.Accent}" VerticalAlignment="Center" />
                         <TextBlock Text="{Binding Row.CategoryName}" FontSize="11" FontWeight="SemiBold" Opacity="0.65" />
                     </StackPanel>
-                    <TextBlock Text="{Binding Row.Title}" FontSize="20" FontWeight="Bold" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding Row.Title}" FontSize="21" FontWeight="Bold" TextWrapping="Wrap" />
                     <TextBlock Classes="field-hint" Text="{Binding Row.Subtitle}" />
                 </StackPanel>
                 <Button Grid.Column="1" Classes="icon" VerticalAlignment="Top" Command="{Binding CloseCommand}" ToolTip.Tip="Close">
@@ -22,25 +22,23 @@
                 </Button>
             </Grid>
 
-            <!-- Progress -->
+            <!-- Where it stands. A ring only when there is a fraction worth drawing. -->
             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="16">
-                <Grid IsVisible="{Binding Row.HasFraction}" Width="64" Height="64" VerticalAlignment="Top">
-                    <views:ProgressRing Value="{Binding Row.Fraction}" Stroke="{Binding Row.Accent}" Thickness="6" />
-                    <TextBlock Classes="numeric" Text="{Binding Row.Fraction, StringFormat='{}{0:0}%'}" FontSize="13" FontWeight="Bold"
+                <Grid IsVisible="{Binding ShowProgress}" Width="60" Height="60" VerticalAlignment="Top">
+                    <views:ProgressRing Value="{Binding Row.Fraction}" Stroke="{Binding Row.Accent}" Thickness="5" />
+                    <TextBlock Classes="numeric" Text="{Binding Row.Fraction, StringFormat='{}{0:0}%'}" FontSize="12" FontWeight="Bold"
                                HorizontalAlignment="Center" VerticalAlignment="Center" />
                 </Grid>
                 <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding Row.ProgressText}" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap" />
-                    <TextBlock Text="{Binding Row.DemandText}" IsVisible="{Binding Row.HasDemand}"
-                               Foreground="{DynamicResource AppAccentBrush}" FontSize="12" TextWrapping="Wrap" />
-                    <TextBlock Text="{Binding Row.BlockedText}" IsVisible="{Binding Row.IsBlocked}"
-                               Opacity="0.7" FontSize="12" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding Row.ProgressText}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" />
+                    <TextBlock Classes="demand" Text="{Binding Row.DemandText}" IsVisible="{Binding Row.HasDemand}" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding Row.BlockedText}" IsVisible="{Binding Row.IsBlocked}" Opacity="0.7" FontSize="12" TextWrapping="Wrap" />
                 </StackPanel>
             </Grid>
 
-            <!-- Do something now -->
+            <!-- What you can do right now -->
             <StackPanel Spacing="8">
-                <Button Classes="action primary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                <Button Classes="action primary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Padding="14,10"
                         Command="{Binding StartFocusCommand}" IsEnabled="{Binding CanStart}">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <PathIcon Data="{StaticResource IconPlay}" Width="12" Height="12" Foreground="{DynamicResource AppOnAccentBrush}" />
@@ -56,145 +54,199 @@
                     <TextBlock Grid.Column="1" Classes="field-hint" Text="{Binding LogUnit}" VerticalAlignment="Center" />
                     <Button Grid.Column="2" Classes="action" Content="Log" Command="{Binding LogCommand}" />
                 </Grid>
-                <Button Classes="action" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                <Button Classes="ghost" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
                         Content="{Binding MarkDoneLabel}" Command="{Binding MarkDoneCommand}" IsVisible="{Binding ShowMarkDone}" />
             </StackPanel>
 
-            <!-- Steps -->
-            <StackPanel Spacing="6">
-                <Grid ColumnDefinitions="*,Auto">
-                    <TextBlock Classes="section-header" Text="STEPS" VerticalAlignment="Center" Margin="0" />
-                    <Button Grid.Column="1" Classes="seg" Content="Do in order" Command="{Binding ChainStepsCommand}"
-                            IsVisible="{Binding CanChain}" ToolTip.Tip="Make each unfinished step wait for the one before it" />
-                </Grid>
-                <TextBlock Classes="field-hint" Text="No steps yet. Add the next small thing to do." IsVisible="{Binding !HasSteps}" />
+            <!-- Steps. Nothing but a single line until there is something to show. -->
+            <StackPanel Spacing="8">
+                <Button Classes="ghost" HorizontalAlignment="Left" Command="{Binding RequestAddCommand}" Padding="0,5"
+                        IsVisible="{Binding !ShowAddRow}">
+                    <StackPanel Orientation="Horizontal" Spacing="7">
+                        <PathIcon Data="{StaticResource IconAdd}" Width="11" Height="11" />
+                        <TextBlock Text="Break this into steps" />
+                    </StackPanel>
+                </Button>
 
-                <ItemsControl ItemsSource="{Binding Steps}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="vm:InspectorStepViewModel">
-                            <StackPanel Margin="{Binding Indent}">
-                            <Border Classes="line" Opacity="{Binding Opacity}">
-                                <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto" ColumnSpacing="6">
-                                    <Button Classes="check" Classes.done="{Binding Done}" Command="{Binding ToggleCommand}"
-                                            VerticalAlignment="Top" Margin="0,1,0,0" IsVisible="{Binding IsLeaf}">
-                                        <PathIcon Data="{StaticResource IconCheck}" />
-                                    </Button>
-                                    <Border Width="16" Height="16" IsVisible="{Binding IsSection}" Margin="0,1,0,0" VerticalAlignment="Top" CornerRadius="4" BorderThickness="1.5"
-                                            BorderBrush="{DynamicResource AppAccentBrush}" Opacity="0.7" />
-                                    <StackPanel Grid.Column="1" Spacing="1">
-                                        <TextBlock Text="{Binding Title}" FontSize="13" TextWrapping="Wrap"
-                                                   FontWeight="{Binding TitleWeight}" Foreground="{DynamicResource AppIconBrush}" />
-                                        <TextBlock Classes="field-hint" Text="{Binding Detail}" />
-                                        <TextBlock FontSize="11" Opacity="0.6" Text="{Binding BlockedText}"
-                                                   IsVisible="{Binding IsBlocked}" TextWrapping="Wrap" />
-                                    </StackPanel>
-                                    <Button Grid.Column="2" Classes="icon" Command="{Binding StartCommand}" IsEnabled="{Binding CanStart}"
-                                            IsVisible="{Binding IsLeaf}" ToolTip.Tip="Start working on this step">
-                                        <PathIcon Data="{StaticResource IconPlay}" />
-                                    </Button>
-                                    <Button Grid.Column="3" Classes="icon" Command="{Binding BeginEditCommand}" ToolTip.Tip="Edit, move or reorder">
-                                        <PathIcon Data="{StaticResource IconEdit}" />
-                                    </Button>
-                                    <Button Grid.Column="4" Classes="icon" Command="{Binding RemoveCommand}" ToolTip.Tip="Remove (a section takes its steps with it)">
+                <StackPanel Spacing="4" IsVisible="{Binding ShowAddRow}">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Classes="section-header" Text="STEPS" VerticalAlignment="Center" Margin="0" />
+                        <Button Grid.Column="1" Classes="ghost" Content="Do in order" Command="{Binding ChainStepsCommand}"
+                                IsVisible="{Binding CanChain}" ToolTip.Tip="Make each unfinished step wait for the one before it" />
+                    </Grid>
+
+                    <ItemsControl ItemsSource="{Binding Steps}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:InspectorStepViewModel">
+                                <StackPanel Margin="{Binding Indent}">
+                                    <Border Classes="line" Opacity="{Binding Opacity}">
+                                        <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
+                                            <Button Classes="check" Classes.done="{Binding Done}" Command="{Binding ToggleCommand}"
+                                                    VerticalAlignment="Top" Margin="0,1,0,0" IsVisible="{Binding IsLeaf}">
+                                                <PathIcon Data="{StaticResource IconCheck}" />
+                                            </Button>
+                                            <Border Width="16" Height="16" IsVisible="{Binding IsSection}" Margin="0,1,0,0" VerticalAlignment="Top"
+                                                    CornerRadius="4" BorderThickness="1.5" BorderBrush="{DynamicResource AppAccentBrush}" Opacity="0.7" />
+                                            <StackPanel Grid.Column="1" Spacing="1">
+                                                <TextBlock Text="{Binding Title}" FontSize="13" TextWrapping="Wrap"
+                                                           FontWeight="{Binding TitleWeight}" Foreground="{DynamicResource AppIconBrush}" />
+                                                <TextBlock Classes="field-hint" Text="{Binding Detail}" />
+                                                <TextBlock FontSize="11" Opacity="0.6" Text="{Binding BlockedText}"
+                                                           IsVisible="{Binding IsBlocked}" TextWrapping="Wrap" />
+                                                <StackPanel Orientation="Horizontal" IsVisible="{Binding NeedsSplit}">
+                                                    <Button Classes="ghost" Padding="0,3" Content="Put off a few times. Break it up?" Command="{Binding SplitCommand}" />
+                                                </StackPanel>
+                                            </StackPanel>
+                                            <!-- Tools appear when the pointer is over the row -->
+                                            <StackPanel Grid.Column="2" Classes="tools" Orientation="Horizontal" VerticalAlignment="Top">
+                                                <Button Classes="icon" Command="{Binding PutOffCommand}" IsVisible="{Binding CanPutOff}" ToolTip.Tip="Not today">
+                                                    <PathIcon Data="{StaticResource IconLater}" />
+                                                </Button>
+                                                <Button Classes="icon" Command="{Binding BeginEditCommand}" ToolTip.Tip="Edit, reorder, or move to another goal">
+                                                    <PathIcon Data="{StaticResource IconEdit}" />
+                                                </Button>
+                                                <Button Classes="icon" Command="{Binding RemoveCommand}" ToolTip.Tip="Remove (a section takes its steps with it)">
+                                                    <PathIcon Data="{StaticResource IconClose}" />
+                                                </Button>
+                                            </StackPanel>
+                                            <Button Grid.Column="3" Classes="icon" Command="{Binding StartCommand}" IsEnabled="{Binding CanStart}"
+                                                    IsVisible="{Binding IsLeaf}" ToolTip.Tip="Start working on this step" VerticalAlignment="Top">
+                                                <PathIcon Data="{StaticResource IconPlay}" />
+                                            </Button>
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- The editor, open only for the step being edited -->
+                                    <Border Classes="card" Padding="12" Margin="0,2,0,8" IsVisible="{Binding IsEditing}">
+                                        <StackPanel Spacing="10">
+                                            <TextBox Classes="orrery-input" Text="{Binding EditTitle}" PlaceholderText="Name" />
+                                            <Grid ColumnDefinitions="*,*" ColumnSpacing="8" IsVisible="{Binding IsLeaf}">
+                                                <TextBox Classes="orrery-input" Text="{Binding EditMinutes}" PlaceholderText="Minutes (optional)" />
+                                                <ComboBox Grid.Column="1" Classes="orrery-combo" ItemsSource="{Binding EnergyNames}" SelectedIndex="{Binding EditEnergy}" />
+                                            </Grid>
+                                            <StackPanel Spacing="3">
+                                                <TextBlock Classes="field-hint" Text="Where it sits" />
+                                                <ComboBox Classes="orrery-combo" ItemsSource="{Binding ParentChoices}" SelectedIndex="{Binding EditParentIndex}">
+                                                    <ComboBox.ItemTemplate>
+                                                        <DataTemplate x:DataType="vm:WaitOption">
+                                                            <TextBlock Text="{Binding Label}" TextTrimming="CharacterEllipsis" />
+                                                        </DataTemplate>
+                                                    </ComboBox.ItemTemplate>
+                                                </ComboBox>
+                                            </StackPanel>
+                                            <StackPanel Spacing="3" IsVisible="{Binding HasOtherGoals}">
+                                                <TextBlock Classes="field-hint" Text="Which goal" />
+                                                <ComboBox Classes="orrery-combo" ItemsSource="{Binding GoalChoices}" SelectedIndex="{Binding EditGoalIndex}">
+                                                    <ComboBox.ItemTemplate>
+                                                        <DataTemplate x:DataType="vm:WaitOption">
+                                                            <TextBlock Text="{Binding Label}" TextTrimming="CharacterEllipsis" />
+                                                        </DataTemplate>
+                                                    </ComboBox.ItemTemplate>
+                                                </ComboBox>
+                                            </StackPanel>
+                                            <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto" ColumnSpacing="4">
+                                                <Button Classes="ghost" Command="{Binding MoveUpCommand}" IsEnabled="{Binding CanMoveUp}" ToolTip.Tip="Earlier in the list">
+                                                    <PathIcon Data="{StaticResource IconUp}" Width="12" Height="12" />
+                                                </Button>
+                                                <Button Grid.Column="1" Classes="ghost" Command="{Binding MoveDownCommand}" IsEnabled="{Binding CanMoveDown}" ToolTip.Tip="Later in the list">
+                                                    <PathIcon Data="{StaticResource IconDown}" Width="12" Height="12" />
+                                                </Button>
+                                                <Button Grid.Column="3" Classes="ghost" Content="Cancel" Command="{Binding CancelEditCommand}" />
+                                                <Button Grid.Column="4" Classes="action primary" Content="Save" Command="{Binding SaveEditCommand}" />
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- Adding: one field. The rest is behind "More". -->
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" Margin="0,8,0,0">
+                        <TextBox Classes="orrery-input" PlaceholderText="Add a step…" Text="{Binding NewStepTitle}">
+                            <TextBox.KeyBindings>
+                                <KeyBinding Gesture="Enter" Command="{Binding AddStepCommand}" />
+                            </TextBox.KeyBindings>
+                        </TextBox>
+                        <Button Grid.Column="1" Classes="action" Content="Add" Command="{Binding AddStepCommand}" />
+                    </Grid>
+                    <ToggleButton Classes="disclose" IsChecked="{Binding ShowOptions}">
+                        <Grid>
+                            <TextBlock Text="More options" IsVisible="{Binding !ShowOptions}" />
+                            <TextBlock Text="Fewer options" IsVisible="{Binding ShowOptions}" />
+                        </Grid>
+                    </ToggleButton>
+                    <StackPanel Spacing="8" IsVisible="{Binding ShowOptions}">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                            <ComboBox Classes="orrery-combo" ItemsSource="{Binding ParentOptions}" SelectedIndex="{Binding ParentIndex}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:WaitOption">
+                                        <TextBlock Text="{Binding Label}" TextTrimming="CharacterEllipsis" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                            <Button Grid.Column="1" Classes="action" Content="Add as section" Command="{Binding AddSectionCommand}"
+                                    ToolTip.Tip="A section groups steps, like a unit with its readings and exercises" />
+                        </Grid>
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                            <ComboBox Classes="orrery-combo" ItemsSource="{Binding EnergyNames}" SelectedIndex="{Binding NewStepEnergy}" />
+                            <ComboBox Grid.Column="1" Classes="orrery-combo" ItemsSource="{Binding WaitOptions}" SelectedIndex="{Binding WaitIndex}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:WaitOption">
+                                        <TextBlock Text="{Binding Label}" TextTrimming="CharacterEllipsis" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </Grid>
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Waiting on another goal. A single line until it matters. -->
+            <StackPanel Spacing="6">
+                <Button Classes="ghost" HorizontalAlignment="Left" Command="{Binding RequestWaitsCommand}" Padding="0,5"
+                        IsVisible="{Binding !ShowWaitsSection}">
+                    <StackPanel Orientation="Horizontal" Spacing="7">
+                        <PathIcon Data="{StaticResource IconLater}" Width="11" Height="11" />
+                        <TextBlock Text="Waits for another goal first" />
+                    </StackPanel>
+                </Button>
+                <StackPanel Spacing="6" IsVisible="{Binding ShowWaitsSection}">
+                    <TextBlock Classes="section-header" Text="WAITS FOR" Margin="0" />
+                    <TextBlock Classes="field-hint" Text="There are no other goals to wait for." IsVisible="{Binding !HasDependencyCandidates}" />
+                    <ItemsControl ItemsSource="{Binding Dependencies}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:DependencyChipViewModel">
+                                <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,2">
+                                    <TextBlock Text="{Binding Title}" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                    <Button Grid.Column="1" Classes="icon" Command="{Binding RemoveCommand}" ToolTip.Tip="No longer waits for this">
                                         <PathIcon Data="{StaticResource IconClose}" />
                                     </Button>
                                 </Grid>
-                            </Border>
-                            <!-- In-place editor -->
-                            <Border Classes="card" Padding="12" Margin="0,2,0,6" IsVisible="{Binding IsEditing}">
-                                <StackPanel Spacing="8">
-                                    <TextBox Classes="orrery-input" Text="{Binding EditTitle}" PlaceholderText="Name" />
-                                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8" IsVisible="{Binding IsLeaf}">
-                                        <TextBox Classes="orrery-input" Text="{Binding EditMinutes}" PlaceholderText="Minutes (optional)" />
-                                        <ComboBox Grid.Column="1" Classes="orrery-combo" ItemsSource="{Binding EnergyNames}" SelectedIndex="{Binding EditEnergy}" />
-                                    </Grid>
-                                    <ComboBox Classes="orrery-combo" ItemsSource="{Binding ParentChoices}" SelectedIndex="{Binding EditParentIndex}">
-                                        <ComboBox.ItemTemplate>
-                                            <DataTemplate x:DataType="vm:WaitOption">
-                                                <TextBlock Text="{Binding Label}" TextTrimming="CharacterEllipsis" />
-                                            </DataTemplate>
-                                        </ComboBox.ItemTemplate>
-                                    </ComboBox>
-                                    <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto" ColumnSpacing="6">
-                                        <Button Classes="action" Content="Up" Command="{Binding MoveUpCommand}" IsEnabled="{Binding CanMoveUp}" />
-                                        <Button Grid.Column="1" Classes="action" Content="Down" Command="{Binding MoveDownCommand}" IsEnabled="{Binding CanMoveDown}" />
-                                        <Button Grid.Column="3" Classes="action" Content="Cancel" Command="{Binding CancelEditCommand}" />
-                                        <Button Grid.Column="4" Classes="action primary" Content="Save" Command="{Binding SaveEditCommand}" />
-                                    </Grid>
-                                </StackPanel>
-                            </Border>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-
-                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" Margin="0,6,0,0">
-                    <TextBox Classes="orrery-input" PlaceholderText="Add a step…" Text="{Binding NewStepTitle}">
-                        <TextBox.KeyBindings>
-                            <KeyBinding Gesture="Enter" Command="{Binding AddStepCommand}" />
-                        </TextBox.KeyBindings>
-                    </TextBox>
-                    <Button Grid.Column="1" Classes="action primary" Content="Add step" Command="{Binding AddStepCommand}" />
-                </Grid>
-                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                    <ComboBox Classes="orrery-combo" ItemsSource="{Binding ParentOptions}" SelectedIndex="{Binding ParentIndex}">
-                        <ComboBox.ItemTemplate>
-                            <DataTemplate x:DataType="vm:WaitOption">
-                                <TextBlock Text="{Binding Label}" TextTrimming="CharacterEllipsis" />
                             </DataTemplate>
-                        </ComboBox.ItemTemplate>
-                    </ComboBox>
-                    <Button Grid.Column="1" Classes="action" Content="Add as section" Command="{Binding AddSectionCommand}"
-                            ToolTip.Tip="A section groups steps, like a unit with its readings and exercises" />
-                </Grid>
-                <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-                    <ComboBox Classes="orrery-combo" ItemsSource="{Binding EnergyNames}" SelectedIndex="{Binding NewStepEnergy}" />
-                    <ComboBox Grid.Column="1" Classes="orrery-combo" ItemsSource="{Binding WaitOptions}" SelectedIndex="{Binding WaitIndex}">
-                        <ComboBox.ItemTemplate>
-                            <DataTemplate x:DataType="vm:WaitOption">
-                                <TextBlock Text="{Binding Label}" TextTrimming="CharacterEllipsis" />
-                            </DataTemplate>
-                        </ComboBox.ItemTemplate>
-                    </ComboBox>
-                </Grid>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" IsVisible="{Binding ShowWaitsPicker}">
+                        <ComboBox Classes="orrery-combo" ItemsSource="{Binding DependencyCandidates}" SelectedIndex="{Binding DependencyIndex}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate x:DataType="vm:WaitOption">
+                                    <TextBlock Text="{Binding Label}" TextTrimming="CharacterEllipsis" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <Button Grid.Column="1" Classes="action" Content="Add" Command="{Binding AddDependencyCommand}" />
+                    </Grid>
+                </StackPanel>
             </StackPanel>
 
-            <!-- Goal-level dependencies -->
-            <StackPanel Spacing="6">
-                <TextBlock Classes="section-header" Text="WAITS FOR" />
-                <TextBlock Classes="field-hint" Text="Nothing. This can start any time." IsVisible="{Binding !HasDependencies}" />
-                <ItemsControl ItemsSource="{Binding Dependencies}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="vm:DependencyChipViewModel">
-                            <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,2">
-                                <TextBlock Text="{Binding Title}" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-                                <Button Grid.Column="1" Classes="icon" Command="{Binding RemoveCommand}" ToolTip.Tip="No longer waits for this">
-                                    <PathIcon Data="{StaticResource IconClose}" />
-                                </Button>
-                            </Grid>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" IsVisible="{Binding HasDependencyCandidates}">
-                    <ComboBox Classes="orrery-combo" ItemsSource="{Binding DependencyCandidates}" SelectedIndex="{Binding DependencyIndex}">
-                        <ComboBox.ItemTemplate>
-                            <DataTemplate x:DataType="vm:WaitOption">
-                                <TextBlock Text="{Binding Label}" TextTrimming="CharacterEllipsis" />
-                            </DataTemplate>
-                        </ComboBox.ItemTemplate>
-                    </ComboBox>
-                    <Button Grid.Column="1" Classes="action" Content="Add" Command="{Binding AddDependencyCommand}" />
-                </Grid>
-            </StackPanel>
-
-            <StackPanel Orientation="Horizontal" Spacing="8">
-                <Button Classes="action" Command="{Binding EditCommand}">
+            <StackPanel Orientation="Horizontal" Spacing="2" Margin="-9,4,0,0">
+                <Button Classes="ghost" Command="{Binding EditCommand}">
                     <StackPanel Orientation="Horizontal" Spacing="7">
                         <PathIcon Data="{StaticResource IconEdit}" Width="12" Height="12" />
                         <TextBlock Text="Edit goal" />
                     </StackPanel>
                 </Button>
-                <Button Classes="action" Content="Archive" Command="{Binding ArchiveCommand}" />
+                <Button Classes="ghost" Content="Archive" Command="{Binding ArchiveCommand}" />
             </StackPanel>
         </StackPanel>
     </ScrollViewer>

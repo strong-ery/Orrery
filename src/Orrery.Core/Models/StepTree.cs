@@ -87,6 +87,27 @@ public static class StepTree
         return at >= 0 && at < siblings.Count - 1 && goal.MoveUp(siblings[at + 1]);
     }
 
+    /// <summary>
+    /// Moves a step, with everything inside it, into another goal. What it waits for and what waits for it stay
+    /// attached, since steps can depend on steps in any goal. False if the target is the same goal or the new parent
+    /// isn't in the target.
+    /// </summary>
+    public static bool MoveToGoal(this Goal from, Goal to, Step step, Guid? newParent = null)
+    {
+        if (from == to || !from.Steps.Contains(step))
+            return false;
+        if (newParent is { } np && to.Steps.All(s => s.Id != np))
+            return false;
+        var block = from.BlockOf(step);
+        from.Steps.RemoveAll(block.Contains);
+        step.ParentId = newParent;
+        var at = to.Steps.Count;
+        if (newParent is { } parentId && to.Steps.FirstOrDefault(s => s.Id == parentId) is { } parent)
+            at = to.Steps.IndexOf(to.BlockOf(parent)[^1]) + 1;
+        to.Steps.InsertRange(at, block);
+        return true;
+    }
+
     /// <summary>Puts a step inside another section (or back at the top with null). Refuses to put a step inside itself.</summary>
     public static bool MoveTo(this Goal goal, Step step, Guid? newParent)
     {

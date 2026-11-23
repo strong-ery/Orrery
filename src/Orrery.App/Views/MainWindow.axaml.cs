@@ -32,7 +32,6 @@ public partial class MainWindow : Window
             if (e.Key == Key.K && e.KeyModifiers.HasFlag(KeyModifiers.Control))
             {
                 capture.Open();
-                FocusTitle();
                 e.Handled = true;
                 return;
             }
@@ -50,7 +49,17 @@ public partial class MainWindow : Window
     public void FocusTitle() =>
         Avalonia.Threading.Dispatcher.UIThread.Post(() => CaptureTitle.Focus(), Avalonia.Threading.DispatcherPriority.Loaded);
 
-    private void OnQuickAddClicked(object? sender, RoutedEventArgs e) => FocusTitle();
+    private ViewModels.CaptureViewModel? _hooked;
+
+    protected override void OnDataContextChanged(EventArgs e)
+    {
+        base.OnDataContextChanged(e);
+        if (_hooked is not null)
+            _hooked.Opened -= FocusTitle;
+        _hooked = (DataContext as ViewModels.MainViewModel)?.Capture;
+        if (_hooked is not null)
+            _hooked.Opened += FocusTitle;
+    }
 
     private void OnScrimPressed(object? sender, PointerPressedEventArgs e)
     {

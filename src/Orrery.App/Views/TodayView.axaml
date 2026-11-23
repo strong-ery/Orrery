@@ -6,45 +6,108 @@
     <ScrollViewer>
         <StackPanel Margin="32,24,32,30" Spacing="22" MaxWidth="860" HorizontalAlignment="Stretch">
 
-            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="24">
-                <StackPanel Spacing="2" VerticalAlignment="Center">
-                    <TextBlock Classes="page-title" Text="{Binding Heading}" />
-                    <TextBlock Classes="field-hint" Text="{Binding Subheading}" FontSize="12" />
-                    <ProgressBar Classes="orrery-progress" Value="{Binding DayProgress}" Maximum="100" Width="200" Margin="0,5,0,0"
-                                 IsVisible="{Binding HasDayProgress}" Foreground="{DynamicResource AppAccentBrush}" HorizontalAlignment="Left" />
-                </StackPanel>
-
-                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="22" VerticalAlignment="Center">
-                    <StackPanel Spacing="0">
-                        <TextBlock Classes="field-label" Text="Low energy" />
-                        <ToggleSwitch IsChecked="{Binding LowEnergy}" OnContent="" OffContent="" ToolTip.Tip="Only easy steps, from every goal" />
+            <!-- Date and how the day is going. The two dials stay tucked away until wanted. -->
+            <StackPanel Spacing="12" IsVisible="{Binding ShowControls}">
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="24">
+                    <StackPanel Spacing="2" VerticalAlignment="Center">
+                        <TextBlock Classes="page-title" Text="{Binding Heading}" />
+                        <TextBlock Classes="field-hint" Text="{Binding Subheading}" FontSize="12" />
+                        <ProgressBar Classes="orrery-progress" Value="{Binding DayProgress}" Maximum="100" Width="200" Margin="0,5,0,0"
+                                     IsVisible="{Binding HasDayProgress}" Foreground="{DynamicResource AppAccentBrush}" HorizontalAlignment="Left" />
                     </StackPanel>
-                    <StackPanel Spacing="0" Width="190">
-                        <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Classes="field-label" Text="Lean toward" />
-                            <TextBlock Grid.Column="1" Classes="field-hint" Text="{Binding BiasLabel}" />
-                        </Grid>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="14" VerticalAlignment="Center">
+                        <ToggleButton Classes="disclose" IsChecked="{Binding ShowTuning}" ToolTip.Tip="How the list is chosen">
+                            <TextBlock Text="{Binding BiasLabel, StringFormat='Mix: {0}'}" />
+                        </ToggleButton>
+                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <TextBlock Classes="field-label" Text="Low energy" VerticalAlignment="Center" />
+                            <ToggleSwitch IsChecked="{Binding LowEnergy}" OnContent="" OffContent="" MinWidth="0"
+                                          ToolTip.Tip="Only easy steps, from every goal" />
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14" IsVisible="{Binding ShowTuning}">
+                    <TextBlock Classes="field-hint" Text="Obligations" VerticalAlignment="Center" />
+                    <Grid Grid.Column="1" ColumnDefinitions="*,Auto" ColumnSpacing="14" MaxWidth="360" HorizontalAlignment="Left">
                         <Slider Minimum="-1" Maximum="1" TickFrequency="0.25" Value="{Binding Bias}" />
-                        <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Classes="field-hint" FontSize="10" Text="Obligations" />
-                            <TextBlock Grid.Column="1" Classes="field-hint" FontSize="10" Text="Passions" />
-                        </Grid>
-                    </StackPanel>
-                </StackPanel>
-            </Grid>
+                        <TextBlock Grid.Column="1" Classes="field-hint" Text="Passions" VerticalAlignment="Center" />
+                    </Grid>
+                </Grid>
+                <TextBlock Classes="field-hint" IsVisible="{Binding ShowTuning}"
+                           Text="This changes what makes the list. Responsibilities always come before passions in the order." />
+            </StackPanel>
 
-            <Border Classes="card" IsVisible="{Binding IsEmpty}">
-                <TextBlock Classes="field-hint" FontSize="13" Text="{Binding Subheading}" />
-            </Border>
+            <!-- First run: nothing exists yet -->
+            <StackPanel Spacing="14" Margin="0,40,0,0" IsVisible="{Binding IsFirstRun}" HorizontalAlignment="Left" MaxWidth="460">
+                <TextBlock Classes="page-title" Text="Nothing here yet" />
+                <TextBlock Classes="field-hint" FontSize="13"
+                           Text="Add the first thing you want to keep track of. A goal can be a pile of work with a deadline, something you do every few days, or a hobby you'd like to make time for. Orrery builds each day's short list from them." />
+                <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,6,0,0">
+                    <Button Classes="action primary" Command="{Binding NewGoalCommand}" Padding="18,10">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <PathIcon Data="{StaticResource IconAdd}" Width="12" Height="12" Foreground="{DynamicResource AppOnAccentBrush}" />
+                            <TextBlock Text="Set up a goal" />
+                        </StackPanel>
+                    </Button>
+                    <Button Classes="ghost" Content="or add one quickly (Ctrl K)" Command="{Binding QuickAddCommand}" />
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Done for the day -->
+            <StackPanel Spacing="8" Margin="0,18,0,0" IsVisible="{Binding IsAllDone}">
+                <Border Width="44" Height="44" CornerRadius="22" BorderThickness="1.5" BorderBrush="{DynamicResource AppAccentBrush}"
+                        HorizontalAlignment="Left">
+                    <PathIcon Data="{StaticResource IconCheck}" Width="20" Height="20" Foreground="{DynamicResource AppAccentBrush}" />
+                </Border>
+                <TextBlock Classes="page-title" Text="That's today." Margin="0,6,0,0" />
+                <TextBlock Classes="field-hint" FontSize="13" Text="{Binding DoneSummary}" />
+            </StackPanel>
+
+            <!-- A day with nothing in it -->
+            <StackPanel Spacing="8" Margin="0,18,0,0" IsVisible="{Binding IsQuiet}">
+                <TextBlock Classes="page-title" Text="Nothing is asking for you." />
+                <TextBlock Classes="field-hint" FontSize="13"
+                           Text="Nothing is due and nothing has fallen behind. Use the time however you like." />
+            </StackPanel>
+
+            <!-- Low energy and nothing light left -->
+            <StackPanel Spacing="10" Margin="0,18,0,0" IsVisible="{Binding IsLowEnergyEmpty}">
+                <TextBlock Classes="page-title" Text="Nothing light is waiting." />
+                <TextBlock Classes="field-hint" FontSize="13" Text="Rest counts. Only easy steps are being offered right now." />
+                <Button Classes="action" Content="Show everything again" Command="{Binding TurnOffLowEnergyCommand}" HorizontalAlignment="Left" />
+            </StackPanel>
+
+            <!-- What is next, for the three empty days -->
+            <StackPanel Spacing="4" IsVisible="{Binding HasUpcoming}">
+                <TextBlock Classes="section-header" Text="COMING UP" Margin="0,0,0,4" />
+                <ItemsControl ItemsSource="{Binding Upcoming}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:CalendarItemViewModel">
+                            <Border Classes="line">
+                                <Button Classes="link" Command="{Binding OpenCommand}">
+                                    <Grid ColumnDefinitions="Auto,110,*" ColumnSpacing="12">
+                                        <Border Width="3" CornerRadius="2" Background="{Binding Bucket}" />
+                                        <TextBlock Grid.Column="1" Classes="field-hint" FontSize="12" Text="{Binding When}" VerticalAlignment="Center" />
+                                        <StackPanel Grid.Column="2" Spacing="1">
+                                            <TextBlock Classes="title" Text="{Binding Title}" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Classes="field-hint" Text="{Binding Kind}" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Button>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
 
             <!-- The one thing to do next -->
-            <ContentControl Content="{Binding Hero}">
+            <ContentControl Content="{Binding Hero}" IsVisible="{Binding HasHero}">
                 <ContentControl.ContentTemplate>
                     <DataTemplate x:DataType="vm:PlanRowViewModel">
                         <Border Classes="hero" Background="{DynamicResource AppSubtleBackgroundBrush}">
                             <Grid ColumnDefinitions="6,*,Auto">
                                 <Border Background="{Binding Accent}" />
-                                <StackPanel Grid.Column="1" Margin="24,20" Spacing="5">
+                                <StackPanel Grid.Column="1" Margin="24,20" Spacing="6">
                                     <StackPanel Orientation="Horizontal" Spacing="9">
                                         <TextBlock Text="UP NEXT" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource AppAccentBrush}"
                                                    VerticalAlignment="Center" />
@@ -56,10 +119,17 @@
                                     <Button Classes="link" Command="{Binding InspectCommand}">
                                         <TextBlock Classes="title" Text="{Binding Title}" FontSize="26" FontWeight="Bold" TextWrapping="Wrap" />
                                     </Button>
-                                    <TextBlock Text="{Binding Reason}" FontSize="13" Opacity="0.8" TextWrapping="Wrap" />
+                                    <TextBlock Classes="demand" Text="{Binding DemandNote}" IsVisible="{Binding HasDemand}" />
+                                    <TextBlock Classes="field-hint" Text="{Binding UnlockNote}" IsVisible="{Binding HasUnlock}" FontSize="12" />
                                     <TextBlock Classes="field-hint" Text="{Binding Meta}" />
+                                    <StackPanel Orientation="Horizontal" Spacing="4" IsVisible="{Binding NeedsSplit}" Margin="0,4,0,0">
+                                        <TextBlock Classes="field-hint" FontSize="12" VerticalAlignment="Center"
+                                                   Text="You've put this off a few times." />
+                                        <Button Classes="ghost" Content="Break it into smaller pieces" Command="{Binding SplitCommand}" />
+                                    </StackPanel>
                                 </StackPanel>
-                                <StackPanel Grid.Column="2" Margin="0,20,24,20" Spacing="10" VerticalAlignment="Center" MinWidth="150">
+
+                                <StackPanel Grid.Column="2" Margin="0,20,24,20" Spacing="6" VerticalAlignment="Center" MinWidth="170">
                                     <Button Classes="action primary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
                                             Command="{Binding StartCommand}" IsEnabled="{Binding CanStart}" Padding="16,10">
                                         <StackPanel Orientation="Horizontal" Spacing="8">
@@ -67,13 +137,27 @@
                                             <TextBlock Text="Start" FontSize="13" />
                                         </StackPanel>
                                     </Button>
-                                    <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6">
-                                        <TextBox Classes="orrery-input" Text="{Binding AmountText}" IsVisible="{Binding ShowAmount}"
-                                                 HorizontalContentAlignment="Center" MinWidth="0" />
-                                        <TextBlock Grid.Column="1" Classes="field-hint" Text="{Binding UnitLabel}" IsVisible="{Binding ShowAmount}"
-                                                   VerticalAlignment="Center" />
-                                        <Button Grid.Column="2" Classes="action" Content="{Binding ActionLabel}" Command="{Binding CompleteCommand}" />
+                                    <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6" IsVisible="{Binding IsLogging}">
+                                        <TextBox Classes="orrery-input" Text="{Binding AmountText}" HorizontalContentAlignment="Center" MinWidth="0" />
+                                        <TextBlock Grid.Column="1" Classes="field-hint" Text="{Binding UnitLabel}" VerticalAlignment="Center" />
+                                        <Button Grid.Column="2" Classes="action" Content="Save" Command="{Binding CompleteCommand}" />
                                     </Grid>
+                                    <Grid ColumnDefinitions="*,*" ColumnSpacing="2">
+                                        <Button Classes="ghost" Content="Done" Command="{Binding CompleteCommand}" HorizontalAlignment="Stretch"
+                                                HorizontalContentAlignment="Center" IsVisible="{Binding !ShowAmount}" />
+                                        <Button Classes="ghost" Content="Log…" Command="{Binding ToggleLogCommand}" HorizontalAlignment="Stretch"
+                                                HorizontalContentAlignment="Center" IsVisible="{Binding ShowAmount}" />
+                                        <Button Grid.Column="1" Classes="ghost" Content="Not today" Command="{Binding PutOffCommand}"
+                                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                                                ToolTip.Tip="Hide it until tomorrow" />
+                                    </Grid>
+                                    <Button Classes="ghost" Command="{Binding MoveDownCommand}" IsEnabled="{Binding CanMoveDown}"
+                                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" ToolTip.Tip="{Binding DownTip}">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <PathIcon Data="{StaticResource IconDown}" Width="12" Height="12" />
+                                            <TextBlock Text="Later in the day" />
+                                        </StackPanel>
+                                    </Button>
                                 </StackPanel>
                             </Grid>
                         </Border>
@@ -87,38 +171,50 @@
                 <ItemsControl ItemsSource="{Binding Rest}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="vm:PlanRowViewModel">
-                            <Border Classes="line">
-                                <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto,Auto" ColumnSpacing="12">
-                                    <Button Classes="check" Command="{Binding CompleteCommand}" ToolTip.Tip="Mark done">
-                                        <PathIcon Data="{StaticResource IconCheck}" />
-                                    </Button>
-                                    <Border Grid.Column="1" Width="3" CornerRadius="2" Background="{Binding Accent}" />
-                                    <Button Grid.Column="2" Classes="link" Command="{Binding InspectCommand}">
-                                        <StackPanel Spacing="1">
-                                            <TextBlock Classes="title" Text="{Binding Title}" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-                                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                                <TextBlock Classes="field-hint" Text="{Binding GoalTitle}" IsVisible="{Binding HasGoalTitle}" />
-                                                <TextBlock Classes="field-hint" Text="{Binding Reason}" TextTrimming="CharacterEllipsis" />
+                            <StackPanel>
+                                <TextBlock Classes="section-header" Text="FOR YOU" Margin="0,18,0,2" IsVisible="{Binding StartsPassions}" />
+                                <Border Classes="line">
+                                    <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto,Auto" ColumnSpacing="12">
+                                        <Button Classes="check" Command="{Binding CompleteCommand}" ToolTip.Tip="{Binding CheckTip}" VerticalAlignment="Center">
+                                            <PathIcon Data="{StaticResource IconCheck}" />
+                                        </Button>
+                                        <Border Grid.Column="1" Width="3" CornerRadius="2" Background="{Binding Accent}" />
+                                        <Button Grid.Column="2" Classes="link" Command="{Binding InspectCommand}">
+                                            <StackPanel Spacing="2">
+                                                <TextBlock Classes="title" Text="{Binding Title}" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                                    <TextBlock Classes="field-hint" Text="{Binding GoalTitle}" IsVisible="{Binding HasGoalTitle}" />
+                                                    <TextBlock Classes="demand" FontSize="11" Text="{Binding DemandNote}" IsVisible="{Binding HasDemand}" />
+                                                </StackPanel>
                                             </StackPanel>
+                                        </Button>
+                                        <TextBlock Grid.Column="3" Classes="field-hint" Text="{Binding UnlockNote}" IsVisible="{Binding HasUnlock}"
+                                                   VerticalAlignment="Center" TextWrapping="NoWrap" />
+                                        <StackPanel Grid.Column="4" Classes="tools" Orientation="Horizontal" VerticalAlignment="Center">
+                                            <Button Classes="icon" Command="{Binding MoveUpCommand}" IsEnabled="{Binding CanMoveUp}" ToolTip.Tip="{Binding UpTip}">
+                                                <PathIcon Data="{StaticResource IconUp}" />
+                                            </Button>
+                                            <Button Classes="icon" Command="{Binding MoveDownCommand}" IsEnabled="{Binding CanMoveDown}" ToolTip.Tip="{Binding DownTip}">
+                                                <PathIcon Data="{StaticResource IconDown}" />
+                                            </Button>
+                                            <Button Classes="icon" Command="{Binding PutOffCommand}" ToolTip.Tip="Not today: hide it until tomorrow">
+                                                <PathIcon Data="{StaticResource IconLater}" />
+                                            </Button>
                                         </StackPanel>
-                                    </Button>
-                                    <TextBox Grid.Column="3" Classes="orrery-input" Width="56" Text="{Binding AmountText}" IsVisible="{Binding ShowAmount}"
-                                             HorizontalContentAlignment="Center" VerticalAlignment="Center" />
-                                    <TextBlock Grid.Column="4" Classes="field-hint" Text="{Binding UnitLabel}" IsVisible="{Binding ShowAmount}"
-                                               VerticalAlignment="Center" />
-                                    <Button Grid.Column="5" Classes="icon" Command="{Binding StartCommand}" IsEnabled="{Binding CanStart}"
-                                            ToolTip.Tip="Start working on this" VerticalAlignment="Center">
-                                        <PathIcon Data="{StaticResource IconPlay}" />
-                                    </Button>
-                                </Grid>
-                            </Border>
+                                        <Button Grid.Column="5" Classes="icon" Command="{Binding StartCommand}" IsEnabled="{Binding CanStart}"
+                                                ToolTip.Tip="Start working on this" VerticalAlignment="Center">
+                                            <PathIcon Data="{StaticResource IconPlay}" />
+                                        </Button>
+                                    </Grid>
+                                </Border>
+                            </StackPanel>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
             </StackPanel>
 
             <!-- Streaks: just numbers, no boxes -->
-            <StackPanel Spacing="8">
+            <StackPanel Spacing="8" IsVisible="{Binding ShowControls}">
                 <TextBlock Classes="section-header" Text="STREAKS" Margin="0" />
                 <ItemsControl ItemsSource="{Binding Streaks}">
                     <ItemsControl.ItemsPanel>

@@ -50,12 +50,17 @@ public sealed partial class InspectorStepViewModel : ObservableObject
         CanMoveUp = siblings.IndexOf(step) > 0;
         CanMoveDown = siblings.IndexOf(step) < siblings.Count - 1;
         CanStart = !IsSection && !Done && !IsBlocked && !main.Focus.IsVisible;
+        NeedsSplit = !IsSection && !Done && step.DeferCount >= Orrery.Core.Engine.PutOff.SplitAfter;
+        CanPutOff = !IsSection && !Done;
         Opacity = Done ? 0.45 : IsBlocked ? 0.65 : 1;
     }
 
     // --- Editing a step in place -----------------------------------------------------------------
 
     public ObservableCollection<WaitOption> ParentChoices { get; } = [];
+    public ObservableCollection<WaitOption> GoalChoices { get; } = [];
+    [ObservableProperty] private int _editGoalIndex;
+    [ObservableProperty] private bool _hasOtherGoals;
     public string[] EnergyNames { get; } = ["Low energy", "Medium energy", "High energy"];
 
     [ObservableProperty] private bool _isEditing;
@@ -82,6 +87,14 @@ public sealed partial class InspectorStepViewModel : ObservableObject
         var at = Math.Max(0, ParentChoices.ToList().FindIndex(c => c.Id == step.ParentId));
         EditParentIndex = -1;
         EditParentIndex = at;
+
+        GoalChoices.Clear();
+        GoalChoices.Add(new WaitOption("Stays in this goal", null));
+        foreach (var other in _main.Data.Goals.Where(g => g.Id != goal.Id && !g.Archived))
+            GoalChoices.Add(new WaitOption($"Move to “{other.Title}”", other.Id));
+        HasOtherGoals = GoalChoices.Count > 1;
+        EditGoalIndex = -1;
+        EditGoalIndex = 0;
         IsEditing = true;
     }
 
@@ -97,10 +110,33 @@ public sealed partial class InspectorStepViewModel : ObservableObject
             step.Title = EditTitle.Trim();
         step.Energy = (Energy)EditEnergy;
         step.EstimateMinutes = int.TryParse(EditMinutes, out var m) && m > 0 ? m : null;
+        // Moving to another goal wins over a new place inside this one.
+        if (EditGoalIndex > 0 && EditGoalIndex < GoalChoices.Count && GoalChoices[EditGoalIndex].Id is { } target)
+        {
+            _main.MoveStepToGoal(_goalId, _stepId, target);
+            return;
+        }
         var parent = EditParentIndex >= 0 && EditParentIndex < ParentChoices.Count ? ParentChoices[EditParentIndex].Id : null;
         goal.MoveTo(step, parent);
         _main.Changed();
     }
+
+    /// <summary>"Not today" for a step: back tomorrow.</summary>
+    [RelayCommand]
+    private void PutOff()
+    {
+        if (_main.FindGoal(_goalId) is { } goal && goal.Steps.FirstOrDefault(s => s.Id == _stepId) is { } step)
+        {
+            Orrery.Core.Engine.PutOff.ForStep(step, MainViewModel.Today);
+            _main.Changed();
+        }
+    }
+
+    [RelayCommand]
+    private void Split() => _main.SplitStep(_goalId, _stepId);
+
+    public bool NeedsSplit { get; private set; }
+    public bool CanPutOff { get; private set; }
 
     [RelayCommand]
     private void MoveUp()
@@ -195,14 +231,44 @@ public partial class InspectorViewModel : ObservableObject
     [ObservableProperty] private int _waitIndex;
     [ObservableProperty] private int _dependencyIndex;
 
+    // Things stay folded away until they are needed: adding steps, their extra options, and waiting on another goal.
+    [ObservableProperty] private bool _showAddRow;
+    [ObservableProperty] private bool _showOptions;
+    [ObservableProperty] private bool _showWaitsSection;
+    [ObservableProperty] private bool _showWaitsPicker;
+    [ObservableProperty] private bool _showProgress;
+    private bool _addRequested;
+    private bool _waitsRequested;
+
     public bool CanStart => IsOpen && !_main.Focus.IsVisible;
 
     public void Open(Guid goalId, Guid? stepId)
     {
+        if (_goalId != goalId)
+        {
+            _addRequested = false;
+            _waitsRequested = false;
+            ShowOptions = false;
+        }
         _goalId = goalId;
         _stepId = stepId;
         IsOpen = true;
         Refresh();
+    }
+
+    /// <summary>"Break this into steps": reveals the add row on a goal that has none yet.</summary>
+    [RelayCommand]
+    private void RequestAdd()
+    {
+        _addRequested = true;
+        ShowAddRow = true;
+    }
+
+    [RelayCommand]
+    private void RequestWaits()
+    {
+        _waitsRequested = true;
+        ShowWaitsSection = true;
     }
 
     [RelayCommand]
@@ -239,6 +305,7 @@ public partial class InspectorViewModel : ObservableObject
         foreach (var root in goal.Roots())
             Walk(root, 0);
         HasSteps = Steps.Count > 0;
+        ShowAddRow = HasSteps || _addRequested;
         CanChain = goal.Roots().Count(s => !goal.IsDone(s)) > 1;
 
         WaitOptions.Clear();
@@ -266,6 +333,8 @@ public partial class InspectorViewModel : ObservableObject
             if (_main.FindGoal(depId) is { } dep)
                 Dependencies.Add(new DependencyChipViewModel(dep.Title, () => RemoveDependency(depId)));
         HasDependencies = Dependencies.Count > 0;
+        ShowWaitsSection = HasDependencies || _waitsRequested;
+        ShowProgress = Row.HasFraction;
 
         DependencyCandidates.Clear();
         DependencyCandidates.Add(new WaitOption("Wait for another goal…", null));
@@ -275,6 +344,7 @@ public partial class InspectorViewModel : ObservableObject
                 DependencyCandidates.Add(new WaitOption(other.Title, other.Id));
         }
         HasDependencyCandidates = DependencyCandidates.Count > 1;
+        ShowWaitsPicker = HasDependencyCandidates && (HasDependencies || _waitsRequested);
         DependencyIndex = -1;
         DependencyIndex = 0;
     }

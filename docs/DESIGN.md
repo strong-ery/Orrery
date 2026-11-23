@@ -111,10 +111,22 @@ dot or a thin tab, never as coloured text. Danger red is gone from lists. Detail
 tooltips, not on the page you scan. The goal designer asks plain questions with tiles instead of dropdowns, and
 the right-hand panel restates the answers as sentences.
 
+## Today's order and "not today"
+
+* The planner decides what is on today's list; you decide the order. Rows have earlier/later buttons (shown on hover).
+* One rule never bends: responsibilities (obligations and routines) stay ahead of passions. A responsibility can be
+  moved later in the day, among the other responsibilities, but never past a passion, and a passion can never go above
+  a responsibility. The disabled button's tooltip says why. The mix slider changes what makes the list, not this rule.
+* Your order is kept for the day only (`Settings.PlanOrder` + `PlanOrderDay`); tomorrow starts from the planner's order.
+* "Not today" hides a step until tomorrow and counts it (`Step.DeferCount`). From the third time it offers to break
+  the step into a section with a small first piece ("Just start: ...", low energy, 10 min). A goal with no steps is
+  snoozed with `Goal.SnoozedUntil`.
+* A step can be moved to another goal from its editor, with everything inside it. What it waits for, and what waits
+  for it, stay attached, since steps can depend on steps in any goal.
+
 ## Not built yet
 
-* "Put off" on a step, then offering to split it after three defers (`Step.DeferCount` exists)
-* Reordering steps, editing a step after adding it, moving a step between sections
+* Drag-and-drop for today's order (the buttons do the same job)
 * Real graphs on History (it has streak ribbons and last-7-days effort bars) and click-through from them
 * An `.ico` for the exe (the tray and window icon are drawn at runtime from the same mark)
 * A weekly review screen
