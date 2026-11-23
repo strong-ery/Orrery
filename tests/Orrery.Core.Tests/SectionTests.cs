@@ -120,3 +120,45 @@ public class FlowGraphTests
         Assert.True(unit1.Column > schoolNode.Column);
     }
 }
+
+public class NudgeTests
+{
+    private static readonly DateTime Evening = new(2026, 3, 2, 18, 0, 0);
+
+    [Fact]
+    public void Nothing_nags_in_the_morning_or_late_at_night()
+    {
+        var data = SampleData.Create(DateOnly.FromDateTime(Evening));
+        Assert.Empty(Nudges.Due(data, Evening.Date.AddHours(8)));
+        Assert.Empty(Nudges.Due(data, Evening.Date.AddHours(22)));
+    }
+
+    [Fact]
+    public void Something_due_today_is_nudged_in_the_evening_then_left_alone()
+    {
+        var data = SampleData.Create(DateOnly.FromDateTime(Evening));
+        var first = Nudges.Due(data, Evening);
+        Assert.Contains(first, n => n.Message.Contains("Do laundry"));
+
+        foreach (var n in first)
+            data.Settings.NudgeLog[n.GoalId] = Evening;
+        Assert.DoesNotContain(Nudges.Due(data, Evening.AddMinutes(30)), n => n.Message.Contains("Do laundry"));
+    }
+
+    [Fact]
+    public void Turning_nudges_off_silences_everything()
+    {
+        var data = SampleData.Create(DateOnly.FromDateTime(Evening));
+        data.Settings.Nudges = false;
+        Assert.Empty(Nudges.Due(data, Evening));
+    }
+
+    [Fact]
+    public void The_daily_cap_holds()
+    {
+        var data = SampleData.Create(DateOnly.FromDateTime(Evening));
+        for (var i = 0; i < 4; i++)
+            data.Settings.NudgeLog[Guid.NewGuid()] = Evening.AddHours(-1);
+        Assert.Empty(Nudges.Due(data, Evening));
+    }
+}

@@ -146,6 +146,15 @@ public sealed class Settings
     /// <summary>Which Goals view was last used: 0 orbit map, 1 list, 2 dependency graph.</summary>
     public int GoalsMode { get; set; }
 
+    /// <summary>Whether Orrery may interrupt you with a nudge.</summary>
+    public bool Nudges { get; set; } = true;
+
+    /// <summary>When each goal was last nudged about, so the same thing isn't repeated every few minutes.</summary>
+    public Dictionary<Guid, DateTime> NudgeLog { get; set; } = [];
+
+    /// <summary>Set once the "Orrery keeps running in the tray" note has been shown.</summary>
+    public bool TrayHintShown { get; set; }
+
     /// <summary>A focus session in progress. Stored so closing the app doesn't lose the timer.</summary>
     public FocusState? Focus { get; set; }
 }

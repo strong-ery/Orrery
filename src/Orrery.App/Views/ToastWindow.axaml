@@ -1,0 +1,21 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Orrery.App.Views.ToastWindow"
+        Width="380" SizeToContent="Height" CanResize="False"
+        SystemDecorations="None" ShowInTaskbar="False" Topmost="True" ShowActivated="False"
+        Background="Transparent" TransparencyLevelHint="Transparent">
+    <Border Margin="10" Classes="card" Padding="16,14" BoxShadow="0 6 24 0 #80000000"
+            Background="{DynamicResource AppDialogBackgroundBrush}">
+        <StackPanel Spacing="10">
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                <Ellipse Width="9" Height="9" Fill="{DynamicResource AppAccentBrush}" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="1" x:Name="Heading" FontWeight="SemiBold" FontSize="13" />
+            </Grid>
+            <TextBlock x:Name="Body" TextWrapping="Wrap" FontSize="13" Foreground="{DynamicResource AppIconBrush}" />
+            <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                <Button Classes="action" Content="Later" Click="OnLater" />
+                <Button Classes="action primary" x:Name="OpenButton" Content="Open" Click="OnOpen" />
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</Window>
