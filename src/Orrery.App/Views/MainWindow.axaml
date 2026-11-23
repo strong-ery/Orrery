@@ -19,6 +19,7 @@
         <DataTemplate DataType="vm:CalendarViewModel"><views:CalendarView /></DataTemplate>
     </Window.DataTemplates>
 
+    <Grid>
     <DockPanel>
         <Grid x:Name="TitleBar" DockPanel.Dock="Top" Height="38" ColumnDefinitions="214,*,214"
               PointerPressed="OnTitleBarPointerPressed" DoubleTapped="OnTitleBarDoubleTapped">
@@ -28,43 +29,14 @@
             </StackPanel>
 
             <!-- Quick add: type a line, see what it will do, press Enter. Ctrl+K from anywhere. -->
-            <Border Grid.Column="1" Classes="quick-box" Width="520" Height="28" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <Grid ColumnDefinitions="Auto,*,Auto">
-                    <PathIcon Data="{StaticResource IconAdd}" Width="12" Height="12" Margin="10,0,0,0" Opacity="0.6" />
-                    <TextBox x:Name="CaptureBox" Grid.Column="1" Text="{Binding Capture.Text}"
-                             PlaceholderText="Quick add…   Unit 5 in Biology after Unit 4 ~90m">
-                        <TextBox.KeyBindings>
-                            <KeyBinding Gesture="Enter" Command="{Binding Capture.CommitCommand}" />
-                            <KeyBinding Gesture="Escape" Command="{Binding Capture.CancelCommand}" />
-                        </TextBox.KeyBindings>
-                    </TextBox>
-                    <TextBlock Grid.Column="2" Text="Ctrl K" Classes="field-hint" Margin="0,0,10,0" VerticalAlignment="Center" />
-                    <Popup IsOpen="{Binding Capture.IsOpen}" PlacementTarget="{Binding #CaptureBox}" Placement="BottomEdgeAlignedLeft"
-                           IsLightDismissEnabled="False" VerticalOffset="6" MinWidth="520">
-                        <Border Classes="popup-card" MinWidth="520">
-                            <StackPanel Spacing="6">
-                                <TextBlock Text="{Binding Capture.Summary}" FontWeight="SemiBold" FontSize="13" TextWrapping="Wrap" />
-                                <ItemsControl ItemsSource="{Binding Capture.Chips}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate x:DataType="x:String">
-                                            <Border Classes="chip" Margin="0,0,6,0">
-                                                <TextBlock Text="{Binding}" FontSize="11" Foreground="{DynamicResource AppAccentBrush}" />
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                                <TextBlock Text="{Binding Capture.Problem}" IsVisible="{Binding Capture.HasProblem}"
-                                           Foreground="{DynamicResource AppWarnBrush}" FontSize="12" TextWrapping="Wrap" />
-                                <TextBlock Classes="field-hint" Text="Enter to add · Esc to clear" />
-                                <TextBlock Classes="field-hint" Text="{Binding Capture.Help}" />
-                            </StackPanel>
-                        </Border>
-                    </Popup>
+            <Button Grid.Column="1" Classes="quick-button" Width="340" Height="28" HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Command="{Binding Capture.OpenCommand}" Click="OnQuickAddClicked">
+                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="9">
+                    <PathIcon Data="{StaticResource IconAdd}" Width="11" Height="11" Opacity="0.65" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="1" Text="Add a step or a goal" FontSize="12" Opacity="0.75" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="2" Text="Ctrl K" Classes="field-hint" VerticalAlignment="Center" />
                 </Grid>
-            </Border>
+            </Button>
 
             <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
                 <Button Classes="window-button" Click="OnMinimizeClicked" ToolTip.Tip="Minimize">
@@ -127,4 +99,116 @@
             </Border>
         </Grid>
     </DockPanel>
+
+    <!-- Quick add: a small form over a dimmed window. Enter adds, Esc or a click outside closes. -->
+    <Grid IsVisible="{Binding IsOpen}" DataContext="{Binding Capture}" x:DataType="vm:CaptureViewModel">
+        <Border Classes="scrim" PointerPressed="OnScrimPressed" />
+        <Border Classes="popup-card" x:Name="CaptureCard" Width="500" VerticalAlignment="Top" Margin="0,64,0,0" Padding="22,20">
+            <StackPanel Spacing="16">
+                <Grid ColumnDefinitions="Auto,Auto,*" ColumnSpacing="8">
+                    <Button Classes="tile" Classes.selected="{Binding IsStep}" Command="{Binding PickKindCommand}"
+                            CommandParameter="step" Padding="18,8" IsEnabled="{Binding !HasNoGoals}">
+                        <TextBlock Text="A step" FontWeight="SemiBold" FontSize="13" />
+                    </Button>
+                    <Button Grid.Column="1" Classes="tile" Classes.selected="{Binding IsGoal}" Command="{Binding PickKindCommand}"
+                            CommandParameter="goal" Padding="18,8">
+                        <TextBlock Text="A goal" FontWeight="SemiBold" FontSize="13" />
+                    </Button>
+                    <TextBlock Grid.Column="2" Text="Esc to close" Classes="field-hint" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                </Grid>
+
+                <TextBox x:Name="CaptureTitle" Classes="orrery-input" Text="{Binding Title}" FontSize="15" MinHeight="40"
+                         PlaceholderText="What is it called?">
+                    <TextBox.KeyBindings>
+                        <KeyBinding Gesture="Enter" Command="{Binding CommitCommand}" />
+                    </TextBox.KeyBindings>
+                </TextBox>
+
+                <!-- A step: where it goes, and what it waits for -->
+                <StackPanel Spacing="12" IsVisible="{Binding IsStep}">
+                    <StackPanel Spacing="4">
+                        <TextBlock Classes="field-hint" Text="Which goal" />
+                        <ComboBox Classes="orrery-combo" ItemsSource="{Binding GoalNames}" SelectedIndex="{Binding GoalIndex}" />
+                    </StackPanel>
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                        <StackPanel Spacing="4" IsVisible="{Binding HasSections}">
+                            <TextBlock Classes="field-hint" Text="Inside" />
+                            <ComboBox Classes="orrery-combo" ItemsSource="{Binding SectionNames}" SelectedIndex="{Binding SectionIndex}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Spacing="4" IsVisible="{Binding HasSections}">
+                            <TextBlock Classes="field-hint" Text="Waits for" />
+                            <ComboBox Classes="orrery-combo" ItemsSource="{Binding AfterNames}" SelectedIndex="{Binding AfterIndex}" />
+                        </StackPanel>
+                    </Grid>
+                    <StackPanel Spacing="4" IsVisible="{Binding !HasSections}">
+                        <TextBlock Classes="field-hint" Text="Waits for" />
+                        <ComboBox Classes="orrery-combo" ItemsSource="{Binding AfterNames}" SelectedIndex="{Binding AfterIndex}" />
+                    </StackPanel>
+                    <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
+                        <StackPanel Spacing="4">
+                            <TextBlock Classes="field-hint" Text="Takes about" />
+                            <ComboBox Classes="orrery-combo" ItemsSource="{Binding TimeNames}" SelectedIndex="{Binding TimeIndex}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Spacing="4">
+                            <TextBlock Classes="field-hint" Text="Effort" />
+                            <ComboBox Classes="orrery-combo" ItemsSource="{Binding EnergyNames}" SelectedIndex="{Binding EnergyIndex}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Spacing="4">
+                            <TextBlock Classes="field-hint" Text="Not before" />
+                            <ComboBox Classes="orrery-combo" ItemsSource="{Binding StartNames}" SelectedIndex="{Binding StartIndex}" />
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+
+                <!-- A goal: which bucket, and whether it comes back -->
+                <StackPanel Spacing="12" IsVisible="{Binding IsGoal}">
+                    <StackPanel Spacing="6">
+                        <TextBlock Classes="field-hint" Text="What kind" />
+                        <ItemsControl ItemsSource="{Binding Buckets}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate><UniformGrid Rows="1" /></ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:BucketPick">
+                                    <Button Classes="tile" Classes.selected="{Binding IsSelected}" HorizontalAlignment="Stretch"
+                                            Command="{Binding $parent[ItemsControl].((vm:CaptureViewModel)DataContext).PickBucketCommand}"
+                                            CommandParameter="{Binding}">
+                                        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                                            <Border Width="8" Height="8" CornerRadius="4" Background="{Binding Dot}" VerticalAlignment="Center" />
+                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13" />
+                                        </StackPanel>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                        <StackPanel Spacing="4">
+                            <TextBlock Classes="field-hint" Text="Repeats" />
+                            <ComboBox Classes="orrery-combo" ItemsSource="{Binding RepeatNames}" SelectedIndex="{Binding RepeatIndex}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Spacing="4" IsVisible="{Binding ShowHours}">
+                            <TextBlock Classes="field-hint" Text="Aim for" />
+                            <ComboBox Classes="orrery-combo" ItemsSource="{Binding HourNames}" SelectedIndex="{Binding HoursIndex}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Spacing="4" IsVisible="{Binding ShowDeadline}">
+                            <TextBlock Classes="field-hint" Text="Finish by" />
+                            <ComboBox Classes="orrery-combo" ItemsSource="{Binding DeadlineNames}" SelectedIndex="{Binding DeadlineIndex}" />
+                        </StackPanel>
+                    </Grid>
+                    <StackPanel Spacing="4" Width="228" HorizontalAlignment="Left">
+                        <TextBlock Classes="field-hint" Text="Effort" />
+                        <ComboBox Classes="orrery-combo" ItemsSource="{Binding EnergyNames}" SelectedIndex="{Binding EnergyIndex}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                    <TextBlock Text="{Binding Hint}" Classes="field-hint" VerticalAlignment="Center" />
+                    <Button Grid.Column="1" Classes="action primary" Content="{Binding CommitLabel}" Command="{Binding CommitCommand}"
+                            IsEnabled="{Binding CanCommit}" Padding="20,9" />
+                </Grid>
+            </StackPanel>
+        </Border>
+    </Grid>
+    </Grid>
 </Window>

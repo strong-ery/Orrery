@@ -26,15 +26,36 @@ public partial class MainWindow : Window
 
     protected override void OnKeyDown(KeyEventArgs e)
     {
-        // Ctrl+K from anywhere jumps to quick add.
-        if (e.Key == Key.K && e.KeyModifiers.HasFlag(KeyModifiers.Control))
+        // Ctrl+K from anywhere opens quick add; Esc puts it away.
+        if (DataContext is ViewModels.MainViewModel { Capture: var capture })
         {
-            CaptureBox.Focus();
-            CaptureBox.SelectAll();
-            e.Handled = true;
-            return;
+            if (e.Key == Key.K && e.KeyModifiers.HasFlag(KeyModifiers.Control))
+            {
+                capture.Open();
+                FocusTitle();
+                e.Handled = true;
+                return;
+            }
+            if (e.Key == Key.Escape && capture.IsOpen)
+            {
+                capture.IsOpen = false;
+                e.Handled = true;
+                return;
+            }
         }
         base.OnKeyDown(e);
+    }
+
+    /// <summary>The form opens with the cursor in the name field, ready to type.</summary>
+    public void FocusTitle() =>
+        Avalonia.Threading.Dispatcher.UIThread.Post(() => CaptureTitle.Focus(), Avalonia.Threading.DispatcherPriority.Loaded);
+
+    private void OnQuickAddClicked(object? sender, RoutedEventArgs e) => FocusTitle();
+
+    private void OnScrimPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (DataContext is ViewModels.MainViewModel main)
+            main.Capture.IsOpen = false;
     }
 
     private void OnTitleBarPointerPressed(object? sender, PointerPressedEventArgs e)

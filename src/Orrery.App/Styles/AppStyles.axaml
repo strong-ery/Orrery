@@ -408,33 +408,23 @@
     <Setter Property="BorderBrush" Value="{DynamicResource AppAccentBrush}" />
     <Setter Property="TextElement.Foreground" Value="{DynamicResource AppOnAccentBrush}" />
   </Style>
-  <Style Selector="Border.quick-box">
+  <!-- The title-bar button that opens the quick-add form. -->
+  <Style Selector="Button.quick-button">
+    <Setter Property="Padding" Value="12,0" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+  </Style>
+  <Style Selector="Button.quick-button /template/ ContentPresenter">
     <Setter Property="Background" Value="{DynamicResource AppSubtleBackgroundBrush}" />
     <Setter Property="CornerRadius" Value="8" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="BorderBrush" Value="Transparent" />
   </Style>
-  <Style Selector="Border.quick-box:focus-within">
-    <Setter Property="BorderBrush" Value="{DynamicResource AppAccentBrush}" />
+  <Style Selector="Button.quick-button:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AppHoverBrush}" />
   </Style>
-  <Style Selector="Border.quick-box TextBox">
-    <Setter Property="Background" Value="Transparent" />
-    <Setter Property="BorderThickness" Value="0" />
-    <Setter Property="MinHeight" Value="26" />
-    <Setter Property="Padding" Value="8,3" />
-    <Setter Property="FontSize" Value="12" />
-  </Style>
-  <Style Selector="Border.quick-box TextBox /template/ Border#PART_BorderElement">
-    <Setter Property="Background" Value="Transparent" />
-    <Setter Property="BorderThickness" Value="0" />
-  </Style>
-  <Style Selector="Border.quick-box TextBox:pointerover /template/ Border#PART_BorderElement">
-    <Setter Property="Background" Value="Transparent" />
-    <Setter Property="BorderThickness" Value="0" />
-  </Style>
-  <Style Selector="Border.quick-box TextBox:focus /template/ Border#PART_BorderElement">
-    <Setter Property="Background" Value="Transparent" />
-    <Setter Property="BorderThickness" Value="0" />
+  <!-- The dimmed layer behind the form. -->
+  <Style Selector="Border.scrim">
+    <Setter Property="Background" Value="#99000000" />
   </Style>
   <Style Selector="Border.popup-card">
     <Setter Property="Background" Value="{DynamicResource AppDialogBackgroundBrush}" />

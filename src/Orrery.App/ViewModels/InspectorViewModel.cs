@@ -79,8 +79,9 @@ public sealed partial class InspectorStepViewModel : ObservableObject
         ParentChoices.Add(new WaitOption("Top level", null));
         foreach (var other in goal.Steps.Where(o => !inside.Contains(o.Id) && !o.Done))
             ParentChoices.Add(new WaitOption($"Inside “{other.Title}”", other.Id));
-        EditParentIndex = Math.Max(0, ParentChoices.ToList().FindIndex(c => c.Id == step.ParentId));
-        OnPropertyChanged(nameof(EditParentIndex));
+        var at = Math.Max(0, ParentChoices.ToList().FindIndex(c => c.Id == step.ParentId));
+        EditParentIndex = -1;
+        EditParentIndex = at;
         IsEditing = true;
     }
 
@@ -249,10 +250,10 @@ public partial class InspectorViewModel : ObservableObject
         foreach (var s in goal.Steps.Where(s => !s.Done))
             ParentOptions.Add(new WaitOption($"Inside “{s.Title}”", s.Id));
         // Replacing a ComboBox's items clears its selection, so put the first option back.
+        WaitIndex = -1;
         WaitIndex = 0;
-        OnPropertyChanged(nameof(WaitIndex));
+        ParentIndex = -1;
         ParentIndex = 0;
-        OnPropertyChanged(nameof(ParentIndex));
 
         var kind = goal.Measure.Kind;
         ShowLog = kind is MeasureKind.Amount or MeasureKind.Time;
@@ -274,8 +275,8 @@ public partial class InspectorViewModel : ObservableObject
                 DependencyCandidates.Add(new WaitOption(other.Title, other.Id));
         }
         HasDependencyCandidates = DependencyCandidates.Count > 1;
+        DependencyIndex = -1;
         DependencyIndex = 0;
-        OnPropertyChanged(nameof(DependencyIndex));
     }
 
     private Goal? CurrentGoal => _goalId is { } id ? _main.FindGoal(id) : null;
