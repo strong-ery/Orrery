@@ -143,8 +143,8 @@ public sealed class Settings
     public bool LowEnergy { get; set; }
     public int MaxToday { get; set; } = 5;
 
-    /// <summary>Whether Goals opens as the orbit map or as a plain list.</summary>
-    public bool GoalsAsList { get; set; }
+    /// <summary>Which Goals view was last used: 0 orbit map, 1 list, 2 dependency graph.</summary>
+    public int GoalsMode { get; set; }
 
     /// <summary>A focus session in progress. Stored so closing the app doesn't lose the timer.</summary>
     public FocusState? Focus { get; set; }

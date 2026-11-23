@@ -86,3 +86,37 @@ public class SectionTests
         Assert.DoesNotContain(empty, bio.Leaves());
     }
 }
+
+public class FlowGraphTests
+{
+    private static readonly DateOnly Monday = new(2026, 3, 2);
+
+    [Fact]
+    public void Units_form_a_left_to_right_chain_and_unconnected_goals_are_left_out()
+    {
+        var data = SampleData.Create(Monday);
+        var flow = FlowGraph.Build(data, Monday, g => Progress.IsComplete(g, data.Contributions));
+
+        var bio = flow.Nodes.Where(n => n.GoalTitle == "Biology 101").OrderBy(n => n.Column).ToList();
+        Assert.Equal(4, bio.Count);
+        Assert.Equal([0, 1, 2, 3], bio.Select(n => n.Column));
+        Assert.Equal(NodeState.Open, bio[0].State);
+        Assert.All(bio.Skip(1), n => Assert.Equal(NodeState.Blocked, n.State));
+        Assert.DoesNotContain(flow.Nodes, n => n.GoalTitle == "Do laundry");
+    }
+
+    [Fact]
+    public void A_goal_that_waits_for_another_hangs_off_its_last_step()
+    {
+        var data = SampleData.Create(Monday);
+        var bio = data.Goals.First(g => g.Title == "Biology 101");
+        var school = data.Goals.First(g => g.Title.StartsWith("Catch up"));
+        bio.DependsOnGoals.Add(school.Id);
+        var flow = FlowGraph.Build(data, Monday, g => Progress.IsComplete(g, data.Contributions));
+
+        var schoolNode = flow.Nodes.Single(n => n.GoalTitle == school.Title);
+        var unit1 = flow.Nodes.Single(n => n.Title == "Unit 1");
+        Assert.Contains(flow.Edges, e => e.From == schoolNode.Id && e.To == unit1.Id);
+        Assert.True(unit1.Column > schoolNode.Column);
+    }
+}

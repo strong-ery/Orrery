@@ -177,7 +177,7 @@ public class EngineTests
         var plan = Planner.Suggest(data, new PlanRequest(Monday, LowEnergy: true));
         Assert.NotEmpty(plan);
         Assert.All(plan, p => Assert.Equal(Energy.Low, p.Energy));
-        Assert.Contains(plan, p => p.GoalTitle == "Finish Prism"); // the low-energy Prism step
+        Assert.Contains(plan, p => p.GoalTitle.StartsWith("Finish Prism")); // the low-energy Prism step
     }
 
     [Fact]

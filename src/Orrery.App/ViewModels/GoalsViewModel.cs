@@ -136,7 +136,7 @@ public partial class GoalsViewModel : ObservableObject
     public GoalsViewModel(MainViewModel main)
     {
         _main = main;
-        _asList = main.Data.Settings.GoalsAsList;
+        _mode = main.Data.Settings.GoalsMode;
     }
 
     public ObservableCollection<GoalGroup> Groups { get; } = [];
@@ -145,9 +145,19 @@ public partial class GoalsViewModel : ObservableObject
     [ObservableProperty]
     private IReadOnlyList<OrbitBody> _bodies = [];
 
+    /// <summary>0 = orbit map, 1 = list, 2 = dependency graph.</summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(AsOrbit))]
-    private bool _asList;
+    [NotifyPropertyChangedFor(nameof(AsOrbit), nameof(AsList), nameof(AsGraph))]
+    private int _mode;
+
+    [ObservableProperty]
+    private Orrery.Core.Engine.FlowLayout? _flow;
+
+    [ObservableProperty]
+    private IReadOnlyDictionary<Guid, Color> _goalColors = new Dictionary<Guid, Color>();
+
+    [ObservableProperty]
+    private bool _graphIsEmpty;
 
     [ObservableProperty]
     private bool _isEmpty;
@@ -161,19 +171,31 @@ public partial class GoalsViewModel : ObservableObject
     [ObservableProperty]
     private string _summary = "";
 
-    public bool AsOrbit => !AsList;
+    public bool AsOrbit => Mode == 0;
+    public bool AsList => Mode == 1;
+    public bool AsGraph => Mode == 2;
 
-    partial void OnAsListChanged(bool value)
+    partial void OnModeChanged(int value)
     {
-        _main.Data.Settings.GoalsAsList = value;
+        _main.Data.Settings.GoalsMode = value;
         Core.Storage.JsonStore.Save(_main.Data);
     }
 
     [RelayCommand]
-    private void ShowOrbit() => AsList = false;
+    private void ShowOrbit() => Mode = 0;
 
     [RelayCommand]
-    private void ShowList() => AsList = true;
+    private void ShowList() => Mode = 1;
+
+    [RelayCommand]
+    private void ShowGraph() => Mode = 2;
+
+    [RelayCommand]
+    private void OpenNode(FlowNode node)
+    {
+        SelectedId = node.GoalId;
+        _main.Inspect(node.GoalId, node.StepId);
+    }
 
     [RelayCommand]
     private void Open(Guid id)
@@ -207,6 +229,10 @@ public partial class GoalsViewModel : ObservableObject
             .ToList();
 
         TodayCount = Planner.Suggest(data, new PlanRequest(today, data.Settings.MaxToday, data.Settings.Bias, data.Settings.LowEnergy)).Count;
+
+        Flow = FlowGraph.Build(data, today, g => Progress.IsComplete(g, data.Contributions));
+        GraphIsEmpty = Flow.Nodes.Count == 0;
+        GoalColors = data.Goals.ToDictionary(g => g.Id, g => Palette.ColorFor(data.CategoryOf(g)));
 
         IsEmpty = rows.Count == 0;
         var now = rows.Count(r => r.Horizon == Horizon.Now);

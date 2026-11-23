@@ -14,6 +14,8 @@
                 <StackPanel Orientation="Horizontal" Spacing="2">
                     <Button Classes="seg" Classes.active="{Binding AsOrbit}" Content="Orbit" Command="{Binding ShowOrbitCommand}" />
                     <Button Classes="seg" Classes.active="{Binding AsList}" Content="List" Command="{Binding ShowListCommand}" />
+                    <Button Classes="seg" Classes.active="{Binding AsGraph}" Content="Waiting" Command="{Binding ShowGraphCommand}"
+                            ToolTip.Tip="What waits for what" />
                 </StackPanel>
             </Border>
         </Grid>
@@ -26,6 +28,17 @@
         <!-- Orbit: rings are how soon it'll want you, sectors are the buckets -->
         <views:OrbitCanvas IsVisible="{Binding AsOrbit}" Bodies="{Binding Bodies}" SelectedId="{Binding SelectedId}"
                            BodyCommand="{Binding OpenCommand}" CoreCount="{Binding TodayCount}" />
+
+        <!-- Waiting: dependencies, left to right -->
+        <Grid IsVisible="{Binding AsGraph}">
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                <views:GraphCanvas LayoutData="{Binding Flow}" Colors="{Binding GoalColors}" NodeCommand="{Binding OpenNodeCommand}"
+                                   HorizontalAlignment="Left" VerticalAlignment="Top" />
+            </ScrollViewer>
+            <TextBlock Classes="field-hint" FontSize="13" TextWrapping="Wrap" MaxWidth="420" HorizontalAlignment="Center"
+                       VerticalAlignment="Center" TextAlignment="Center" IsVisible="{Binding GraphIsEmpty}"
+                       Text="Nothing waits on anything yet. Open a goal and use “Do in order” on its steps, or “Wait for another goal”, and the chain shows up here." />
+        </Grid>
 
         <!-- List: the same goals, grouped by the same rings -->
         <ScrollViewer IsVisible="{Binding AsList}">
