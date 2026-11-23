@@ -16,13 +16,12 @@
                                      IsVisible="{Binding HasDayProgress}" Foreground="{DynamicResource AppAccentBrush}" HorizontalAlignment="Left" />
                     </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="14" VerticalAlignment="Center">
-                        <ToggleButton Classes="disclose" IsChecked="{Binding ShowTuning}" ToolTip.Tip="How the list is chosen">
+                        <ToggleButton Classes="disclose" IsChecked="{Binding ShowTuning}">
                             <TextBlock Text="{Binding BiasLabel, StringFormat='Mix: {0}'}" />
                         </ToggleButton>
                         <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                             <TextBlock Classes="field-label" Text="Low energy" VerticalAlignment="Center" />
-                            <ToggleSwitch IsChecked="{Binding LowEnergy}" OnContent="" OffContent="" MinWidth="0"
-                                          ToolTip.Tip="Only easy steps, from every goal" />
+                            <ToggleSwitch IsChecked="{Binding LowEnergy}" OnContent="" OffContent="" MinWidth="0" />
                         </StackPanel>
                     </StackPanel>
                 </Grid>
@@ -114,7 +113,7 @@
                                         <Border Width="7" Height="7" CornerRadius="4" Background="{Binding Accent}" VerticalAlignment="Center" />
                                         <TextBlock Text="{Binding CategoryName}" FontSize="10" FontWeight="SemiBold" Opacity="0.6"
                                                    VerticalAlignment="Center" />
-                                        <Border Classes="grip" ToolTip.Tip="Drag to change the order" Margin="6,0,0,0"
+                                        <Border Classes="grip" Margin="6,0,0,0"
                                                 PointerPressed="OnGripPressed" PointerMoved="OnGripMoved" PointerReleased="OnGripReleased">
                                             <PathIcon Data="{StaticResource IconGrip}" />
                                         </Border>
@@ -152,8 +151,7 @@
                                         <Button Classes="ghost" Content="Log…" Command="{Binding ToggleLogCommand}" HorizontalAlignment="Stretch"
                                                 HorizontalContentAlignment="Center" IsVisible="{Binding ShowAmount}" />
                                         <Button Grid.Column="1" Classes="ghost" Content="Not today" Command="{Binding PutOffCommand}"
-                                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
-                                                ToolTip.Tip="Hide it until tomorrow" />
+                                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
                                     </Grid>
                                     <Button Classes="ghost" Command="{Binding MoveDownCommand}" IsEnabled="{Binding CanMoveDown}"
                                             HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" ToolTip.Tip="{Binding DownTip}">
@@ -179,7 +177,7 @@
                                 <TextBlock Classes="section-header" Text="FOR YOU" Margin="0,18,0,2" IsVisible="{Binding StartsPassions}" />
                                 <Border Classes="line">
                                     <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto,Auto,Auto" ColumnSpacing="12">
-                                        <Border Classes="grip" ToolTip.Tip="Drag to change the order"
+                                        <Border Classes="grip"
                                                 PointerPressed="OnGripPressed" PointerMoved="OnGripMoved" PointerReleased="OnGripReleased">
                                             <PathIcon Data="{StaticResource IconGrip}" />
                                         </Border>
@@ -203,8 +201,7 @@
                                                 <PathIcon Data="{StaticResource IconLater}" />
                                             </Button>
                                         </StackPanel>
-                                        <Button Grid.Column="6" Classes="icon" Command="{Binding StartCommand}" IsEnabled="{Binding CanStart}"
-                                                ToolTip.Tip="Start working on this" VerticalAlignment="Center">
+                                        <Button Grid.Column="6" Classes="icon" Command="{Binding StartCommand}" IsEnabled="{Binding CanStart}" VerticalAlignment="Center">
                                             <PathIcon Data="{StaticResource IconPlay}" />
                                         </Button>
                                     </Grid>

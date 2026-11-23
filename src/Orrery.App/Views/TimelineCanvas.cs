@@ -10,10 +10,10 @@ using Orrery.Core.Models;
 namespace Orrery.App.Views;
 
 /// <summary>
-/// Goals in time. One lane per bucket, time running left to right, today as a brass line. Each goal is a bar from when
-/// it started to when it is due: the filled part is how far along it is, the notch at the end is the deadline, and the
-/// next step is written beside its name. Days you planned on the calendar show as brass dots on the bar. Goals with no
-/// deadline are a quiet line from today, with a tick wherever a repeating goal comes due.
+/// Goals in time. Names and what to do next sit in a column on the left; time runs left to right beside them, with
+/// today as a brass line. A goal with a deadline is a bar from when it started to when it is due: the filled part is how
+/// far along it is, the notch is the deadline. A goal with no deadline is a quiet dotted line from today, with a tick
+/// wherever a repeating goal comes due. Brass dots are days you planned on the calendar.
 /// </summary>
 public sealed class TimelineCanvas : Control
 {
@@ -40,8 +40,8 @@ public sealed class TimelineCanvas : Control
     public Guid? SelectedId { get => GetValue(SelectedIdProperty); set => SetValue(SelectedIdProperty, value); }
     public ICommand? BarCommand { get => GetValue(BarCommandProperty); set => SetValue(BarCommandProperty, value); }
 
-    private const double AxisH = 38, HeadH = 30, RowH = 54, LaneGap = 14, Pad = 4;
-    private const int Back = 6;
+    private const double AxisH = 40, HeadH = 34, RowH = 52, LaneGap = 12, Pad = 4, EndRoom = 62;
+    private const int Back = 5;
     private static readonly Color Brass = Color.Parse("#E8B64C");
     private static readonly Color Ink = Color.Parse("#7C8CFF");
 
@@ -53,18 +53,18 @@ public sealed class TimelineCanvas : Control
         var height = AxisH;
         foreach (var lane in Lanes ?? [])
             height += HeadH + lane.Bars.Count * RowH + LaneGap;
-        return new Size(Math.Max(width, 560), height + 8);
+        return new Size(Math.Max(width, 620), height + 8);
     }
 
-    private double Left => Pad;
-    private double Right => Math.Max(Bounds.Width, 560) - Pad;
+    private double FullWidth => Math.Max(Bounds.Width, 620);
+    private double LabelW => Math.Clamp(FullWidth * 0.2, 170, 250);
+    private double Left => Pad + LabelW + 14;
+    private double Right => FullWidth - Pad - EndRoom;
     private double PerDay => (Right - Left) / (SpanDays + Back);
 
+    private static DateOnly Today => DateOnly.FromDateTime(DateTime.Now);
     private double XOf(DateOnly day) => Left + (day.DayNumber - Today.DayNumber + Back) * PerDay;
 
-    private static DateOnly Today => DateOnly.FromDateTime(DateTime.Now);
-
-    /// <summary>The y of each row, so drawing and pointing agree.</summary>
     private IEnumerable<(TimelineBar Bar, double Y)> Rows()
     {
         var y = AxisH;
@@ -96,7 +96,6 @@ public sealed class TimelineCanvas : Control
         if (bar?.GoalId == _hover)
             return;
         _hover = bar?.GoalId;
-        ToolTip.SetTip(this, bar is null ? null : Describe(bar));
         InvalidateVisual();
     }
 
@@ -114,20 +113,6 @@ public sealed class TimelineCanvas : Control
             BarCommand.Execute(bar.GoalId);
     }
 
-    private static string Describe(TimelineBar b)
-    {
-        var parts = new List<string> { b.Title };
-        if (b.Fraction is { } f)
-            parts.Add($"{Math.Round(f * 100)}% done");
-        if (b.Deadline is { } d)
-            parts.Add($"due {d:ddd MMM d}");
-        if (b.Next.Length > 0)
-            parts.Add(b.NextIsWaiting ? $"waiting: {b.Next}" : $"next: {b.Next}");
-        if (b.Planned.Count > 0)
-            parts.Add($"planned {string.Join(", ", b.Planned.Take(4).Select(p => p.ToString("MMM d", CultureInfo.CurrentCulture)))}");
-        return string.Join("  ·  ", parts);
-    }
-
     public override void Render(DrawingContext context)
     {
         context.FillRectangle(Brushes.Transparent, new Rect(Bounds.Size));
@@ -136,20 +121,18 @@ public sealed class TimelineCanvas : Control
 
         DrawAxis(context, today, height);
 
-        var rows = Rows().ToList();
         var y = AxisH;
         foreach (var lane in Lanes ?? [])
         {
             var heading = Text(string.Join(' ', lane.Name.ToUpperInvariant().Select(c => c.ToString())), 10, "#7F88BC", 300, bold: true);
-            context.DrawText(heading, new Point(Left + 2, y + 6));
-            context.DrawLine(PenOf(Tint(Ink, 0x30), 1), new Point(Left, y + HeadH - 5), new Point(Right, y + HeadH - 5));
+            context.DrawText(heading, new Point(Pad + 2, y + 10));
+            context.DrawLine(PenOf(Tint(Ink, 0x30), 1), new Point(Pad, y + HeadH - 6), new Point(FullWidth - Pad, y + HeadH - 6));
             y += HeadH + lane.Bars.Count * RowH + LaneGap;
         }
 
-        foreach (var (bar, rowY) in rows)
-            DrawBar(context, bar, rowY, today);
+        foreach (var (bar, rowY) in Rows())
+            DrawRow(context, bar, rowY, today);
 
-        // Today, on top of everything.
         var tx = XOf(today);
         context.DrawLine(PenOf(Tint(Brass, 0xC0), 1.5), new Point(tx, AxisH - 8), new Point(tx, height - 4));
     }
@@ -158,7 +141,6 @@ public sealed class TimelineCanvas : Control
     {
         var from = today.AddDays(-Back);
         var to = today.AddDays(SpanDays);
-        var grid = PenOf(Tint(Ink, 0x16), 1);
         var weekly = SpanDays <= 90;
 
         for (var d = from; d <= to; d = d.AddDays(1))
@@ -171,40 +153,52 @@ public sealed class TimelineCanvas : Control
             var x = XOf(d);
             if (x < Left || x > Right)
                 continue;
-            context.DrawLine(firstOfMonth ? PenOf(Tint(Ink, 0x30), 1) : grid, new Point(x, AxisH - 8), new Point(x, height - 4));
+            context.DrawLine(PenOf(Tint(Ink, firstOfMonth ? 0x30 : 0x16), 1), new Point(x, AxisH - 8), new Point(x, height - 4));
             var label = firstOfMonth
                 ? d.ToString("MMM", CultureInfo.CurrentCulture).ToUpperInvariant()
                 : d.Day.ToString(CultureInfo.InvariantCulture);
             var ft = Text(label, firstOfMonth ? 10.5 : 10, firstOfMonth ? "#B8C0E8" : "#6E77A8", 60, bold: firstOfMonth);
-            if (x + 4 + ft.Width <= Right)
-                context.DrawText(ft, new Point(x + 4, 6));
+            context.DrawText(ft, new Point(x + 4, 6));
         }
 
         var todayLabel = Text("TODAY", 10, "#E8B64C", 60, bold: true);
-        var tx = XOf(today);
-        context.DrawText(todayLabel, new Point(Math.Min(tx - todayLabel.Width / 2, Right - todayLabel.Width), 20));
+        context.DrawText(todayLabel, new Point(Math.Max(Left - 4, XOf(today) - todayLabel.Width / 2), 21));
     }
 
-    private void DrawBar(DrawingContext context, TimelineBar bar, double y, DateOnly today)
+    private void DrawRow(DrawingContext context, TimelineBar bar, double y, DateOnly today)
     {
         var accent = Accents is not null && Accents.TryGetValue(bar.GoalId, out var c) ? c : Color.Parse("#8890B0");
         var selected = bar.GoalId == SelectedId;
         var hovered = bar.GoalId == _hover;
 
         if (hovered || selected)
-            context.DrawRectangle(new SolidColorBrush(Tint(Ink, hovered ? 0x1C : 0x12)), null, new Rect(Left - 2, y + 2, Right - Left + 4, RowH - 6), 8, 8);
+            context.DrawRectangle(new SolidColorBrush(Tint(Ink, hovered ? 0x1C : 0x12)), null,
+                new Rect(Pad - 2, y + 2, FullWidth - Pad * 2 + 4, RowH - 4), 8, 8);
         if (selected)
-            context.DrawRectangle(new SolidColorBrush(Brass), null, new Rect(Left - 2, y + 8, 2.5, RowH - 18), 1, 1);
+            context.DrawRectangle(new SolidColorBrush(Brass), null, new Rect(Pad - 2, y + 9, 2.5, RowH - 18), 1, 1);
 
-        var barY = y + 31;
+        // Left column: what it is, then how it stands and what to do next.
+        context.DrawText(Text(bar.Title, 13.5, "#F2F4FF", LabelW - 8, bold: true), new Point(Pad + 8, y + 8));
+        var facts = new List<string>();
+        if (bar.Fraction is { } f && bar.Deadline is not null)
+            facts.Add($"{Math.Round(f * 100)}%");
+        if (bar.Next.Length > 0)
+            facts.Add(bar.NextIsWaiting ? $"waiting · {bar.Next}" : bar.Next);
+        else if (bar.Note.Length > 0)
+            facts.Add(bar.Note);
+        if (facts.Count > 0)
+            context.DrawText(Text(string.Join("  ·  ", facts), 11.5, bar.NextIsWaiting ? "#C9A55A" : "#8B93C4", LabelW - 8),
+                new Point(Pad + 8, y + 28));
+
+        // Right: the span of time.
+        var barY = y + 21;
         var mid = barY + 5;
         var windowStart = XOf(today.AddDays(-Back));
-        var trueFrom = XOf(bar.Created);
-        var fromX = Math.Max(trueFrom, windowStart);
 
-        double? deadlineX = null;
         if (bar.Deadline is { } due)
         {
+            var trueFrom = XOf(bar.Created);
+            var fromX = Math.Max(trueFrom, windowStart);
             var dueX = XOf(due);
             var clipped = dueX > Right;
             var endX = Math.Min(dueX, Right);
@@ -212,15 +206,14 @@ public sealed class TimelineCanvas : Control
                 fromX = Math.Max(windowStart, endX - 6);
             if (trueFrom > fromX)
                 trueFrom = fromX;
+
             context.DrawRectangle(new SolidColorBrush(Tint(accent, 0x38)), null, new Rect(fromX, barY, endX - fromX, 10), 5, 5);
-            if (bar.Fraction is { } f && f > 0.005)
+            if (bar.Fraction is { } fr && fr > 0.005)
             {
                 // Progress is a share of the whole span, even when the start is off the left edge.
-                var whole = (dueX - trueFrom) * Math.Min(1, f);
-                var fillEnd = Math.Min(endX, Math.Max(fromX + 8, trueFrom + whole));
+                var fillEnd = Math.Min(endX, Math.Max(fromX + 8, trueFrom + (dueX - trueFrom) * Math.Min(1, fr)));
                 context.DrawRectangle(new SolidColorBrush(accent), null, new Rect(fromX, barY, fillEnd - fromX, 10), 5, 5);
             }
-            deadlineX = endX;
 
             var late = due < today;
             var markColor = bar.Pressing || late ? Brass : Color.Parse("#F2F4FF");
@@ -229,18 +222,13 @@ public sealed class TimelineCanvas : Control
             else
                 context.DrawRectangle(new SolidColorBrush(markColor), null, new Rect(endX - 1.5, barY - 4, 3, 18), 1.5, 1.5);
 
-            var dueLabel = Text(late ? $"was due {due:MMM d}" : due.ToString("MMM d", CultureInfo.CurrentCulture), 10.5,
-                late || bar.Pressing ? "#E8B64C" : "#8B93C4", 120);
-            var labelX = endX - dueLabel.Width - 8;
-            if (labelX > fromX + 4 && endX - fromX > dueLabel.Width + 40)
-                context.DrawText(dueLabel, new Point(endX + 7 <= Right - dueLabel.Width ? endX + 7 : labelX, barY - 3));
-            else if (endX + 7 + dueLabel.Width <= Right)
-                context.DrawText(dueLabel, new Point(endX + 7, barY - 3));
+            var dueLabel = Text(late ? $"late · {due:MMM d}" : due.ToString("MMM d", CultureInfo.CurrentCulture), 10.5,
+                late || bar.Pressing ? "#E8B64C" : "#8B93C4", EndRoom + 20);
+            context.DrawText(dueLabel, new Point(endX + 9, mid - dueLabel.Height / 2));
         }
         else
         {
-            // Nothing to finish by: a quiet line forward from today, with ticks where a repeating goal comes due.
-            var startX = Math.Max(XOf(today), Left);
+            var startX = XOf(today);
             context.DrawLine(PenOf(Tint(accent, 0x50), 2, new DashStyle([2, 4], 0)), new Point(startX, mid), new Point(Right, mid));
             context.DrawEllipse(new SolidColorBrush(accent), null, new Point(startX, mid), 4, 4);
             foreach (var day in bar.Due)
@@ -251,26 +239,12 @@ public sealed class TimelineCanvas : Control
             }
         }
 
-        // Planned days.
         foreach (var day in bar.Planned)
         {
             var x = XOf(day);
             if (x < Left || x > Right)
                 continue;
             context.DrawEllipse(new SolidColorBrush(Brass), new Pen(new SolidColorBrush(Color.Parse("#14172B")), 1.5), new Point(x, mid), 4.5, 4.5);
-        }
-
-        // Name, and what to do next, anchored so it stays readable when the bar starts off-screen.
-        var anchor = Left + 2;
-        var title = Text(bar.Title, 13.5, "#F2F4FF", Math.Max(120, Right - anchor - 16), bold: true);
-        context.DrawText(title, new Point(anchor, y + 7));
-
-        var tail = bar.Next.Length > 0 ? (bar.NextIsWaiting ? $"waiting · {bar.Next}" : $"next · {bar.Next}") : bar.Note;
-        var room = Right - anchor - title.Width - 24;
-        if (tail.Length > 0 && room > 60)
-        {
-            var next = Text(tail, 11.5, bar.NextIsWaiting ? "#C9A55A" : "#8B93C4", room);
-            context.DrawText(next, new Point(anchor + title.Width + 12, y + 9));
         }
     }
 

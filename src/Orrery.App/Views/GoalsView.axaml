@@ -27,8 +27,7 @@
                 <StackPanel Orientation="Horizontal" Spacing="2">
                     <Button Classes="seg" Classes.active="{Binding AsTimeline}" Content="Timeline" Command="{Binding ShowTimelineCommand}" />
                     <Button Classes="seg" Classes.active="{Binding AsList}" Content="List" Command="{Binding ShowListCommand}" />
-                    <Button Classes="seg" Classes.active="{Binding AsGraph}" Content="Waiting" Command="{Binding ShowGraphCommand}"
-                            ToolTip.Tip="What waits for what" />
+                    <Button Classes="seg" Classes.active="{Binding AsGraph}" Content="Waiting" Command="{Binding ShowGraphCommand}" />
                 </StackPanel>
             </Border>
         </Grid>
@@ -90,7 +89,7 @@
                                                     </Button>
                                                     <StackPanel Grid.Column="1" Classes="tools" Orientation="Horizontal" Spacing="0" Margin="8,0,0,0"
                                                                 VerticalAlignment="Center">
-                                                        <Button Classes="icon" Command="{Binding EditCommand}" ToolTip.Tip="Edit">
+                                                        <Button Classes="icon" Command="{Binding EditCommand}">
                                                             <PathIcon Data="{StaticResource IconEdit}" />
                                                         </Button>
                                                         <Button Classes="icon" Command="{Binding ArchiveCommand}" IsVisible="{Binding CanArchive}"
@@ -101,7 +100,7 @@
                                                                 ToolTip.Tip="Bring it back">
                                                             <PathIcon Data="{StaticResource IconRestore}" />
                                                         </Button>
-                                                        <Button Classes="icon danger" Command="{Binding DeleteCommand}" ToolTip.Tip="Delete">
+                                                        <Button Classes="icon danger" Command="{Binding DeleteCommand}">
                                                             <PathIcon Data="{StaticResource IconTrash}" />
                                                         </Button>
                                                     </StackPanel>

@@ -38,7 +38,7 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="design:Starter">
-                                <Button Classes="pill" Margin="0,0,8,8" Content="{Binding Name}" ToolTip.Tip="{Binding Blurb}"
+                                <Button Classes="pill" Margin="0,0,8,8" Content="{Binding Name}"
                                         Command="{Binding $parent[UserControl].((vm:DesignerViewModel)DataContext).ApplyStarterCommand}"
                                         CommandParameter="{Binding}" />
                             </DataTemplate>

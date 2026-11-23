@@ -155,6 +155,15 @@ public sealed class Settings
     /// <summary>How many minutes of planned work make a full day on the calendar.</summary>
     public int DayCapacityMinutes { get; set; } = 240;
 
+    /// <summary>Play a sound when a reminder appears.</summary>
+    public bool NotifySound { get; set; } = true;
+
+    /// <summary>File name of a custom sound in the app's sounds folder; empty means the built-in chime.</summary>
+    public string NotifySoundFile { get; set; } = "";
+
+    /// <summary>The original name of the custom sound, for display.</summary>
+    public string NotifySoundName { get; set; } = "";
+
     /// <summary>Which Goals view was last used: 0 orbit map, 1 list, 2 dependency graph.</summary>
     public int GoalsMode { get; set; }
 

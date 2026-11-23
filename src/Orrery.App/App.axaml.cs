@@ -36,6 +36,16 @@ public partial class App : Application
                 _main.Inspect(goal, step);
             });
             _nudges.Start();
+            _main.PickSoundFile = async () =>
+            {
+                var files = await window.StorageProvider.OpenFilePickerAsync(new Avalonia.Platform.Storage.FilePickerOpenOptions
+                {
+                    Title = "Choose a reminder sound",
+                    AllowMultiple = false,
+                    FileTypeFilter = [new Avalonia.Platform.Storage.FilePickerFileType("Sound (.wav, .mp3)") { Patterns = ["*.wav", "*.mp3"] }],
+                });
+                return files.Count > 0 ? files[0].Path.LocalPath : null;
+            };
             _main.SendTestReminder = () => _nudges.Show("Reminder", "This is what a reminder looks like.", null);
             SetUpTray();
         }

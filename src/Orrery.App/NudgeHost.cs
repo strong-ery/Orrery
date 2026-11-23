@@ -42,5 +42,7 @@ public sealed class NudgeHost
         toast.Closed += (_, _) => _showing = null;
         _showing = toast;
         toast.Show();
+        if (_main.Data.Settings.NotifySound)
+            Chime.Play(_main.Data.Settings);
     }
 }

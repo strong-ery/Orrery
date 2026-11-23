@@ -11,10 +11,10 @@
             <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,0,14">
                 <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
                     <TextBlock Classes="page-title" Text="{Binding MonthTitle}" Margin="0,0,14,0" />
-                    <Button Classes="icon" Command="{Binding PreviousCommand}" ToolTip.Tip="Previous month">
+                    <Button Classes="icon" Command="{Binding PreviousCommand}">
                         <TextBlock Text="‹" FontSize="20" Margin="0,-3,0,0" />
                     </Button>
-                    <Button Classes="icon" Command="{Binding NextCommand}" ToolTip.Tip="Next month">
+                    <Button Classes="icon" Command="{Binding NextCommand}">
                         <TextBlock Text="›" FontSize="20" Margin="0,-3,0,0" />
                     </Button>
                 </StackPanel>
@@ -23,8 +23,7 @@
                     <Button Classes="ghost" Content="Discard" Command="{Binding DiscardCommand}" IsVisible="{Binding IsPlanning}" />
                     <Button Classes="action primary" Content="Apply" Command="{Binding ApplyCommand}"
                             IsVisible="{Binding IsPlanning}" IsEnabled="{Binding HasChanges}" />
-                    <Button Classes="action" Content="Plan" Command="{Binding StartPlanningCommand}" IsVisible="{Binding NotPlanning}"
-                            ToolTip.Tip="Drag steps onto days, see what Today would look like, then apply" />
+                    <Button Classes="action" Content="Plan" Command="{Binding StartPlanningCommand}" IsVisible="{Binding NotPlanning}" />
                     <Button Classes="action" Content="Today" Command="{Binding GoToTodayCommand}" IsEnabled="{Binding !ShowingToday}" />
                 </StackPanel>
             </Grid>
@@ -56,7 +55,7 @@
                                                Classes.todaynum="{Binding IsToday}" />
                                     <Border Grid.Column="1" Width="5" Height="5" CornerRadius="3" VerticalAlignment="Center"
                                             Background="{DynamicResource AppAccentBrush}" Opacity="0.8"
-                                            IsVisible="{Binding HasWorked}" ToolTip.Tip="{Binding WorkedTip}" />
+                                            IsVisible="{Binding HasWorked}" />
                                 </Grid>
                                 <ItemsControl Grid.Row="1" ItemsSource="{Binding Chips}" Margin="0,3,0,0">
                                     <ItemsControl.ItemTemplate>

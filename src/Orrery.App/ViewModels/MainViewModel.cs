@@ -60,6 +60,9 @@ public partial class MainViewModel : ObservableObject
     /// <summary>Set by the app so Settings can show a sample reminder.</summary>
     public Action? SendTestReminder { get; set; }
 
+    /// <summary>Set by the window: asks the user for a sound file and returns its path, or null if they cancel.</summary>
+    public Func<Task<string?>>? PickSoundFile { get; set; }
+
     public void OpenDataFolder()
     {
         var folder = System.IO.Path.GetDirectoryName(JsonStore.DefaultPath);

@@ -67,6 +67,25 @@
 
                             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
                                 <StackPanel Spacing="2">
+                                    <TextBlock Text="Play a sound" FontWeight="SemiBold" />
+                                    <TextBlock Classes="field-hint" TextWrapping="Wrap" Text="{Binding SoundLabel}" />
+                                </StackPanel>
+                                <ToggleSwitch Grid.Column="1" IsChecked="{Binding SoundOn}" OnContent="" OffContent="" VerticalAlignment="Center" />
+                            </Grid>
+                            <StackPanel Spacing="6" IsEnabled="{Binding SoundOn}">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Button Classes="action" Content="Choose a file…" Command="{Binding ChooseSoundCommand}" />
+                                    <Button Classes="action" Content="Play" Command="{Binding PlaySoundCommand}" />
+                                    <Button Classes="ghost" Content="Use the chime" Command="{Binding UseDefaultSoundCommand}" IsVisible="{Binding IsCustomSound}" />
+                                </StackPanel>
+                                <TextBlock Classes="field-hint" Text="A .wav or .mp3. Orrery keeps its own copy." />
+                                <TextBlock Foreground="{DynamicResource AppWarnBrush}" FontSize="12" Text="{Binding SoundError}" IsVisible="{Binding SoundError.Length}" />
+                            </StackPanel>
+
+                            <Border Height="1" Background="{DynamicResource AppCardBorderBrush}" />
+
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                                <StackPanel Spacing="2">
                                     <TextBlock Text="No more than" FontWeight="SemiBold" />
                                     <TextBlock Classes="field-hint" Text="Across everything, in one day." />
                                 </StackPanel>

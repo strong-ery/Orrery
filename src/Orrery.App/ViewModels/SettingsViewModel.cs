@@ -54,6 +54,12 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private int _gentleIndex;
     [ObservableProperty] private int _listSizeIndex;
     [ObservableProperty] private int _dayLengthIndex;
+    [ObservableProperty] private bool _soundOn;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(SoundLabel), nameof(IsCustomSound))] private string _soundName = "";
+    [ObservableProperty] private string _soundError = "";
+
+    public bool IsCustomSound => SoundName.Length > 0;
+    public string SoundLabel => SoundName.Length > 0 ? SoundName : "Built-in chime";
 
     private static IEnumerable<double> Hours(double from, double to)
     {
@@ -98,6 +104,9 @@ public partial class SettingsViewModel : ObservableObject
         GentleIndex = Nearest(Hours(12, 21), s.NudgeGentleFromHour);
         ListSizeIndex = Nearest(ListSizes.Select(n => (double)n), s.MaxToday);
         DayLengthIndex = Nearest(DayHours.Select(h => h * 60.0), s.DayCapacityMinutes);
+        SoundOn = s.NotifySound;
+        SoundName = s.NotifySoundName;
+        SoundError = "";
         _loading = false;
     }
 
@@ -134,6 +143,36 @@ public partial class SettingsViewModel : ObservableObject
         if (!_loading)
             _main.RefreshAll();
     }
+
+    partial void OnSoundOnChanged(bool value) => Save(s => s.NotifySound = value);
+
+    [RelayCommand]
+    private async Task ChooseSound()
+    {
+        if (_main.PickSoundFile is null || await _main.PickSoundFile() is not { } path)
+            return;
+        var error = Chime.Import(_main.Data.Settings, path);
+        SoundError = error ?? "";
+        if (error is null)
+        {
+            SoundName = _main.Data.Settings.NotifySoundName;
+            JsonStore.Save(_main.Data);
+            Chime.Play(_main.Data.Settings);
+        }
+    }
+
+    [RelayCommand]
+    private void UseDefaultSound()
+    {
+        Chime.UseDefault(_main.Data.Settings);
+        SoundName = "";
+        SoundError = "";
+        JsonStore.Save(_main.Data);
+        Chime.Play(_main.Data.Settings);
+    }
+
+    [RelayCommand]
+    private void PlaySound() => Chime.Play(_main.Data.Settings);
 
     [RelayCommand]
     private void TestReminder() => _main.SendTestReminder?.Invoke();

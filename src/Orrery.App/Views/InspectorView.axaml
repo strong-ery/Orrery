@@ -17,7 +17,7 @@
                     <TextBlock Text="{Binding Row.Title}" FontSize="21" FontWeight="Bold" TextWrapping="Wrap" />
                     <TextBlock Classes="field-hint" Text="{Binding Row.Subtitle}" />
                 </StackPanel>
-                <Button Grid.Column="1" Classes="icon" VerticalAlignment="Top" Command="{Binding CloseCommand}" ToolTip.Tip="Close">
+                <Button Grid.Column="1" Classes="icon" VerticalAlignment="Top" Command="{Binding CloseCommand}">
                     <PathIcon Data="{StaticResource IconClose}" />
                 </Button>
             </Grid>
@@ -72,7 +72,7 @@
                     <Grid ColumnDefinitions="*,Auto">
                         <TextBlock Classes="section-header" Text="STEPS" VerticalAlignment="Center" Margin="0" />
                         <Button Grid.Column="1" Classes="ghost" Content="Do in order" Command="{Binding ChainStepsCommand}"
-                                IsVisible="{Binding CanChain}" ToolTip.Tip="Make each unfinished step wait for the one before it" />
+                                IsVisible="{Binding CanChain}" />
                     </Grid>
 
                     <ItemsControl ItemsSource="{Binding Steps}">
@@ -102,7 +102,7 @@
                                                 <Button Classes="icon" Command="{Binding PutOffCommand}" IsVisible="{Binding CanPutOff}" ToolTip.Tip="Not today">
                                                     <PathIcon Data="{StaticResource IconLater}" />
                                                 </Button>
-                                                <Button Classes="icon" Command="{Binding BeginEditCommand}" ToolTip.Tip="Edit, reorder, or move to another goal">
+                                                <Button Classes="icon" Command="{Binding BeginEditCommand}">
                                                     <PathIcon Data="{StaticResource IconEdit}" />
                                                 </Button>
                                                 <Button Classes="icon" Command="{Binding RemoveCommand}" ToolTip.Tip="Remove (a section takes its steps with it)">
@@ -110,7 +110,7 @@
                                                 </Button>
                                             </StackPanel>
                                             <Button Grid.Column="3" Classes="icon" Command="{Binding StartCommand}" IsEnabled="{Binding CanStart}"
-                                                    IsVisible="{Binding IsLeaf}" ToolTip.Tip="Start working on this step" VerticalAlignment="Top">
+                                                    IsVisible="{Binding IsLeaf}" VerticalAlignment="Top">
                                                 <PathIcon Data="{StaticResource IconPlay}" />
                                             </Button>
                                         </Grid>
@@ -145,10 +145,10 @@
                                                 </ComboBox>
                                             </StackPanel>
                                             <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto" ColumnSpacing="4">
-                                                <Button Classes="ghost" Command="{Binding MoveUpCommand}" IsEnabled="{Binding CanMoveUp}" ToolTip.Tip="Earlier in the list">
+                                                <Button Classes="ghost" Command="{Binding MoveUpCommand}" IsEnabled="{Binding CanMoveUp}">
                                                     <PathIcon Data="{StaticResource IconUp}" Width="12" Height="12" />
                                                 </Button>
-                                                <Button Grid.Column="1" Classes="ghost" Command="{Binding MoveDownCommand}" IsEnabled="{Binding CanMoveDown}" ToolTip.Tip="Later in the list">
+                                                <Button Grid.Column="1" Classes="ghost" Command="{Binding MoveDownCommand}" IsEnabled="{Binding CanMoveDown}">
                                                     <PathIcon Data="{StaticResource IconDown}" Width="12" Height="12" />
                                                 </Button>
                                                 <Button Grid.Column="3" Classes="ghost" Content="Cancel" Command="{Binding CancelEditCommand}" />
@@ -185,8 +185,7 @@
                                     </DataTemplate>
                                 </ComboBox.ItemTemplate>
                             </ComboBox>
-                            <Button Grid.Column="1" Classes="action" Content="Add as section" Command="{Binding AddSectionCommand}"
-                                    ToolTip.Tip="A section groups steps, like a unit with its readings and exercises" />
+                            <Button Grid.Column="1" Classes="action" Content="Add as section" Command="{Binding AddSectionCommand}" />
                         </Grid>
                         <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
                             <ComboBox Classes="orrery-combo" ItemsSource="{Binding EnergyNames}" SelectedIndex="{Binding NewStepEnergy}" />
@@ -246,8 +245,8 @@
                         <TextBlock Text="Edit goal" />
                     </StackPanel>
                 </Button>
-                <Button Classes="ghost" Content="Put away" Command="{Binding ArchiveCommand}" ToolTip.Tip="Hide it without losing it" />
-                <Button Classes="ghost danger" Content="Delete" Command="{Binding DeleteCommand}" ToolTip.Tip="Remove it and its history" />
+                <Button Classes="ghost" Content="Put away" Command="{Binding ArchiveCommand}" />
+                <Button Classes="ghost danger" Content="Delete" Command="{Binding DeleteCommand}" />
             </StackPanel>
         </StackPanel>
     </ScrollViewer>
