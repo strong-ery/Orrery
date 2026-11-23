@@ -67,25 +67,43 @@ Everything you can do to a goal happens in one place, and every list opens that 
   `#passion`/`#routine`, `daily`, `weekly`, `every 3 days`, `3h/week`. Lives in `QuickCapture` and is tested.
 * **Today** leads with one thing, large, then the rest as quiet lines. Not a wall of equal cards.
 
+## Goal > section > step
+
+A goal holds sections, and sections hold steps. A section is just a step that other steps name as their
+parent (`Step.ParentId`, or `IsGroup` for an empty one), so storage stays one flat list (`StepTree`).
+Only the innermost steps are ever worked on or counted. A section is finished when everything in it is, its
+estimate is the sum of its steps, and what it waits for, its steps wait for too. So "Unit 2 waits for Unit 1" is
+one link, not twelve. Biology 101 in the sample data is four units, each with read / notes / practice.
+
 ## The orbit map
 
-Goals page, with a one-click switch to a plain list (same goals, same grouping). Rings are *how soon it will
-want you*: Now, This week, This month, Later (`Horizons.Of`). The three sectors are the buckets, so a lopsided
-life shows as a lopsided map. A body's size is its pressure and the arc around it is progress. Positions depend
-only on bucket, ring and name, so nothing moves between visits. Labels avoid each other and hide when they
-can't fit, and hovering any body shows what it needs. The point is to see long-term and short-term in one view
-and click straight into the thing, not to look at it.
+Goals page. Rings are *how soon it will want you*: Now, This week, This month, Later (`Horizons.Of`). The three
+tinted sectors are the buckets, so a lopsided life shows as a lopsided map. A planet's size is its pressure and
+the arc around it is progress. Moons are its sections: solid when finished, ringed when open, faint when waiting.
+Dashed arcs with arrowheads are goal-level dependencies and light up when you point at either end. The core
+shows how many things are on today's list. Positions depend only on bucket, ring and name, so nothing jumps
+between visits; the only motion is a slow drift of the moons and a breathing glow on whatever is pressing.
+
+## Waiting (dependency graph)
+
+The third Goals view. Left to right: what has to finish sits left of what waits on it. Boxes are sections,
+loose steps, or whole goals; only things that take part in a dependency are drawn (`FlowGraph`). Pointing at a
+box lights its whole chain, up and down. Click opens it in the inspector.
+
+## Nudges
+
+`Nudges.Due` is deliberately stingy: nothing before 10:00 or after 21:30, only what is genuinely due or about
+to slip (anything softer waits until 17:00), a cool-down per goal, at most four a day, and never during a focus
+session. They appear as a small card in the screen corner. Closing the window puts Orrery in the tray so
+nudges still arrive; "Quit" in the tray menu exits, and the same menu turns nudges off.
 
 ## Not built yet
 
-* Nudges: tray icon plus toast notifications when a day's demand is behind pace (the data is there:
-  `Demand.Remaining` and `Enforced`)
 * "Put off" on a step, then offering to split it after three defers (`Step.DeferCount` exists)
-* A dependency graph view, and editing step-to-step dependencies other than via "after" and "Do in order"
+* Reordering steps, editing a step after adding it, moving a step between sections
 * Real graphs on History (it has streak ribbons and last-7-days effort bars) and click-through from them
-* Logo as an `.ico` for the exe and tray (the mark exists as `OrreryMark.axaml`)
+* An `.ico` for the exe (the tray and window icon are drawn at runtime from the same mark)
 * A weekly review screen
-* Reordering steps, editing a step after adding it
 
 ## Visual theme
 
