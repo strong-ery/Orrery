@@ -45,6 +45,10 @@ public static class Planner
             if (goal.SnoozedUntil is { } snoozed && snoozed > today && !goal.Leaves().Any())
                 continue; // put off until another day
 
+            var stepless = !goal.Leaves().Any();
+            if (stepless && goal.PlannedFor is { } later && later > today && Pressure(goal, log, today, Demands.For(goal, log, today)) < MustDo)
+                continue; // you planned it for another day
+
             var demand = Demands.For(goal, log, today);
             if (demand.IsDemanding && demand.IsMet)
                 continue; // today's share of it is done
@@ -56,20 +60,30 @@ public static class Planner
             var category = data.CategoryOf(goal);
 
             // A goal with unfinished steps offers its next available step; otherwise it offers itself.
+            bool Open(Step s) => !s.Done && graph.BlockedReason(s, today) is null && (!request.LowEnergy || s.Energy == Energy.Low);
             if (goal.Leaves().Any(s => !s.Done))
             {
+                // Steps you planned for today (or earlier, and never got to) come first, all of them.
+                var planned = goal.Leaves().Where(s => Open(s) && s.PlannedFor is { } d && d <= today).ToList();
+                if (planned.Count > 0)
+                {
+                    foreach (var step in planned)
+                        candidates.Add(AsPlanned(Make(goal, step, category, pressure, graph.UnlockCount(step.Id), demand, today), step.PlannedFor!.Value, today));
+                    continue;
+                }
+                // Otherwise the next step, skipping any you planned for a later day unless the goal is truly pressing.
                 var next = goal.Leaves().FirstOrDefault(s =>
-                    !s.Done && graph.BlockedReason(s, today) is null && (!request.LowEnergy || s.Energy == Energy.Low));
+                    Open(s) && (s.PlannedFor is null || pressure >= MustDo));
                 if (next is null)
                     continue;
-                var unlocks = graph.UnlockCount(next.Id);
-                candidates.Add(Make(goal, next, category, pressure, unlocks, demand, today));
+                candidates.Add(Make(goal, next, category, pressure, graph.UnlockCount(next.Id), demand, today));
             }
             else
             {
                 if (graph.BlockedReason(goal, today) is not null)
                     continue;
-                candidates.Add(Make(goal, null, category, pressure, 0, demand, today));
+                var item = Make(goal, null, category, pressure, 0, demand, today);
+                candidates.Add(goal.PlannedFor is { } day && day <= today ? AsPlanned(item, day, today) : item);
             }
         }
 
@@ -110,6 +124,18 @@ public static class Planner
         }
 
         return picked.OrderByDescending(c => c.Score).ToList();
+    }
+
+    /// <summary>A plan you made yourself outranks the planner's own guess: it goes on the list and says why.</summary>
+    private static PlanItem AsPlanned(PlanItem item, DateOnly day, DateOnly today)
+    {
+        var note = day == today ? "planned for today" : $"planned for {day:MMM d}";
+        return item with
+        {
+            Pressure = Math.Max(item.Pressure, MustDo),
+            Score = Math.Max(item.Score, MustDo * 10 + 1),
+            Reason = $"{note} · {item.Reason}",
+        };
     }
 
     private static double RoleWeight(CategoryRole? role, double bias) => role switch

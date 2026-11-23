@@ -13,6 +13,7 @@ public partial class SettingsViewModel : ObservableObject
     private static readonly double[] Repeats = [1, 2, 4, 8, 24];
     private static readonly int[] PerDay = [1, 2, 3, 4, 6, 8, 12];
     private static readonly int[] ListSizes = [3, 4, 5, 6, 8, 10];
+    private static readonly int[] DayHours = [1, 2, 3, 4, 5, 6, 8];
 
     private readonly MainViewModel _main;
     private bool _loading;
@@ -23,6 +24,7 @@ public partial class SettingsViewModel : ObservableObject
         RepeatNames = Repeats.Select(h => h switch { 1 => "Every hour", 24 => "Once a day", _ => $"Every {h:0} hours" }).ToList();
         PerDayNames = PerDay.Select(n => n == 1 ? "1 reminder" : $"{n} reminders").ToList();
         ListSizeNames = ListSizes.Select(n => $"{n} things").ToList();
+        DayLengthNames = DayHours.Select(h => h == 1 ? "1 hour" : $"{h} hours").ToList();
         FromNames = Hours(6, 12).Select(Clock).ToList();
         UntilNames = Hours(17, 24).Select(Clock).ToList();
         GentleNames = Hours(12, 21).Select(Clock).ToList();
@@ -32,6 +34,7 @@ public partial class SettingsViewModel : ObservableObject
     public IReadOnlyList<string> RepeatNames { get; }
     public IReadOnlyList<string> PerDayNames { get; }
     public IReadOnlyList<string> ListSizeNames { get; }
+    public IReadOnlyList<string> DayLengthNames { get; }
     public IReadOnlyList<string> FromNames { get; }
     public IReadOnlyList<string> UntilNames { get; }
     public IReadOnlyList<string> GentleNames { get; }
@@ -50,6 +53,7 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private int _untilIndex;
     [ObservableProperty] private int _gentleIndex;
     [ObservableProperty] private int _listSizeIndex;
+    [ObservableProperty] private int _dayLengthIndex;
 
     private static IEnumerable<double> Hours(double from, double to)
     {
@@ -93,6 +97,7 @@ public partial class SettingsViewModel : ObservableObject
         UntilIndex = Nearest(Hours(17, 24), s.NudgeUntilHour);
         GentleIndex = Nearest(Hours(12, 21), s.NudgeGentleFromHour);
         ListSizeIndex = Nearest(ListSizes.Select(n => (double)n), s.MaxToday);
+        DayLengthIndex = Nearest(DayHours.Select(h => h * 60.0), s.DayCapacityMinutes);
         _loading = false;
     }
 
@@ -115,6 +120,13 @@ public partial class SettingsViewModel : ObservableObject
     partial void OnFromIndexChanged(int value) => Save(s => s.NudgeFromHour = Hours(6, 12).ElementAt(Math.Clamp(value, 0, FromNames.Count - 1)));
     partial void OnUntilIndexChanged(int value) => Save(s => s.NudgeUntilHour = Hours(17, 24).ElementAt(Math.Clamp(value, 0, UntilNames.Count - 1)));
     partial void OnGentleIndexChanged(int value) => Save(s => s.NudgeGentleFromHour = Hours(12, 21).ElementAt(Math.Clamp(value, 0, GentleNames.Count - 1)));
+
+    partial void OnDayLengthIndexChanged(int value)
+    {
+        Save(s => s.DayCapacityMinutes = DayHours[Math.Clamp(value, 0, DayHours.Length - 1)] * 60);
+        if (!_loading)
+            _main.RefreshAll();
+    }
 
     partial void OnListSizeIndexChanged(int value)
     {

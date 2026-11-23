@@ -109,6 +109,15 @@
                         <ComboBox Grid.Column="1" Classes="orrery-combo" Width="150" ItemsSource="{Binding ListSizeNames}" SelectedIndex="{Binding ListSizeIndex}" />
                     </Grid>
                 </Border>
+                <Border Classes="card" Padding="20,16">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="A full day of work" FontWeight="SemiBold" />
+                            <TextBlock Classes="field-hint" TextWrapping="Wrap" Text="How much you usually get through. The calendar's day bars fill up against this when you plan." />
+                        </StackPanel>
+                        <ComboBox Grid.Column="1" Classes="orrery-combo" Width="150" ItemsSource="{Binding DayLengthNames}" SelectedIndex="{Binding DayLengthIndex}" />
+                    </Grid>
+                </Border>
             </StackPanel>
 
             <!-- Data -->

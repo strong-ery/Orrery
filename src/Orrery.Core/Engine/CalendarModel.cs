@@ -12,6 +12,8 @@ public enum CalendarKind
     Available,
     /// <summary>Something was worked on (a day in the past).</summary>
     Worked,
+    /// <summary>You planned to do this on this day.</summary>
+    Planned,
 }
 
 public sealed record CalendarEvent(DateOnly Day, CalendarKind Kind, Guid GoalId, Guid? StepId, string Title, string Detail);
@@ -39,6 +41,19 @@ public static class CalendarModel
                 foreach (var due in DueDays(goal, log, Max(from, today), to))
                     events.Add(new CalendarEvent(due, CalendarKind.Due, goal.Id, null, goal.Title,
                         goal.Rhythm.EveryDays <= 1 ? "Every day" : $"Every {goal.Rhythm.EveryDays} days"));
+
+            if (!complete)
+            {
+                if (goal.Leaves().Any())
+                {
+                    foreach (var step in goal.Leaves().Where(s => !s.Done && s.PlannedFor is { } d && d >= from && d <= to))
+                        events.Add(new CalendarEvent(step.PlannedFor!.Value, CalendarKind.Planned, goal.Id, step.Id, step.Title,
+                            $"{goal.Title} · {Planner.Format(Scheduling.MinutesOf(goal, step))} min"));
+                }
+                else if (goal.PlannedFor is { } day && day >= from && day <= to)
+                    events.Add(new CalendarEvent(day, CalendarKind.Planned, goal.Id, null, goal.Title,
+                        $"{Planner.Format(Scheduling.MinutesOf(goal, null))} min"));
+            }
 
             foreach (var step in goal.Leaves())
                 if (!step.Done && step.BlockedUntil is { } open && open >= from && open <= to)

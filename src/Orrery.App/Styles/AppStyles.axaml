@@ -375,6 +375,22 @@
   <Style Selector="ProgressBar.orrery-progress /template/ Border#PART_Indicator">
     <Setter Property="CornerRadius" Value="3" />
   </Style>
+  <!-- Calendar planning: a thin load bar per day, brass until the day is over-full. -->
+  <Style Selector="ProgressBar.load">
+    <Setter Property="Height" Value="3" />
+    <Setter Property="MinHeight" Value="3" />
+    <Setter Property="CornerRadius" Value="2" />
+  </Style>
+  <Style Selector="ProgressBar.load.over /template/ Border#PART_Indicator">
+    <Setter Property="Background" Value="{DynamicResource AppWarnBrush}" />
+  </Style>
+  <Style Selector="Button.day.drop /template/ ContentPresenter">
+    <Setter Property="BorderBrush" Value="{DynamicResource AppAccentBrush}" />
+    <Setter Property="Background" Value="{DynamicResource AppSubtleBackgroundBrush}" />
+  </Style>
+  <Style Selector="TextBlock.planned">
+    <Setter Property="FontStyle" Value="Italic" />
+  </Style>
   <Style Selector="Slider">
     <Setter Property="MinHeight" Value="24" />
   </Style>

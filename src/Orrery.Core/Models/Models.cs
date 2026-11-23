@@ -77,6 +77,9 @@ public sealed class Step
     public bool Done { get; set; }
     public int DeferCount { get; set; }
 
+    /// <summary>The day you decided to do this, from the calendar. Today's list leans on it; it never blocks anything.</summary>
+    public DateOnly? PlannedFor { get; set; }
+
     /// <summary>The section this step sits in, or null at the top level. A step with children is a section.</summary>
     public Guid? ParentId { get; set; }
 
@@ -117,6 +120,9 @@ public sealed class Goal
 
     /// <summary>Put off until this day. Only used when the goal has no steps of its own to put off.</summary>
     public DateOnly? SnoozedUntil { get; set; }
+
+    /// <summary>For a goal with no steps of its own: the day you decided to work on it.</summary>
+    public DateOnly? PlannedFor { get; set; }
 }
 
 /// <summary>One piece of progress: minutes worked, units logged, a step finished, a chore done.</summary>
@@ -145,6 +151,9 @@ public sealed class Settings
     public double Bias { get; set; }
     public bool LowEnergy { get; set; }
     public int MaxToday { get; set; } = 5;
+
+    /// <summary>How many minutes of planned work make a full day on the calendar.</summary>
+    public int DayCapacityMinutes { get; set; } = 240;
 
     /// <summary>Which Goals view was last used: 0 orbit map, 1 list, 2 dependency graph.</summary>
     public int GoalsMode { get; set; }
