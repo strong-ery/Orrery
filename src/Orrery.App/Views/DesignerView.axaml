@@ -4,103 +4,133 @@
              xmlns:design="using:Orrery.Core.Design"
              x:Class="Orrery.App.Views.DesignerView"
              x:DataType="vm:DesignerViewModel">
-    <Grid ColumnDefinitions="*,340" Margin="30,22,30,24" ColumnSpacing="22">
+    <UserControl.Resources>
+        <!-- One option of a question. Picking it fills the tile in. -->
+        <DataTemplate x:Key="ChoiceTile" x:DataType="vm:ChoiceViewModel">
+            <Button Classes="tile" Classes.selected="{Binding IsSelected}" HorizontalAlignment="Stretch"
+                    Command="{Binding $parent[UserControl].((vm:DesignerViewModel)DataContext).ChooseCommand}"
+                    CommandParameter="{Binding}">
+                <StackPanel Spacing="2">
+                    <TextBlock Text="{Binding Label}" FontWeight="SemiBold" FontSize="13" />
+                    <TextBlock Classes="field-hint" Text="{Binding Blurb}" TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+            </Button>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <Grid ColumnDefinitions="*,320" Margin="32,24,32,24" ColumnSpacing="32">
 
         <ScrollViewer Grid.Column="0">
-            <StackPanel Spacing="16" Margin="0,0,6,0">
+            <StackPanel Spacing="26" Margin="0,0,10,24" MaxWidth="640" HorizontalAlignment="Left">
+
                 <StackPanel Spacing="2">
                     <TextBlock Classes="page-title" Text="{Binding Heading}" />
                     <TextBlock Classes="field-hint" FontSize="12" Text="{Binding Intro}" />
                 </StackPanel>
 
-                <StackPanel Spacing="0" IsVisible="{Binding !IsEditing}">
-                    <TextBlock Classes="section-header" Text="START FROM" />
+                <!-- Starters are shortcuts, not the main path: small pills -->
+                <StackPanel Spacing="8" IsVisible="{Binding !IsEditing}">
+                    <TextBlock Classes="section-header" Text="OR START FROM AN EXAMPLE" Margin="0" />
                     <ItemsControl ItemsSource="{Binding Starters}">
                         <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <UniformGrid Columns="3" />
-                            </ItemsPanelTemplate>
+                            <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="design:Starter">
-                                <Button Classes="starter" Margin="0,0,8,8"
+                                <Button Classes="pill" Margin="0,0,8,8" Content="{Binding Name}" ToolTip.Tip="{Binding Blurb}"
                                         Command="{Binding $parent[UserControl].((vm:DesignerViewModel)DataContext).ApplyStarterCommand}"
-                                        CommandParameter="{Binding}">
-                                    <StackPanel Spacing="2">
-                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="12" />
-                                        <TextBlock Classes="field-hint" Text="{Binding Blurb}" />
-                                    </StackPanel>
-                                </Button>
+                                        CommandParameter="{Binding}" />
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </StackPanel>
 
-                <Border Classes="card">
-                    <StackPanel Spacing="12">
-                        <StackPanel Spacing="4">
-                            <TextBlock Classes="field-label" Text="1 · What is it?" />
-                            <TextBox Classes="orrery-input" PlaceholderText="Name it" Text="{Binding Title}" />
-                        </StackPanel>
+                <StackPanel Spacing="8">
+                    <TextBlock Classes="q" Text="What is it?" />
+                    <TextBox Classes="orrery-input" PlaceholderText="Give it a name" Text="{Binding Title}" FontSize="15" />
+                </StackPanel>
 
-                        <StackPanel Spacing="4">
-                            <TextBlock Classes="field-label" Text="2 · Which bucket?" />
-                            <ComboBox Classes="orrery-combo" ItemsSource="{Binding RoleNames}" SelectedIndex="{Binding RoleIndex}" />
-                            <TextBlock Classes="field-hint" Text="Things you have to do, things you want to do, or things that come round again." />
-                        </StackPanel>
+                <StackPanel Spacing="8">
+                    <TextBlock Classes="q" Text="What kind of thing is it?" />
+                    <ItemsControl ItemsSource="{Binding KindChoices}" ItemTemplate="{StaticResource ChoiceTile}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate><UniformGrid Rows="1" /></ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                    </ItemsControl>
+                </StackPanel>
 
-                        <StackPanel Spacing="4">
-                            <TextBlock Classes="field-label" Text="3 · Does it ever finish?" />
-                            <ToggleSwitch IsChecked="{Binding HasFinishLine}" OnContent="It has a finish line" OffContent="It never finishes" />
-                        </StackPanel>
-
-                        <StackPanel Spacing="4">
-                            <TextBlock Classes="field-label" Text="4 · How do you measure progress?" />
-                            <ComboBox Classes="orrery-combo" ItemsSource="{Binding MeasureNames}" SelectedIndex="{Binding MeasureIndex}" />
-                            <TextBox Classes="orrery-input" PlaceholderText="Unit (pages, %, kg…)" Text="{Binding Unit}"
-                                     IsVisible="{Binding ShowUnit}" />
-                            <StackPanel Spacing="3" IsVisible="{Binding ShowTarget}">
-                                <TextBlock Classes="field-hint" Text="{Binding TargetLabel}" />
-                                <TextBox Classes="orrery-input" PlaceholderText="0" Text="{Binding TargetText}" />
-                            </StackPanel>
-                        </StackPanel>
-
-                        <StackPanel Spacing="4">
-                            <TextBlock Classes="field-label" Text="5 · Does it repeat?" />
-                            <ComboBox Classes="orrery-combo" ItemsSource="{Binding RhythmNames}" SelectedIndex="{Binding RhythmIndex}" />
-                            <StackPanel Spacing="3" IsVisible="{Binding ShowEvery}">
-                                <TextBlock Classes="field-hint" Text="Every how many days?" />
-                                <TextBox Classes="orrery-input" Text="{Binding EveryDaysText}" />
-                            </StackPanel>
-                            <StackPanel Spacing="3" IsVisible="{Binding ShowPerWeek}">
-                                <TextBlock Classes="field-hint" Text="{Binding PerWeekLabel}" />
-                                <TextBox Classes="orrery-input" Text="{Binding PerWeekText}" />
-                            </StackPanel>
-                        </StackPanel>
-
-                        <StackPanel Spacing="4" IsVisible="{Binding ShowDeadline}">
-                            <TextBlock Classes="field-label" Text="6 · Is there a deadline?" />
-                            <ToggleSwitch IsChecked="{Binding HasDeadline}" OnContent="Yes, by this date" OffContent="No deadline" />
-                            <DatePicker SelectedDate="{Binding DeadlineDate}" IsVisible="{Binding HasDeadline}" />
-                        </StackPanel>
-
-                        <StackPanel Spacing="4">
-                            <TextBlock Classes="field-label" Text="How much energy does it usually take?" />
-                            <ComboBox Classes="orrery-combo" ItemsSource="{Binding EnergyNames}" SelectedIndex="{Binding EnergyIndex}" />
-                        </StackPanel>
+                <StackPanel Spacing="8">
+                    <TextBlock Classes="q" Text="How will you know it is going well?" />
+                    <ItemsControl ItemsSource="{Binding MeasureChoices}" ItemTemplate="{StaticResource ChoiceTile}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate><UniformGrid Rows="1" /></ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                    </ItemsControl>
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10" IsVisible="{Binding ShowUnit}">
+                        <TextBox Classes="orrery-input" PlaceholderText="Unit (pages, %, kg…)" Text="{Binding Unit}" />
+                    </Grid>
+                    <StackPanel Spacing="4" IsVisible="{Binding ShowTarget}">
+                        <TextBlock Classes="field-hint" Text="{Binding TargetLabel}" />
+                        <TextBox Classes="orrery-input" PlaceholderText="0" Text="{Binding TargetText}" MaxWidth="200" HorizontalAlignment="Left" />
                     </StackPanel>
-                </Border>
+                </StackPanel>
+
+                <StackPanel Spacing="8">
+                    <TextBlock Classes="q" Text="Does it come back?" />
+                    <ItemsControl ItemsSource="{Binding RhythmChoices}" ItemTemplate="{StaticResource ChoiceTile}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate><UniformGrid Rows="1" /></ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                    </ItemsControl>
+                    <StackPanel Spacing="4" IsVisible="{Binding ShowEvery}">
+                        <TextBlock Classes="field-hint" Text="Every how many days?" />
+                        <TextBox Classes="orrery-input" Text="{Binding EveryDaysText}" MaxWidth="120" HorizontalAlignment="Left" />
+                    </StackPanel>
+                    <StackPanel Spacing="4" IsVisible="{Binding ShowPerWeek}">
+                        <TextBlock Classes="field-hint" Text="{Binding PerWeekLabel}" />
+                        <TextBox Classes="orrery-input" Text="{Binding PerWeekText}" MaxWidth="160" HorizontalAlignment="Left" />
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel Spacing="8" IsVisible="{Binding !IsRepeating}">
+                    <TextBlock Classes="q" Text="Does it end?" />
+                    <ItemsControl ItemsSource="{Binding EndChoices}" ItemTemplate="{StaticResource ChoiceTile}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate><UniformGrid Rows="1" /></ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                    </ItemsControl>
+                    <StackPanel Spacing="6" IsVisible="{Binding ShowDeadline}">
+                        <ToggleSwitch IsChecked="{Binding HasDeadline}" OnContent="Finish it by a date" OffContent="No deadline" />
+                        <DatePicker SelectedDate="{Binding DeadlineDate}" IsVisible="{Binding HasDeadline}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel Spacing="8">
+                    <TextBlock Classes="q" Text="How much does it usually take out of you?" />
+                    <ItemsControl ItemsSource="{Binding EnergyChoices}" ItemTemplate="{StaticResource ChoiceTile}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate><UniformGrid Rows="1" /></ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                    </ItemsControl>
+                    <TextBlock Classes="field-hint" Text="Low-energy days only offer the light ones." />
+                </StackPanel>
             </StackPanel>
         </ScrollViewer>
 
-        <StackPanel Grid.Column="1" Spacing="12" Margin="0,48,0,0">
-            <Border Classes="card">
-                <StackPanel Spacing="8">
-                    <TextBlock Classes="section-header" Text="WHAT THIS MEANS" />
+        <!-- What it will do, in plain words, updating as you answer -->
+        <StackPanel Grid.Column="1" Spacing="14" Margin="0,40,0,0">
+            <Border Classes="card" Padding="18">
+                <StackPanel Spacing="10">
+                    <TextBlock Classes="section-header" Text="HOW IT WILL BEHAVE" Margin="0" />
+                    <TextBlock Text="{Binding Title}" FontSize="17" FontWeight="Bold" TextWrapping="Wrap" />
                     <ItemsControl ItemsSource="{Binding Summary}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="x:String">
-                                <TextBlock Text="{Binding}" TextWrapping="Wrap" FontSize="12" Margin="0,0,0,6" />
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="9" Margin="0,0,0,7">
+                                    <Border Width="4" Height="4" CornerRadius="2" Margin="0,7,0,0" VerticalAlignment="Top"
+                                            Background="{DynamicResource AppAccentBrush}" />
+                                    <TextBlock Grid.Column="1" Text="{Binding}" TextWrapping="Wrap" FontSize="12.5" Opacity="0.9" />
+                                </Grid>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
@@ -118,7 +148,7 @@
             </ItemsControl>
 
             <Button Classes="action primary" Content="{Binding SubmitLabel}" HorizontalAlignment="Stretch"
-                    HorizontalContentAlignment="Center" Command="{Binding CreateCommand}" IsEnabled="{Binding CanCreate}" />
+                    HorizontalContentAlignment="Center" Padding="16,12" Command="{Binding CreateCommand}" IsEnabled="{Binding CanCreate}" />
         </StackPanel>
     </Grid>
 </UserControl>

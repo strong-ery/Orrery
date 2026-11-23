@@ -526,4 +526,43 @@
   <Style Selector="TextBlock.deadline">
     <Setter Property="Foreground" Value="{DynamicResource AppAccentBrush}" />
   </Style>
+
+  <!-- Designer: a question, and its options as tiles that fill in when chosen. -->
+  <Style Selector="TextBlock.q">
+    <Setter Property="FontSize" Value="15" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+  <Style Selector="Button.tile">
+    <Setter Property="Margin" Value="0,0,8,0" />
+    <Setter Property="Padding" Value="14,11" />
+    <Setter Property="HorizontalContentAlignment" Value="Left" />
+    <Setter Property="Cursor" Value="Hand" />
+  </Style>
+  <Style Selector="Button.tile /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AppPlaceholderBackgroundBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AppCardBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="11" />
+  </Style>
+  <Style Selector="Button.tile:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AppHoverBrush}" />
+  </Style>
+  <Style Selector="Button.tile.selected /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AppSubtleBackgroundBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AppAccentBrush}" />
+  </Style>
+  <Style Selector="Button.pill">
+    <Setter Property="Padding" Value="13,6" />
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="Cursor" Value="Hand" />
+  </Style>
+  <Style Selector="Button.pill /template/ ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AppCardBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="16" />
+  </Style>
+  <Style Selector="Button.pill:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AppHoverBrush}" />
+  </Style>
 </Styles>

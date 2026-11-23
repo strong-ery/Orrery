@@ -10,6 +10,9 @@ namespace Orrery.App.ViewModels;
 
 public sealed record IssueRow(string Message, bool IsError);
 
+/// <summary>One option in a question, shown as a tile. Picking it sets the matching answer.</summary>
+public sealed record ChoiceViewModel(string Group, int Index, string Label, string Blurb, bool IsSelected);
+
 /// <summary>
 /// The goal designer. It holds the answers to the few questions every goal comes from, and re-reads what
 /// they add up to after every change, so you can see a goal's behaviour before it exists.
@@ -47,6 +50,12 @@ public partial class DesignerViewModel : ObservableObject
 
     [ObservableProperty] private bool _canCreate;
 
+    public ObservableCollection<ChoiceViewModel> KindChoices { get; } = [];
+    public ObservableCollection<ChoiceViewModel> MeasureChoices { get; } = [];
+    public ObservableCollection<ChoiceViewModel> RhythmChoices { get; } = [];
+    public ObservableCollection<ChoiceViewModel> EndChoices { get; } = [];
+    public ObservableCollection<ChoiceViewModel> EnergyChoices { get; } = [];
+
     public ObservableCollection<string> Summary { get; } = [];
     public ObservableCollection<IssueRow> Issues { get; } = [];
 
@@ -54,6 +63,7 @@ public partial class DesignerViewModel : ObservableObject
     public bool ShowTarget => MeasureIndex is (int)MeasureKind.Amount or (int)MeasureKind.Time && RhythmIndex != (int)RhythmKind.Cadence;
     public string TargetLabel => RhythmIndex == (int)RhythmKind.Repeat ? "How much each time" : "Finish line (how much in total)";
     public bool ShowDeadline => HasFinishLine && RhythmIndex == (int)RhythmKind.None;
+    public bool IsRepeating => RhythmIndex == (int)RhythmKind.Repeat;
     public bool ShowEvery => RhythmIndex == (int)RhythmKind.Repeat;
     public bool ShowPerWeek => RhythmIndex == (int)RhythmKind.Cadence;
     public string PerWeekLabel => MeasureIndex switch
@@ -170,11 +180,58 @@ public partial class DesignerViewModel : ObservableObject
         };
     }
 
+    [RelayCommand]
+    private void Choose(ChoiceViewModel choice)
+    {
+        switch (choice.Group)
+        {
+            case "kind": RoleIndex = choice.Index; break;
+            case "measure": MeasureIndex = choice.Index; break;
+            case "rhythm": RhythmIndex = choice.Index; break;
+            case "end": HasFinishLine = choice.Index == 0; break;
+            case "energy": EnergyIndex = choice.Index; break;
+        }
+    }
+
+    private static void Fill(ObservableCollection<ChoiceViewModel> into, string group, int selected,
+        params (string Label, string Blurb)[] options)
+    {
+        into.Clear();
+        for (var i = 0; i < options.Length; i++)
+            into.Add(new ChoiceViewModel(group, i, options[i].Label, options[i].Blurb, i == selected));
+    }
+
+    private void RebuildChoices()
+    {
+        var names = RoleNames;
+        Fill(KindChoices, "kind", RoleIndex,
+            (names.ElementAtOrDefault(0) ?? "Obligation", "Has to happen"),
+            (names.ElementAtOrDefault(1) ?? "Passion", "You want to do it"),
+            (names.ElementAtOrDefault(2) ?? "Routine", "Comes round again"));
+        Fill(MeasureChoices, "measure", MeasureIndex,
+            ("Done or not", "Nothing in between"),
+            ("Steps", "A checklist"),
+            ("An amount", "Pages, %, kg…"),
+            ("Time", "Minutes put in"));
+        Fill(RhythmChoices, "rhythm", RhythmIndex,
+            ("Once", "No repeat"),
+            ("Every few days", "Done, then due again"),
+            ("Each week", "A total, spread out"));
+        Fill(EndChoices, "end", HasFinishLine ? 0 : 1,
+            ("It ends", "There is a finish line"),
+            ("Open-ended", "It never finishes"));
+        Fill(EnergyChoices, "energy", EnergyIndex,
+            ("Light", "Easy to start"),
+            ("Medium", "Takes some focus"),
+            ("Heavy", "Needs a clear head"));
+    }
+
     private void Recompute()
     {
+        RebuildChoices();
         foreach (var name in new[]
                  {
-                     nameof(ShowUnit), nameof(ShowTarget), nameof(TargetLabel), nameof(ShowDeadline),
+                     nameof(ShowUnit), nameof(IsRepeating), nameof(ShowTarget), nameof(TargetLabel), nameof(ShowDeadline),
                      nameof(ShowEvery), nameof(ShowPerWeek), nameof(PerWeekLabel),
                  })
             base.OnPropertyChanged(new PropertyChangedEventArgs(name));
