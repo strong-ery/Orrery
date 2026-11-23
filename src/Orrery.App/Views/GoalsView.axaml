@@ -25,7 +25,7 @@
         <Grid>
         <!-- Orbit: rings are how soon it'll want you, sectors are the buckets -->
         <views:OrbitCanvas IsVisible="{Binding AsOrbit}" Bodies="{Binding Bodies}" SelectedId="{Binding SelectedId}"
-                           BodyCommand="{Binding OpenCommand}" />
+                           BodyCommand="{Binding OpenCommand}" CoreCount="{Binding TodayCount}" />
 
         <!-- List: the same goals, grouped by the same rings -->
         <ScrollViewer IsVisible="{Binding AsList}">

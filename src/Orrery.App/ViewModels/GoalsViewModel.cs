@@ -77,6 +77,12 @@ public partial class GoalRowViewModel : ObservableObject
         BlockedText = graph.BlockedReason(goal, today) ?? "";
         IsComplete = Progress.IsComplete(goal, log);
 
+        var units = goal.Roots().Where(goal.IsSection).ToList();
+        Moons = (units.Count > 0 ? units : goal.Leaves().ToList()).Take(8)
+            .Select(u => goal.IsDone(u) ? MoonState.Done : graph.BlockedReason(u, today) is not null ? MoonState.Blocked : MoonState.Open)
+            .ToList();
+        DependsOnIds = goal.DependsOnGoals.ToList();
+
         var leaves = goal.Leaves().ToList();
         StepSummary = leaves.Count == 0 ? "" : $"{leaves.Count(s => s.Done)}/{leaves.Count} steps";
     }
@@ -104,6 +110,8 @@ public partial class GoalRowViewModel : ObservableObject
     public double Pressure { get; }
     public Horizon Horizon { get; }
     public string StepSummary { get; }
+    public IReadOnlyList<MoonState> Moons { get; }
+    public IReadOnlyList<Guid> DependsOnIds { get; }
     public ObservableCollection<StepRowViewModel> Steps { get; }
     public bool HasSteps => Steps.Count > 0;
 
@@ -113,10 +121,13 @@ public partial class GoalRowViewModel : ObservableObject
 
 public sealed record GoalGroup(string Label, IReadOnlyList<GoalRowViewModel> Rows);
 
-/// <summary>One goal as drawn on the orbit map.</summary>
+public enum MoonState { Done, Open, Blocked }
+
+/// <summary>One goal as drawn on the orbit map. Moons are its sections (or steps); links are the goals it waits for.</summary>
 public sealed record OrbitBody(
     Guid Id, string Title, Color Accent, CategoryRole Role, Horizon Horizon,
-    double Pressure, double? Fraction, string Line1, string Line2);
+    double Pressure, double? Fraction, string Line1, string Line2,
+    IReadOnlyList<MoonState> Moons, IReadOnlyList<Guid> DependsOn);
 
 public partial class GoalsViewModel : ObservableObject
 {
@@ -140,6 +151,9 @@ public partial class GoalsViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _isEmpty;
+
+    [ObservableProperty]
+    private int _todayCount;
 
     [ObservableProperty]
     private Guid? _selectedId;
@@ -189,8 +203,10 @@ public partial class GoalsViewModel : ObservableObject
         Bodies = rows
             .OrderBy(r => r.Title, StringComparer.OrdinalIgnoreCase)
             .Select(row => new OrbitBody(row.Id, row.Title, row.AccentColor, row.Role, row.Horizon, row.Pressure,
-                row.HasFraction ? row.Fraction / 100 : null, row.Subtitle, row.Headline))
+                row.HasFraction ? row.Fraction / 100 : null, row.Subtitle, row.Headline, row.Moons, row.DependsOnIds))
             .ToList();
+
+        TodayCount = Planner.Suggest(data, new PlanRequest(today, data.Settings.MaxToday, data.Settings.Bias, data.Settings.LowEnergy)).Count;
 
         IsEmpty = rows.Count == 0;
         var now = rows.Count(r => r.Horizon == Horizon.Now);
