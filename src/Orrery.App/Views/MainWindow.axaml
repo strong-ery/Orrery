@@ -16,6 +16,7 @@
         <DataTemplate DataType="vm:GoalsViewModel"><views:GoalsView /></DataTemplate>
         <DataTemplate DataType="vm:DesignerViewModel"><views:DesignerView /></DataTemplate>
         <DataTemplate DataType="vm:HistoryViewModel"><views:HistoryView /></DataTemplate>
+        <DataTemplate DataType="vm:CalendarViewModel"><views:CalendarView /></DataTemplate>
     </Window.DataTemplates>
 
     <DockPanel>
@@ -94,6 +95,12 @@
                         <StackPanel Orientation="Horizontal" Spacing="10">
                             <PathIcon Data="{StaticResource IconGoals}" />
                             <TextBlock Text="Goals" />
+                        </StackPanel>
+                    </Button>
+                    <Button Classes="nav" Classes.active="{Binding IsCalendar}" Command="{Binding ShowCalendarCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <PathIcon Data="{StaticResource IconCalendar}" />
+                            <TextBlock Text="Calendar" />
                         </StackPanel>
                     </Button>
                     <Button Classes="nav" Classes.active="{Binding IsDesigner}" Command="{Binding ShowDesignerCommand}">

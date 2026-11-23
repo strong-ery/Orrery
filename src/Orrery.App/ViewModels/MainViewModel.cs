@@ -23,18 +23,20 @@ public partial class MainViewModel : ObservableObject
     public GoalsViewModel GoalsPage { get; }
     public DesignerViewModel DesignerPage { get; }
     public HistoryViewModel HistoryPage { get; }
+    public CalendarViewModel CalendarPage { get; }
     public FocusViewModel Focus { get; }
     public InspectorViewModel Inspector { get; }
     public CaptureViewModel Capture { get; }
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsToday), nameof(IsGoals), nameof(IsDesigner), nameof(IsHistory))]
+    [NotifyPropertyChangedFor(nameof(IsToday), nameof(IsGoals), nameof(IsDesigner), nameof(IsHistory), nameof(IsCalendar))]
     private ObservableObject _current;
 
     public bool IsToday => Current == TodayPage;
     public bool IsGoals => Current == GoalsPage;
     public bool IsDesigner => Current == DesignerPage;
     public bool IsHistory => Current == HistoryPage;
+    public bool IsCalendar => Current == CalendarPage;
 
     public MainViewModel()
     {
@@ -46,6 +48,7 @@ public partial class MainViewModel : ObservableObject
         GoalsPage = new GoalsViewModel(this);
         DesignerPage = new DesignerViewModel(this);
         HistoryPage = new HistoryViewModel(this);
+        CalendarPage = new CalendarViewModel(this);
         Focus = new FocusViewModel(this);
         Inspector = new InspectorViewModel(this);
         Capture = new CaptureViewModel(this);
@@ -91,6 +94,9 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void ShowHistory() => Show(HistoryPage);
 
+    [RelayCommand]
+    private void ShowCalendar() => Show(CalendarPage);
+
     private void Show(ObservableObject page)
     {
         RefreshAll();
@@ -102,6 +108,7 @@ public partial class MainViewModel : ObservableObject
         TodayPage.Refresh();
         GoalsPage.Refresh();
         HistoryPage.Refresh();
+        CalendarPage.Refresh();
         Inspector.Refresh();
     }
 

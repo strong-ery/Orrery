@@ -205,3 +205,47 @@ public class StepEditingTests
         Assert.False(bio.MoveTo(unit1, bio.ChildrenOf(unit1).First().Id));
     }
 }
+
+public class CalendarTests
+{
+    private static readonly DateOnly Monday = new(2026, 3, 2);
+
+    [Fact]
+    public void Deadlines_and_repeats_land_on_the_right_days()
+    {
+        var data = SampleData.Create(Monday);
+        var events = CalendarModel.Events(data, Monday, Monday.AddDays(30), Monday);
+
+        var school = data.Goals.First(g => g.Title.StartsWith("Catch up"));
+        Assert.Contains(events, e => e.Kind == CalendarKind.Deadline && e.GoalId == school.Id && e.Day == school.Deadline);
+
+        // laundry: created 3 days ago, every 7 days, so due on day 6 of its window (3 days from now), then weekly
+        var laundry = events.Where(e => e.Kind == CalendarKind.Due).Select(e => e.Day).ToList();
+        Assert.Equal(Monday.AddDays(3), laundry[0]);
+        Assert.Equal(7, laundry[1].DayNumber - laundry[0].DayNumber);
+    }
+
+    [Fact]
+    public void A_repeat_that_is_already_done_this_window_is_not_shown_as_due()
+    {
+        var data = SampleData.Create(Monday);
+        var laundry = data.Goals.First(g => g.Title == "Do laundry");
+        data.Contributions.Add(new Contribution { GoalId = laundry.Id, Day = Monday, Amount = 1 });
+        var due = CalendarModel.Events(data, Monday, Monday.AddDays(10), Monday).Where(e => e.Kind == CalendarKind.Due).ToList();
+        Assert.DoesNotContain(due, e => e.Day == Monday.AddDays(3));
+        Assert.Contains(due, e => e.Day == Monday.AddDays(10));
+    }
+
+    [Fact]
+    public void Past_work_shows_up_as_worked_and_held_back_steps_show_when_they_open()
+    {
+        var data = SampleData.Create(Monday);
+        var prism = data.Goals.First(g => g.Title == "Finish Prism");
+        data.Contributions.Add(new Contribution { GoalId = prism.Id, Day = Monday.AddDays(-2), Amount = 40, Minutes = 40 });
+        prism.Steps.First(s => s.Title == "Parse the header").BlockedUntil = Monday.AddDays(5);
+
+        var events = CalendarModel.Events(data, Monday.AddDays(-7), Monday.AddDays(7), Monday);
+        Assert.Contains(events, e => e.Kind == CalendarKind.Worked && e.Day == Monday.AddDays(-2) && e.Detail == "40 min");
+        Assert.Contains(events, e => e.Kind == CalendarKind.Available && e.Day == Monday.AddDays(5) && e.Title == "Parse the header");
+    }
+}
