@@ -48,7 +48,8 @@
                                     <StackPanel Orientation="Horizontal" Spacing="9">
                                         <TextBlock Text="UP NEXT" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource AppAccentBrush}"
                                                    VerticalAlignment="Center" />
-                                        <TextBlock Text="{Binding CategoryName}" FontSize="10" FontWeight="SemiBold" Foreground="{Binding Accent}"
+                                        <Border Width="7" Height="7" CornerRadius="4" Background="{Binding Accent}" VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding CategoryName}" FontSize="10" FontWeight="SemiBold" Opacity="0.6"
                                                    VerticalAlignment="Center" />
                                     </StackPanel>
                                     <TextBlock Classes="field-hint" Text="{Binding GoalTitle}" IsVisible="{Binding HasGoalTitle}" FontSize="12" />
@@ -128,12 +129,12 @@
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="vm:StreakCardViewModel">
                             <StackPanel Orientation="Horizontal" Spacing="10">
-                                <PathIcon Data="{StaticResource IconFlame}" Foreground="{Binding Accent}" Width="22" Height="22"
+                                <PathIcon Data="{StaticResource IconFlame}" Foreground="{DynamicResource AppAccentBrush}" Opacity="0.85" Width="20" Height="20"
                                           VerticalAlignment="Center" />
                                 <StackPanel>
                                     <StackPanel Orientation="Horizontal" Spacing="6">
                                         <TextBlock Classes="numeric" Text="{Binding Current}" FontSize="22" FontWeight="Bold" />
-                                        <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="SemiBold" Foreground="{Binding Accent}"
+                                        <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="SemiBold" Opacity="0.7"
                                                    VerticalAlignment="Bottom" Margin="0,0,0,3" />
                                     </StackPanel>
                                     <TextBlock Text="{Binding Detail}" Classes="field-hint" />

@@ -59,9 +59,9 @@ public sealed class OrbitCanvas : Control
 
     private static readonly Dictionary<CategoryRole, (string Name, Color Color)> Buckets = new()
     {
-        [CategoryRole.Obligation] = ("OBLIGATIONS", Color.Parse("#FF7A5C")),
-        [CategoryRole.Passion] = ("PASSIONS", Color.Parse("#9B7CFF")),
-        [CategoryRole.Routine] = ("ROUTINES", Color.Parse("#3CC8B4")),
+        [CategoryRole.Obligation] = ("OBLIGATIONS", Color.Parse("#E0896C")),
+        [CategoryRole.Passion] = ("PASSIONS", Color.Parse("#9F8FE6")),
+        [CategoryRole.Routine] = ("ROUTINES", Color.Parse("#62B8A9")),
     };
 
     private readonly List<(OrbitBody Body, Point Center, double Radius)> _placed = [];
@@ -187,6 +187,8 @@ public sealed class OrbitCanvas : Control
         var (center, r) = Frame();
         Layout();
 
+        DrawStars(context);
+
         // Sectors: the faintest wash of each bucket's colour, edged by a hairline. Territory, not decoration.
         foreach (var (role, (_, color)) in Buckets)
         {
@@ -212,12 +214,14 @@ public sealed class OrbitCanvas : Control
             DrawText(context, Horizons.Label(Rings[i]).ToUpperInvariant(), 8, "#7F88BC",
                 new Point(center.X, center.Y + r * RingFractions[i]), centered: true, background: true);
 
-        // Bucket names sit on the rim, in their own colour, centred on their sector.
+        // Bucket names sit on the rim: quiet text, with the bucket's colour only as a small dot.
         foreach (var (role, (name, color)) in Buckets)
         {
             var mid = (SectorStart[role] + SectorSpan / 2) * Math.PI / 180;
             var p = new Point(center.X + (r + 22) * Math.Cos(mid), center.Y + (r + 18) * Math.Sin(mid));
-            DrawText(context, name, 9.5, color.ToString(), p, centered: true, bold: true);
+            var label = Format(name, 9.5, "#A3AAD2", 200, bold: true);
+            context.DrawEllipse(new SolidColorBrush(color), null, new Point(p.X - label.Width / 2 - 8, p.Y), 3, 3);
+            context.DrawText(label, new Point(p.X - label.Width / 2, p.Y - label.Height / 2));
         }
 
         DrawLinks(context, center);
@@ -256,11 +260,33 @@ public sealed class OrbitCanvas : Control
     {
         var face = Math.Clamp(r * 0.135, 36, 56);
         var brass = new SolidColorBrush(Brass);
+
+        // The corona: a wide, soft warmth that breathes very slowly, and a few hairline rays. It is the one warm
+        // thing on the map, so the eye goes to "today" first.
+        var breathe = 0.5 + 0.5 * Math.Sin(Phase * 0.8);
+        context.DrawEllipse(new RadialGradientBrush
+        {
+            GradientStops =
+            {
+                new GradientStop(Color.FromArgb((byte)(0x46 + 0x14 * breathe), Brass.R, Brass.G, Brass.B), 0.3),
+                new GradientStop(Color.FromArgb(0x14, Brass.R, Brass.G, Brass.B), 0.62),
+                new GradientStop(Color.FromArgb(0x00, Brass.R, Brass.G, Brass.B), 1),
+            },
+        }, null, center, face * 3.4, face * 3.4);
+        var ray = new Pen(new SolidColorBrush(Color.FromArgb(0x26, Brass.R, Brass.G, Brass.B)), 1);
+        for (var i = 0; i < 24; i++)
+        {
+            var a = i * 15 + Phase * 1.5;
+            var len = i % 2 == 0 ? 1.9 : 1.5;
+            context.DrawLine(ray, Pt(center, face + 16, a), Pt(center, face * len + 16, a));
+        }
         var total = CoreCount + CoreDone;
         var done = total == 0 ? 1.0 : (double)CoreDone / total;
 
-        context.DrawEllipse(new SolidColorBrush(Color.Parse("#0F1226")),
-            new Pen(new SolidColorBrush(Color.FromArgb(0x70, Brass.R, Brass.G, Brass.B)), 1), center, face, face);
+        context.DrawEllipse(new RadialGradientBrush
+        {
+            GradientStops = { new GradientStop(Color.Parse("#2C2210"), 0), new GradientStop(Color.Parse("#0F1226"), 1) },
+        }, new Pen(new SolidColorBrush(Color.FromArgb(0x90, Brass.R, Brass.G, Brass.B)), 1.2), center, face, face);
 
         // Progress: a thin track with the finished part in brass.
         var arcR = face - 5;
@@ -301,6 +327,29 @@ public sealed class OrbitCanvas : Control
         {
             DrawText(context, left, 28, "#F2F4FF", new Point(center.X, center.Y - 5), centered: true, bold: true);
             DrawText(context, "LEFT TODAY", 7.5, "#8B93C4", new Point(center.X, center.Y + 15), centered: true);
+        }
+    }
+
+    /// <summary>A fixed, seeded scatter of stars with a slow twinkle. A few have a tiny cross, so it reads as sky.</summary>
+    private void DrawStars(DrawingContext context)
+    {
+        var rng = new Random(11);
+        for (var i = 0; i < 130; i++)
+        {
+            var x = rng.NextDouble() * Bounds.Width;
+            var y = rng.NextDouble() * Bounds.Height;
+            var size = 0.5 + rng.NextDouble() * 1.0;
+            var twinkle = 0.65 + 0.35 * Math.Sin(Phase * (0.4 + rng.NextDouble() * 0.6) + i);
+            var alpha = (byte)(0x2A + rng.NextDouble() * 0x40 * twinkle);
+            var warm = i % 9 == 0;
+            var color = warm ? Color.FromArgb(alpha, 0xFF, 0xE2, 0xA8) : Color.FromArgb(alpha, 0xC8, 0xD0, 0xFF);
+            context.DrawEllipse(new SolidColorBrush(color), null, new Point(x, y), size, size);
+            if (i % 17 == 0)
+            {
+                var glint = new Pen(new SolidColorBrush(Color.FromArgb((byte)(alpha / 2), color.R, color.G, color.B)), 0.8);
+                context.DrawLine(glint, new Point(x - 4, y), new Point(x + 4, y));
+                context.DrawLine(glint, new Point(x, y - 4), new Point(x, y + 4));
+            }
         }
     }
 
@@ -410,12 +459,16 @@ public sealed class OrbitCanvas : Control
             RadiusY = RelativeScalar.Parse("75%"),
             GradientStops =
             {
-                new GradientStop(Lighten(accent, 0.18), 0),
-                new GradientStop(accent, 0.55),
-                new GradientStop(Darken(accent, 0.28), 1),
+                new GradientStop(Lighten(accent, 0.5), 0),
+                new GradientStop(accent, 0.5),
+                new GradientStop(Darken(accent, 0.55), 1),
             },
         };
         context.DrawEllipse(disc, new Pen(new SolidColorBrush(Darken(accent, 0.5)), 1), c, radius, radius);
+
+        // A small specular glint: the one detail that makes a flat disc read as a sphere.
+        context.DrawEllipse(new SolidColorBrush(Color.FromArgb(0x55, 255, 255, 255)), null,
+            new Point(c.X - radius * 0.35, c.Y - radius * 0.38), radius * 0.2, radius * 0.14);
 
         if (done)
             DrawText(context, "✓", radius * 1.1, "#0B0D1A", c, centered: true, bold: true);

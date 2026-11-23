@@ -39,6 +39,7 @@ public partial class MainViewModel : ObservableObject
     public MainViewModel()
     {
         Data = JsonStore.Load() ?? SampleData.Create(Today);
+        SoftenOldColours(Data);
         JsonStore.Save(Data);
 
         TodayPage = new TodayViewModel(this);
@@ -60,6 +61,18 @@ public partial class MainViewModel : ObservableObject
             }
         };
         RefreshAll();
+    }
+
+    /// <summary>Earlier builds saved brighter bucket colours; move those to the calmer set.</summary>
+    private static void SoftenOldColours(OrreryData data)
+    {
+        var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["#FF7A5C"] = "#E0896C", ["#9B7CFF"] = "#9F8FE6", ["#3CC8B4"] = "#62B8A9",
+        };
+        foreach (var c in data.Categories)
+            if (map.TryGetValue(c.AccentHex, out var soft))
+                c.AccentHex = soft;
     }
 
     [RelayCommand]

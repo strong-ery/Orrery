@@ -187,9 +187,9 @@ public sealed class OrreryData
     {
         Categories =
         [
-            new Category { Name = "Obligations", Role = CategoryRole.Obligation, AccentHex = "#FF7A5C" },
-            new Category { Name = "Passions", Role = CategoryRole.Passion, AccentHex = "#9B7CFF" },
-            new Category { Name = "Routines", Role = CategoryRole.Routine, AccentHex = "#3CC8B4" },
+            new Category { Name = "Obligations", Role = CategoryRole.Obligation, AccentHex = "#E0896C" },
+            new Category { Name = "Passions", Role = CategoryRole.Passion, AccentHex = "#9F8FE6" },
+            new Category { Name = "Routines", Role = CategoryRole.Routine, AccentHex = "#62B8A9" },
         ],
     };
 
