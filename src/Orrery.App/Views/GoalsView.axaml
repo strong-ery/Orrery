@@ -1,0 +1,67 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Orrery.App.ViewModels"
+             xmlns:views="using:Orrery.App.Views"
+             x:Class="Orrery.App.Views.GoalsView"
+             x:DataType="vm:GoalsViewModel">
+    <DockPanel Margin="32,24,32,24">
+        <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,0,12">
+            <StackPanel Spacing="2" VerticalAlignment="Center">
+                <TextBlock Classes="page-title" Text="Goals" />
+                <TextBlock Classes="field-hint" FontSize="12" Text="{Binding Summary}" />
+            </StackPanel>
+            <Border Grid.Column="1" Classes="chip" Padding="3" VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal" Spacing="2">
+                    <Button Classes="seg" Classes.active="{Binding AsOrbit}" Content="Orbit" Command="{Binding ShowOrbitCommand}" />
+                    <Button Classes="seg" Classes.active="{Binding AsList}" Content="List" Command="{Binding ShowListCommand}" />
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <Border DockPanel.Dock="Top" Classes="card" IsVisible="{Binding IsEmpty}">
+            <TextBlock Classes="field-hint" FontSize="13" Text="No goals yet. Type one into the box at the top, or design one from “New goal”." />
+        </Border>
+
+        <Grid>
+        <!-- Orbit: rings are how soon it'll want you, sectors are the buckets -->
+        <views:OrbitCanvas IsVisible="{Binding AsOrbit}" Bodies="{Binding Bodies}" SelectedId="{Binding SelectedId}"
+                           BodyCommand="{Binding OpenCommand}" />
+
+        <!-- List: the same goals, grouped by the same rings -->
+        <ScrollViewer IsVisible="{Binding AsList}">
+            <ItemsControl ItemsSource="{Binding Groups}" MaxWidth="860" HorizontalAlignment="Stretch">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:GoalGroup">
+                        <StackPanel Margin="0,0,0,14">
+                            <TextBlock Classes="section-header" Text="{Binding Label}" />
+                            <ItemsControl ItemsSource="{Binding Rows}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:GoalRowViewModel">
+                                        <Border Classes="line">
+                                            <Button Classes="link" Command="{Binding OpenCommand}">
+                                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                                    <Border Width="10" Height="10" CornerRadius="5" Background="{Binding Accent}" VerticalAlignment="Center" />
+                                                    <StackPanel Grid.Column="1" Spacing="1">
+                                                        <TextBlock Classes="title" Text="{Binding Title}" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock Classes="field-hint" Text="{Binding Subtitle}" />
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Column="2" Spacing="4" Width="210" VerticalAlignment="Center">
+                                                        <TextBlock Classes="field-hint" Text="{Binding Headline}" HorizontalAlignment="Right"
+                                                                   TextTrimming="CharacterEllipsis" />
+                                                        <ProgressBar Classes="orrery-progress" Value="{Binding Fraction}" Maximum="100"
+                                                                     IsVisible="{Binding HasFraction}" Foreground="{Binding Accent}" />
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Button>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+        </Grid>
+    </DockPanel>
+</UserControl>

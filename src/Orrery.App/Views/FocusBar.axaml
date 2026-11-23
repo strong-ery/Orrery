@@ -1,0 +1,47 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Orrery.App.ViewModels"
+             x:Class="Orrery.App.Views.FocusBar"
+             x:DataType="vm:FocusViewModel">
+    <Border Classes="focus-bar">
+        <Grid>
+            <!-- Working -->
+            <Grid IsVisible="{Binding IsActive}" ColumnDefinitions="Auto,*,Auto,Auto,Auto" ColumnSpacing="18">
+                <TextBlock Classes="numeric" Text="{Binding ElapsedText}" FontSize="26" FontWeight="Bold"
+                           Foreground="{DynamicResource AppAccentBrush}" VerticalAlignment="Center" MinWidth="86" />
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+                    <TextBlock Text="{Binding GoalTitle}" Classes="field-hint" IsVisible="{Binding HasGoalTitle}" />
+                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="14" TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+                <TextBox Grid.Column="2" Classes="orrery-input" Width="230" PlaceholderText="What are you working on?"
+                         Text="{Binding Tag}" VerticalAlignment="Center" />
+                <Button Grid.Column="3" Classes="action" Content="{Binding PauseLabel}" Command="{Binding TogglePauseCommand}"
+                        VerticalAlignment="Center" />
+                <Button Grid.Column="4" Classes="action primary" Command="{Binding StopCommand}" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Spacing="7">
+                        <PathIcon Data="{StaticResource IconStop}" Width="11" Height="11" Foreground="{DynamicResource AppOnAccentBrush}" />
+                        <TextBlock Text="Stop" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+
+            <!-- Wrapping up: say what came of it -->
+            <Grid IsVisible="{Binding IsWrapUp}" ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="16">
+                <StackPanel VerticalAlignment="Center" Spacing="1">
+                    <TextBlock Classes="field-hint" Text="SESSION DONE" />
+                    <TextBlock Text="{Binding WrapText}" FontWeight="SemiBold" FontSize="14" TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" IsVisible="{Binding ShowAmount}" VerticalAlignment="Center">
+                    <TextBlock Classes="field-hint" Text="Progress made" VerticalAlignment="Center" />
+                    <TextBox Classes="orrery-input" Width="70" Text="{Binding AmountText}" HorizontalContentAlignment="Center" />
+                    <TextBlock Classes="field-hint" Text="{Binding AmountUnit}" VerticalAlignment="Center" />
+                </StackPanel>
+                <CheckBox Grid.Column="2" Content="{Binding FinishLabel}" IsChecked="{Binding Finished}"
+                          IsVisible="{Binding ShowFinish}" VerticalAlignment="Center" FontSize="12" />
+                <Button Grid.Column="3" Classes="action" Content="Discard" Command="{Binding DiscardCommand}" VerticalAlignment="Center" />
+                <Button Grid.Column="4" Classes="action primary" Content="Save session" Command="{Binding SaveSessionCommand}"
+                        VerticalAlignment="Center" />
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

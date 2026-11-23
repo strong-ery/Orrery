@@ -1,0 +1,67 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Orrery.App.ViewModels"
+             x:Class="Orrery.App.Views.HistoryView"
+             x:DataType="vm:HistoryViewModel">
+    <ScrollViewer>
+        <StackPanel Margin="30,22,30,30" Spacing="18" MaxWidth="900" HorizontalAlignment="Stretch">
+            <TextBlock Classes="page-title" Text="History" />
+
+            <StackPanel Spacing="0">
+                <TextBlock Classes="section-header" Text="LAST 5 WEEKS" />
+                <ItemsControl ItemsSource="{Binding Ribbons}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:RibbonViewModel">
+                            <Border Classes="card" Margin="0,0,0,10">
+                                <StackPanel Spacing="10">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Orientation="Horizontal" Spacing="10">
+                                            <PathIcon Data="{StaticResource IconFlame}" Foreground="{Binding Accent}" Width="18" Height="18" />
+                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Foreground="{Binding Accent}" />
+                                            <TextBlock Text="{Binding Current, StringFormat='{}{0} day streak'}" FontWeight="SemiBold" />
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="1" Classes="field-hint" Text="{Binding Detail}" />
+                                    </Grid>
+                                    <ItemsControl ItemsSource="{Binding Cells}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:DayCell">
+                                                <Border Classes="day-cell" Margin="0,0,4,4" Background="{Binding Brush}"
+                                                        ToolTip.Tip="{Binding Tip}" />
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock Classes="field-hint" Text="Filled = everything asked that day was done. Red = something was missed. Dim = nothing was asked." />
+            </StackPanel>
+
+            <StackPanel Spacing="0">
+                <TextBlock Classes="section-header" Text="WHERE THE LAST 7 DAYS WENT" />
+                <Border Classes="card" IsVisible="{Binding !HasEffort}">
+                    <TextBlock Classes="field-hint" FontSize="13" Text="Nothing logged yet. Finish something on Today and it shows up here." />
+                </Border>
+                <ItemsControl ItemsSource="{Binding Effort}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:EffortBar">
+                            <Grid ColumnDefinitions="220,*,90" ColumnSpacing="12" Margin="0,0,0,8">
+                                <TextBlock Text="{Binding Title}" FontSize="12" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                <ProgressBar Grid.Column="1" Classes="orrery-progress" Value="{Binding Percent}" Maximum="100"
+                                             Foreground="{Binding Accent}" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="2" Classes="field-hint" Text="{Binding Label}" HorizontalAlignment="Right"
+                                           VerticalAlignment="Center" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

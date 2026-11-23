@@ -1,0 +1,466 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- PathIcon doesn't inherit TextElement.Foreground, so it needs an explicit colour. -->
+  <Style Selector="PathIcon">
+    <Setter Property="Foreground" Value="{DynamicResource AppIconBrush}" />
+  </Style>
+
+  <!-- Text -->
+  <Style Selector="TextBlock.page-title">
+    <Setter Property="FontSize" Value="22" />
+    <Setter Property="FontWeight" Value="Bold" />
+  </Style>
+  <Style Selector="TextBlock.section-header">
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Opacity" Value="0.55" />
+    <Setter Property="Margin" Value="0,0,0,6" />
+  </Style>
+  <Style Selector="TextBlock.field-label">
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Opacity" Value="0.75" />
+  </Style>
+  <Style Selector="TextBlock.field-hint">
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="Opacity" Value="0.55" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+  </Style>
+
+  <!-- Window chrome: same shape as str-amp's custom title bar. -->
+  <Style Selector="Grid#TitleBar">
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+  <Style Selector="Button.window-button">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="0" />
+    <Setter Property="Width" Value="44" />
+    <Setter Property="Height" Value="32" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+  </Style>
+  <Style Selector="Button.window-button:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AppHoverBrush}" />
+  </Style>
+  <Style Selector="Button.window-button.close:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="#E81123" />
+  </Style>
+  <Style Selector="Button.window-button.close:pointerover PathIcon">
+    <Setter Property="Foreground" Value="White" />
+  </Style>
+  <Style Selector="Button.window-button PathIcon">
+    <Setter Property="Width" Value="11" />
+    <Setter Property="Height" Value="11" />
+    <Setter Property="Opacity" Value="0.75" />
+  </Style>
+
+  <!-- Sidebar navigation: flat rows, a brass bar on the active one. -->
+  <Style Selector="Button.nav">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="3,0,0,0" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="CornerRadius" Value="9" />
+    <Setter Property="Padding" Value="12,9" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="HorizontalContentAlignment" Value="Left" />
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Cursor" Value="Hand" />
+  </Style>
+  <Style Selector="Button.nav:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AppHoverBrush}" />
+  </Style>
+  <Style Selector="Button.nav.active /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AppSubtleBackgroundBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AppAccentBrush}" />
+    <Setter Property="BorderThickness" Value="3,0,0,0" />
+  </Style>
+  <Style Selector="Button.nav.active PathIcon">
+    <Setter Property="Foreground" Value="{DynamicResource AppAccentBrush}" />
+  </Style>
+  <Style Selector="Button.nav PathIcon">
+    <Setter Property="Width" Value="16" />
+    <Setter Property="Height" Value="16" />
+  </Style>
+
+  <!-- Surfaces -->
+  <Style Selector="Border.card">
+    <Setter Property="Background" Value="{DynamicResource AppPlaceholderBackgroundBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AppCardBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="12" />
+    <Setter Property="Padding" Value="14" />
+  </Style>
+  <Style Selector="Border.card.row">
+    <Setter Property="Padding" Value="12,10" />
+    <Setter Property="CornerRadius" Value="10" />
+  </Style>
+  <Style Selector="Border.card.selected">
+    <Setter Property="Background" Value="{DynamicResource AppSubtleBackgroundBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AppAccentBrush}" />
+  </Style>
+  <Style Selector="Border.chip">
+    <Setter Property="CornerRadius" Value="999" />
+    <Setter Property="Padding" Value="9,2" />
+    <Setter Property="Background" Value="{DynamicResource AppSubtleBackgroundBrush}" />
+  </Style>
+  <Style Selector="Border.issue-error">
+    <Setter Property="Background" Value="#22FF6B7A" />
+    <Setter Property="BorderBrush" Value="#66FF6B7A" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="Padding" Value="10,6" />
+  </Style>
+  <Style Selector="Border.issue-warning">
+    <Setter Property="Background" Value="#1FE8B64C" />
+    <Setter Property="BorderBrush" Value="#55E8B64C" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="Padding" Value="10,6" />
+  </Style>
+
+  <!-- Buttons -->
+  <Style Selector="Button.action">
+    <Setter Property="Background" Value="{DynamicResource AppSubtleBackgroundBrush}" />
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="Padding" Value="14,7" />
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Cursor" Value="Hand" />
+  </Style>
+  <Style Selector="Button.action:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AppHoverBrush}" />
+  </Style>
+  <Style Selector="Button.action.primary">
+    <Setter Property="Background" Value="{DynamicResource AppAccentBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource AppOnAccentBrush}" />
+  </Style>
+  <Style Selector="Button.action.primary:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AppAccentBrushLight}" />
+    <Setter Property="Foreground" Value="{DynamicResource AppOnAccentBrush}" />
+  </Style>
+  <Style Selector="Button.action:disabled">
+    <Setter Property="Opacity" Value="0.4" />
+  </Style>
+  <Style Selector="Button.starter">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AppCardBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="9" />
+    <Setter Property="Padding" Value="10,7" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="HorizontalContentAlignment" Value="Left" />
+    <Setter Property="Cursor" Value="Hand" />
+  </Style>
+  <Style Selector="Button.starter:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AppHoverBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AppAccentBrush}" />
+  </Style>
+  <Style Selector="Button.done-check">
+    <Setter Property="Width" Value="34" />
+    <Setter Property="Height" Value="34" />
+    <Setter Property="CornerRadius" Value="17" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AppAccentBrush}" />
+    <Setter Property="BorderThickness" Value="1.5" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="Cursor" Value="Hand" />
+  </Style>
+  <Style Selector="Button.done-check:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AppAccentBrush}" />
+  </Style>
+  <Style Selector="Button.done-check:pointerover PathIcon">
+    <Setter Property="Foreground" Value="{DynamicResource AppOnAccentBrush}" />
+  </Style>
+  <Style Selector="Button.done-check PathIcon">
+    <Setter Property="Foreground" Value="{DynamicResource AppAccentBrush}" />
+    <Setter Property="Width" Value="14" />
+    <Setter Property="Height" Value="14" />
+  </Style>
+
+  <!-- Inputs: compact, tinted, no hard borders until focused. -->
+  <Style Selector="TextBox.orrery-input">
+    <Setter Property="Background" Value="{DynamicResource AppSubtleBackgroundBrush}" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="MinHeight" Value="30" />
+    <Setter Property="Padding" Value="8,4" />
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+  </Style>
+  <Style Selector="TextBox.orrery-input:pointerover">
+    <Setter Property="Background" Value="{DynamicResource AppHoverBrush}" />
+  </Style>
+  <Style Selector="ComboBox.orrery-combo">
+    <Setter Property="Background" Value="{DynamicResource AppSubtleBackgroundBrush}" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="MinHeight" Value="30" />
+    <Setter Property="Padding" Value="9,3,6,3" />
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+  </Style>
+  <Style Selector="ComboBox:dropdownopen /template/ Border#PopupBorder">
+    <Setter Property="Background" Value="{DynamicResource AppDialogBackgroundBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AppCardBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="10" />
+    <Setter Property="Padding" Value="4" />
+    <Setter Property="BoxShadow" Value="0 10 28 0 #80000000" />
+  </Style>
+  <Style Selector="ComboBoxItem">
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Padding" Value="8,5" />
+    <Setter Property="Margin" Value="0,1" />
+    <Setter Property="FontSize" Value="12" />
+  </Style>
+  <Style Selector="ComboBoxItem:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AppHoverBrush}" />
+    <Setter Property="CornerRadius" Value="6" />
+  </Style>
+  <Style Selector="ComboBoxItem:selected /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AppSubtleBackgroundBrush}" />
+    <Setter Property="CornerRadius" Value="6" />
+  </Style>
+  <Style Selector="ComboBoxItem:selected TextBlock">
+    <Setter Property="Foreground" Value="{DynamicResource AppAccentBrush}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+
+  <!-- Progress and sliders pick up the brass accent. -->
+  <Style Selector="ProgressBar.orrery-progress">
+    <Setter Property="Height" Value="6" />
+    <Setter Property="MinHeight" Value="6" />
+    <Setter Property="CornerRadius" Value="3" />
+    <Setter Property="Background" Value="{DynamicResource AppSubtleBackgroundBrush}" />
+  </Style>
+  <Style Selector="ProgressBar.orrery-progress /template/ Border#PART_Indicator">
+    <Setter Property="CornerRadius" Value="3" />
+  </Style>
+  <Style Selector="Slider">
+    <Setter Property="MinHeight" Value="24" />
+  </Style>
+  <Style Selector="Slider /template/ Border#TrackBackground">
+    <Setter Property="Background" Value="{DynamicResource AppSubtleBackgroundBrush}" />
+  </Style>
+  <Style Selector="Slider /template/ Thumb">
+    <Setter Property="Background" Value="{DynamicResource AppAccentBrush}" />
+  </Style>
+  <Style Selector="ToggleSwitch:checked /template/ Border#SwitchKnobBounds">
+    <Setter Property="Background" Value="{DynamicResource AppAccentBrush}" />
+  </Style>
+
+  <!-- Plain text that acts as a button. -->
+  <Style Selector="Button.link">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="HorizontalContentAlignment" Value="Left" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="Cursor" Value="Hand" />
+  </Style>
+  <Style Selector="Button.link /template/ ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+  <Style Selector="Button.link:pointerover TextBlock.title">
+    <Setter Property="Foreground" Value="{DynamicResource AppAccentBrushLight}" />
+  </Style>
+
+  <!-- Round tick for steps and today's rows. -->
+  <Style Selector="Button.check">
+    <Setter Property="Width" Value="22" />
+    <Setter Property="Height" Value="22" />
+    <Setter Property="MinHeight" Value="0" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="CornerRadius" Value="11" />
+    <Setter Property="BorderThickness" Value="1.5" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AppAccentBrush}" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="Cursor" Value="Hand" />
+  </Style>
+  <Style Selector="Button.check PathIcon">
+    <Setter Property="Width" Value="12" />
+    <Setter Property="Height" Value="12" />
+    <Setter Property="Foreground" Value="{DynamicResource AppOnAccentBrush}" />
+    <Setter Property="Opacity" Value="0" />
+  </Style>
+  <Style Selector="Button.check:pointerover PathIcon">
+    <Setter Property="Foreground" Value="{DynamicResource AppAccentBrush}" />
+    <Setter Property="Opacity" Value="0.8" />
+  </Style>
+  <Style Selector="Button.check.done /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AppAccentBrush}" />
+  </Style>
+  <Style Selector="Button.check.done PathIcon">
+    <Setter Property="Foreground" Value="{DynamicResource AppOnAccentBrush}" />
+    <Setter Property="Opacity" Value="1" />
+  </Style>
+
+  <!-- Small ghost icon button. -->
+  <Style Selector="Button.icon">
+    <Setter Property="Width" Value="28" />
+    <Setter Property="Height" Value="28" />
+    <Setter Property="MinHeight" Value="0" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="CornerRadius" Value="14" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="Cursor" Value="Hand" />
+  </Style>
+  <Style Selector="Button.icon PathIcon">
+    <Setter Property="Width" Value="13" />
+    <Setter Property="Height" Value="13" />
+    <Setter Property="Opacity" Value="0.7" />
+  </Style>
+  <Style Selector="Button.icon:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AppSubtleBackgroundBrush}" />
+  </Style>
+  <Style Selector="Button.icon:pointerover PathIcon">
+    <Setter Property="Opacity" Value="1" />
+    <Setter Property="Foreground" Value="{DynamicResource AppAccentBrush}" />
+  </Style>
+  <Style Selector="Button.icon:disabled">
+    <Setter Property="Opacity" Value="0.3" />
+  </Style>
+
+  <!-- Segmented switch (orbit / list). -->
+  <Style Selector="Button.seg">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="7" />
+    <Setter Property="Padding" Value="12,5" />
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Opacity" Value="0.6" />
+    <Setter Property="Cursor" Value="Hand" />
+  </Style>
+  <Style Selector="Button.seg.active">
+    <Setter Property="Opacity" Value="1" />
+  </Style>
+  <Style Selector="Button.seg.active /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AppSubtleBackgroundBrush}" />
+  </Style>
+
+  <!-- Today: one thing large, the rest as quiet lines with no boxes. -->
+  <Style Selector="Border.hero">
+    <Setter Property="CornerRadius" Value="16" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AppCardBorderBrush}" />
+    <Setter Property="BoxShadow" Value="0 14 40 0 #55000000" />
+    <Setter Property="ClipToBounds" Value="True" />
+  </Style>
+  <Style Selector="Border.line">
+    <Setter Property="BorderBrush" Value="#1E6B7CFF" />
+    <Setter Property="BorderThickness" Value="0,0,0,1" />
+    <Setter Property="Padding" Value="2,11" />
+  </Style>
+  <Style Selector="TextBlock.numeric">
+    <Setter Property="FontFeatures" Value="+tnum" />
+  </Style>
+
+  <!-- The focus bar along the bottom of the window. -->
+  <Style Selector="Border.focus-bar">
+    <Setter Property="Background" Value="{DynamicResource AppDialogBackgroundBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AppAccentBrush}" />
+    <Setter Property="BorderThickness" Value="0,2,0,0" />
+    <Setter Property="Padding" Value="20,10" />
+  </Style>
+  <Style Selector="Border.quick-box">
+    <Setter Property="Background" Value="{DynamicResource AppSubtleBackgroundBrush}" />
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+  </Style>
+  <Style Selector="Border.quick-box:focus-within">
+    <Setter Property="BorderBrush" Value="{DynamicResource AppAccentBrush}" />
+  </Style>
+  <Style Selector="Border.quick-box TextBox">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="MinHeight" Value="26" />
+    <Setter Property="Padding" Value="8,3" />
+    <Setter Property="FontSize" Value="12" />
+  </Style>
+  <Style Selector="Border.quick-box TextBox /template/ Border#PART_BorderElement">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+  <Style Selector="Border.quick-box TextBox:pointerover /template/ Border#PART_BorderElement">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+  <Style Selector="Border.quick-box TextBox:focus /template/ Border#PART_BorderElement">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+  <Style Selector="Border.popup-card">
+    <Setter Property="Background" Value="{DynamicResource AppDialogBackgroundBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AppCardBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="10" />
+    <Setter Property="Padding" Value="12,10" />
+    <Setter Property="BoxShadow" Value="0 12 32 0 #80000000" />
+  </Style>
+
+  <!-- Ribbon cells on the history page. -->
+  <Style Selector="Border.day-cell">
+    <Setter Property="Width" Value="14" />
+    <Setter Property="Height" Value="14" />
+    <Setter Property="CornerRadius" Value="4" />
+  </Style>
+
+  <!-- Lists with no chrome of their own: the card inside each row carries the selection. -->
+  <Style Selector="ListBox.flat">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+  <Style Selector="ListBox.flat ListBoxItem">
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="Margin" Value="0,0,0,8" />
+    <Setter Property="CornerRadius" Value="10" />
+  </Style>
+  <Style Selector="ListBox.flat ListBoxItem /template/ ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+  <Style Selector="ListBox.flat ListBoxItem:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+  <Style Selector="ListBox.flat ListBoxItem:selected /template/ ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+  <Style Selector="ListBox.flat ListBoxItem:selected:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+  <Style Selector="ListBox.flat ListBoxItem:pointerover Border.card">
+    <Setter Property="Background" Value="{DynamicResource AppHoverBrush}" />
+  </Style>
+  <Style Selector="ListBox.flat ListBoxItem:selected Border.card">
+    <Setter Property="Background" Value="{DynamicResource AppSubtleBackgroundBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AppAccentBrush}" />
+  </Style>
+
+  <Style Selector="ScrollViewer ScrollBar:vertical">
+    <Setter Property="Width" Value="9" />
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+  <Style Selector="ScrollViewer ScrollBar:vertical /template/ Thumb">
+    <Setter Property="MinHeight" Value="34" />
+    <Setter Property="Margin" Value="2,1" />
+    <Setter Property="CornerRadius" Value="4" />
+    <Setter Property="Background" Value="{DynamicResource AppSubtleBackgroundBrush}" />
+  </Style>
+  <Style Selector="ScrollViewer ScrollBar:vertical /template/ Thumb:pointerover">
+    <Setter Property="Background" Value="{DynamicResource AppAccentBrushLight}" />
+  </Style>
+
+</Styles>

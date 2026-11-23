@@ -1,0 +1,159 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Orrery.App.ViewModels"
+             xmlns:views="using:Orrery.App.Views"
+             x:Class="Orrery.App.Views.InspectorView"
+             x:DataType="vm:InspectorViewModel">
+    <ScrollViewer>
+        <StackPanel Margin="20,16,20,24" Spacing="16">
+
+            <!-- Header -->
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Spacing="5">
+                    <Border Classes="chip" HorizontalAlignment="Left">
+                        <TextBlock Text="{Binding Row.CategoryName}" FontSize="10" FontWeight="SemiBold" Foreground="{Binding Row.Accent}" />
+                    </Border>
+                    <TextBlock Text="{Binding Row.Title}" FontSize="20" FontWeight="Bold" TextWrapping="Wrap" />
+                    <TextBlock Classes="field-hint" Text="{Binding Row.Subtitle}" />
+                </StackPanel>
+                <Button Grid.Column="1" Classes="icon" VerticalAlignment="Top" Command="{Binding CloseCommand}" ToolTip.Tip="Close">
+                    <PathIcon Data="{StaticResource IconClose}" />
+                </Button>
+            </Grid>
+
+            <!-- Progress -->
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="16">
+                <Grid IsVisible="{Binding Row.HasFraction}" Width="64" Height="64" VerticalAlignment="Top">
+                    <views:ProgressRing Value="{Binding Row.Fraction}" Stroke="{Binding Row.Accent}" Thickness="6" />
+                    <TextBlock Classes="numeric" Text="{Binding Row.Fraction, StringFormat='{}{0:0}%'}" FontSize="13" FontWeight="Bold"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Grid>
+                <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Row.ProgressText}" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding Row.DemandText}" IsVisible="{Binding Row.HasDemand}"
+                               Foreground="{DynamicResource AppAccentBrush}" FontSize="12" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding Row.BlockedText}" IsVisible="{Binding Row.IsBlocked}"
+                               Foreground="{DynamicResource AppWarnBrush}" FontSize="12" TextWrapping="Wrap" />
+                </StackPanel>
+            </Grid>
+
+            <!-- Do something now -->
+            <StackPanel Spacing="8">
+                <Button Classes="action primary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                        Command="{Binding StartFocusCommand}" IsEnabled="{Binding CanStart}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <PathIcon Data="{StaticResource IconPlay}" Width="12" Height="12" Foreground="{DynamicResource AppOnAccentBrush}" />
+                        <TextBlock Text="Start working on this" />
+                    </StackPanel>
+                </Button>
+                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8" IsVisible="{Binding ShowLog}">
+                    <TextBox Classes="orrery-input" PlaceholderText="Log progress" Text="{Binding LogAmountText}">
+                        <TextBox.KeyBindings>
+                            <KeyBinding Gesture="Enter" Command="{Binding LogCommand}" />
+                        </TextBox.KeyBindings>
+                    </TextBox>
+                    <TextBlock Grid.Column="1" Classes="field-hint" Text="{Binding LogUnit}" VerticalAlignment="Center" />
+                    <Button Grid.Column="2" Classes="action" Content="Log" Command="{Binding LogCommand}" />
+                </Grid>
+                <Button Classes="action" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                        Content="{Binding MarkDoneLabel}" Command="{Binding MarkDoneCommand}" IsVisible="{Binding ShowMarkDone}" />
+            </StackPanel>
+
+            <!-- Steps -->
+            <StackPanel Spacing="6">
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Classes="section-header" Text="STEPS" VerticalAlignment="Center" Margin="0" />
+                    <Button Grid.Column="1" Classes="seg" Content="Do in order" Command="{Binding ChainStepsCommand}"
+                            IsVisible="{Binding CanChain}" ToolTip.Tip="Make each unfinished step wait for the one before it" />
+                </Grid>
+                <TextBlock Classes="field-hint" Text="No steps yet. Add the next small thing to do." IsVisible="{Binding !HasSteps}" />
+
+                <ItemsControl ItemsSource="{Binding Steps}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:InspectorStepViewModel">
+                            <Border Classes="line" Opacity="{Binding Opacity}">
+                                <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10">
+                                    <Button Classes="check" Classes.done="{Binding Done}" Command="{Binding ToggleCommand}"
+                                            VerticalAlignment="Top" Margin="0,1,0,0">
+                                        <PathIcon Data="{StaticResource IconCheck}" />
+                                    </Button>
+                                    <StackPanel Grid.Column="1" Spacing="1">
+                                        <TextBlock Text="{Binding Title}" FontSize="13" TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource AppIconBrush}" />
+                                        <TextBlock Classes="field-hint" Text="{Binding Detail}" />
+                                        <TextBlock FontSize="11" Foreground="{DynamicResource AppWarnBrush}" Text="{Binding BlockedText}"
+                                                   IsVisible="{Binding IsBlocked}" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                    <Button Grid.Column="2" Classes="icon" Command="{Binding StartCommand}" IsEnabled="{Binding CanStart}"
+                                            ToolTip.Tip="Start working on this step">
+                                        <PathIcon Data="{StaticResource IconPlay}" />
+                                    </Button>
+                                    <Button Grid.Column="3" Classes="icon" Command="{Binding RemoveCommand}" ToolTip.Tip="Remove step">
+                                        <PathIcon Data="{StaticResource IconClose}" />
+                                    </Button>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" Margin="0,6,0,0">
+                    <TextBox Classes="orrery-input" PlaceholderText="Add a step…" Text="{Binding NewStepTitle}">
+                        <TextBox.KeyBindings>
+                            <KeyBinding Gesture="Enter" Command="{Binding AddStepCommand}" />
+                        </TextBox.KeyBindings>
+                    </TextBox>
+                    <Button Grid.Column="1" Classes="action primary" Content="Add" Command="{Binding AddStepCommand}" />
+                </Grid>
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                    <ComboBox Classes="orrery-combo" ItemsSource="{Binding EnergyNames}" SelectedIndex="{Binding NewStepEnergy}" />
+                    <ComboBox Grid.Column="1" Classes="orrery-combo" ItemsSource="{Binding WaitOptions}" SelectedIndex="{Binding WaitIndex}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate x:DataType="vm:WaitOption">
+                                <TextBlock Text="{Binding Label}" TextTrimming="CharacterEllipsis" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </Grid>
+            </StackPanel>
+
+            <!-- Goal-level dependencies -->
+            <StackPanel Spacing="6">
+                <TextBlock Classes="section-header" Text="WAITS FOR" />
+                <TextBlock Classes="field-hint" Text="Nothing. This can start any time." IsVisible="{Binding !HasDependencies}" />
+                <ItemsControl ItemsSource="{Binding Dependencies}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:DependencyChipViewModel">
+                            <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,2">
+                                <TextBlock Text="{Binding Title}" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                <Button Grid.Column="1" Classes="icon" Command="{Binding RemoveCommand}" ToolTip.Tip="No longer waits for this">
+                                    <PathIcon Data="{StaticResource IconClose}" />
+                                </Button>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" IsVisible="{Binding HasDependencyCandidates}">
+                    <ComboBox Classes="orrery-combo" ItemsSource="{Binding DependencyCandidates}" SelectedIndex="{Binding DependencyIndex}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate x:DataType="vm:WaitOption">
+                                <TextBlock Text="{Binding Label}" TextTrimming="CharacterEllipsis" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                    <Button Grid.Column="1" Classes="action" Content="Add" Command="{Binding AddDependencyCommand}" />
+                </Grid>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <Button Classes="action" Command="{Binding EditCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="7">
+                        <PathIcon Data="{StaticResource IconEdit}" Width="12" Height="12" />
+                        <TextBlock Text="Edit goal" />
+                    </StackPanel>
+                </Button>
+                <Button Classes="action" Content="Archive" Command="{Binding ArchiveCommand}" />
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

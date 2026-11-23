@@ -1,0 +1,123 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Orrery.App.ViewModels"
+        xmlns:views="using:Orrery.App.Views"
+        x:Class="Orrery.App.Views.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Title="Orrery"
+        Background="{DynamicResource AppBackgroundBrush}"
+        WindowDecorations="BorderOnly"
+        ExtendClientAreaToDecorationsHint="True"
+        Width="1320" Height="800"
+        MinWidth="900" MinHeight="600">
+
+    <Window.DataTemplates>
+        <DataTemplate DataType="vm:TodayViewModel"><views:TodayView /></DataTemplate>
+        <DataTemplate DataType="vm:GoalsViewModel"><views:GoalsView /></DataTemplate>
+        <DataTemplate DataType="vm:DesignerViewModel"><views:DesignerView /></DataTemplate>
+        <DataTemplate DataType="vm:HistoryViewModel"><views:HistoryView /></DataTemplate>
+    </Window.DataTemplates>
+
+    <DockPanel>
+        <Grid x:Name="TitleBar" DockPanel.Dock="Top" Height="38" ColumnDefinitions="214,*,214"
+              PointerPressed="OnTitleBarPointerPressed" DoubleTapped="OnTitleBarDoubleTapped">
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="9" Margin="14,0,0,0" VerticalAlignment="Center">
+                <views:OrreryMark Width="20" Height="20" />
+                <TextBlock Text="orrery" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
+            </StackPanel>
+
+            <!-- Quick add: type a line, see what it will do, press Enter. Ctrl+K from anywhere. -->
+            <Border Grid.Column="1" Classes="quick-box" Width="520" Height="28" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                    <PathIcon Data="{StaticResource IconAdd}" Width="12" Height="12" Margin="10,0,0,0" Opacity="0.6" />
+                    <TextBox x:Name="CaptureBox" Grid.Column="1" Text="{Binding Capture.Text}"
+                             PlaceholderText="Quick add…   Unit 5 in Biology after Unit 4 ~90m">
+                        <TextBox.KeyBindings>
+                            <KeyBinding Gesture="Enter" Command="{Binding Capture.CommitCommand}" />
+                            <KeyBinding Gesture="Escape" Command="{Binding Capture.CancelCommand}" />
+                        </TextBox.KeyBindings>
+                    </TextBox>
+                    <TextBlock Grid.Column="2" Text="Ctrl K" Classes="field-hint" Margin="0,0,10,0" VerticalAlignment="Center" />
+                    <Popup IsOpen="{Binding Capture.IsOpen}" PlacementTarget="{Binding #CaptureBox}" Placement="BottomEdgeAlignedLeft"
+                           IsLightDismissEnabled="False" VerticalOffset="6" MinWidth="520">
+                        <Border Classes="popup-card" MinWidth="520">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="{Binding Capture.Summary}" FontWeight="SemiBold" FontSize="13" TextWrapping="Wrap" />
+                                <ItemsControl ItemsSource="{Binding Capture.Chips}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="x:String">
+                                            <Border Classes="chip" Margin="0,0,6,0">
+                                                <TextBlock Text="{Binding}" FontSize="11" Foreground="{DynamicResource AppAccentBrush}" />
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <TextBlock Text="{Binding Capture.Problem}" IsVisible="{Binding Capture.HasProblem}"
+                                           Foreground="{DynamicResource AppWarnBrush}" FontSize="12" TextWrapping="Wrap" />
+                                <TextBlock Classes="field-hint" Text="Enter to add · Esc to clear" />
+                                <TextBlock Classes="field-hint" Text="{Binding Capture.Help}" />
+                            </StackPanel>
+                        </Border>
+                    </Popup>
+                </Grid>
+            </Border>
+
+            <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Classes="window-button" Click="OnMinimizeClicked" ToolTip.Tip="Minimize">
+                    <PathIcon Data="{StaticResource IconMinimize}" />
+                </Button>
+                <Button Classes="window-button" Click="OnMaximizeClicked" ToolTip.Tip="Maximize">
+                    <PathIcon Data="{StaticResource IconMaximize}" />
+                </Button>
+                <Button Classes="window-button close" Click="OnCloseClicked" ToolTip.Tip="Close">
+                    <PathIcon Data="{StaticResource IconClose}" />
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <views:FocusBar DockPanel.Dock="Bottom" DataContext="{Binding Focus}" IsVisible="{Binding IsVisible}" />
+
+        <Grid ColumnDefinitions="214,*,Auto">
+            <Border Grid.Column="0" Background="{DynamicResource AppSidebarBrush}"
+                    BorderBrush="{DynamicResource AppCardBorderBrush}" BorderThickness="0,0,1,0">
+                <StackPanel Margin="12,14" Spacing="4">
+                    <Button Classes="nav" Classes.active="{Binding IsToday}" Command="{Binding ShowTodayCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <PathIcon Data="{StaticResource IconToday}" />
+                            <TextBlock Text="Today" />
+                        </StackPanel>
+                    </Button>
+                    <Button Classes="nav" Classes.active="{Binding IsGoals}" Command="{Binding ShowGoalsCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <PathIcon Data="{StaticResource IconGoals}" />
+                            <TextBlock Text="Goals" />
+                        </StackPanel>
+                    </Button>
+                    <Button Classes="nav" Classes.active="{Binding IsDesigner}" Command="{Binding ShowDesignerCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <PathIcon Data="{StaticResource IconAdd}" />
+                            <TextBlock Text="New goal" />
+                        </StackPanel>
+                    </Button>
+                    <Button Classes="nav" Classes.active="{Binding IsHistory}" Command="{Binding ShowHistoryCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <PathIcon Data="{StaticResource IconHistory}" />
+                            <TextBlock Text="History" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Border>
+
+            <ContentControl Grid.Column="1" Content="{Binding Current}" />
+
+            <Border Grid.Column="2" Width="380" IsVisible="{Binding Inspector.IsOpen}"
+                    Background="{DynamicResource AppSidebarBrush}"
+                    BorderBrush="{DynamicResource AppCardBorderBrush}" BorderThickness="1,0,0,0">
+                <views:InspectorView DataContext="{Binding Inspector}" />
+            </Border>
+        </Grid>
+    </DockPanel>
+</Window>

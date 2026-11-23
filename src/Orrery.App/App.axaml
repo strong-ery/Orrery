@@ -1,0 +1,65 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Orrery.App.App"
+             RequestedThemeVariant="Dark">
+
+    <!-- Same family as str-amp: a near-black ground, translucent tints for every surface, rounded
+         corners and soft shadows. The twist is the palette: deep indigo space with a brass accent,
+         the colour of an orrery's gears, in place of str-amp's violet. -->
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="AppIconBrush" Color="#26262B" />
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Dark">
+                    <!-- Fluent derives its controls' accent from these; pin them to the brass. -->
+                    <Color x:Key="SystemAccentColor">#E8B64C</Color>
+                    <Color x:Key="SystemAccentColorLight1">#F0C56E</Color>
+                    <Color x:Key="SystemAccentColorLight2">#F5CD78</Color>
+                    <Color x:Key="SystemAccentColorLight3">#F9DDA0</Color>
+                    <Color x:Key="SystemAccentColorDark1">#C99A38</Color>
+                    <Color x:Key="SystemAccentColorDark2">#A87F2C</Color>
+                    <Color x:Key="SystemAccentColorDark3">#876620</Color>
+                    <SolidColorBrush x:Key="AppIconBrush" Color="#EEF0FA" />
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+
+            <SolidColorBrush x:Key="AppAccentBrush" Color="#E8B64C" />
+            <SolidColorBrush x:Key="AppAccentBrushLight" Color="#F5CD78" />
+            <SolidColorBrush x:Key="AppOnAccentBrush" Color="#1B1406" />
+            <SolidColorBrush x:Key="AppWarnBrush" Color="#FF6B7A" />
+            <LinearGradientBrush x:Key="AppBackgroundBrush" StartPoint="0%,0%" EndPoint="100%,100%">
+                <GradientStop Color="#090A13" Offset="0.0" />
+                <GradientStop Color="#0D1020" Offset="1.0" />
+            </LinearGradientBrush>
+            <SolidColorBrush x:Key="AppSidebarBrush" Color="#7010142A" />
+            <SolidColorBrush x:Key="AppSubtleBackgroundBrush" Color="#206B7CFF" />
+            <SolidColorBrush x:Key="AppPlaceholderBackgroundBrush" Color="#126B7CFF" />
+            <SolidColorBrush x:Key="AppHoverBrush" Color="#186B7CFF" />
+            <SolidColorBrush x:Key="AppCardBorderBrush" Color="#286B7CFF" />
+            <SolidColorBrush x:Key="AppDialogBackgroundBrush" Color="#14172B" />
+
+            <!-- Icon glyphs: Material Design Icons geometry, 24x24 (Apache-2.0). -->
+            <StreamGeometry x:Key="IconToday">M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z</StreamGeometry>
+            <StreamGeometry x:Key="IconGoals">M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6z</StreamGeometry>
+            <StreamGeometry x:Key="IconAdd">M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z</StreamGeometry>
+            <StreamGeometry x:Key="IconHistory">M3 13h2v8H3zm4-8h2v16H7zm4 4h2v12h-2zm4-2h2v14h-2zm4 6h2v8h-2z</StreamGeometry>
+            <StreamGeometry x:Key="IconCheck">M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z</StreamGeometry>
+            <StreamGeometry x:Key="IconMinimize">M19 13H5v-2h14v2z</StreamGeometry>
+            <StreamGeometry x:Key="IconMaximize">M4 4h16v16H4V4zm2 2v12h12V6H6z</StreamGeometry>
+            <StreamGeometry x:Key="IconClose">M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z</StreamGeometry>
+            <StreamGeometry x:Key="IconPlay">M8 5v14l11-7z</StreamGeometry>
+            <StreamGeometry x:Key="IconPause">M6 19h4V5H6v14zm8-14v14h4V5h-4z</StreamGeometry>
+            <StreamGeometry x:Key="IconStop">M6 6h12v12H6z</StreamGeometry>
+            <StreamGeometry x:Key="IconEdit">M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z</StreamGeometry>
+            <StreamGeometry x:Key="IconBolt">M7 2v11h3v9l7-12h-4l4-8z</StreamGeometry>
+            <StreamGeometry x:Key="IconFlame">M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z</StreamGeometry>
+        </ResourceDictionary>
+    </Application.Resources>
+
+    <Application.Styles>
+        <FluentTheme />
+        <StyleInclude Source="avares://Orrery.App/Styles/AppStyles.axaml" />
+    </Application.Styles>
+</Application>

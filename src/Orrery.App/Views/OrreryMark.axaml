@@ -1,0 +1,17 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Orrery.App.Views.OrreryMark"
+             Width="28" Height="28">
+    <!-- The logo: three orbits around a brass core, one planet each for obligations, passions and routines. -->
+    <Viewbox>
+        <Canvas Width="64" Height="64">
+            <Ellipse Canvas.Left="4" Canvas.Top="4" Width="56" Height="56" Stroke="#667C8CFF" StrokeThickness="1.6" />
+            <Ellipse Canvas.Left="13" Canvas.Top="13" Width="38" Height="38" Stroke="#667C8CFF" StrokeThickness="1.6" />
+            <Ellipse Canvas.Left="21" Canvas.Top="21" Width="22" Height="22" Stroke="#667C8CFF" StrokeThickness="1.6" />
+            <Ellipse Canvas.Left="27" Canvas.Top="27" Width="10" Height="10" Fill="{DynamicResource AppAccentBrush}" />
+            <Ellipse Canvas.Left="48.5" Canvas.Top="8.5" Width="10" Height="10" Fill="#FF7A5C" />
+            <Ellipse Canvas.Left="9.5" Canvas.Top="35" Width="9" Height="9" Fill="#9B7CFF" />
+            <Ellipse Canvas.Left="34.5" Canvas.Top="35.5" Width="8" Height="8" Fill="#3CC8B4" />
+        </Canvas>
+    </Viewbox>
+</UserControl>

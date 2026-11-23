@@ -1,0 +1,142 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Orrery.App.ViewModels"
+             x:Class="Orrery.App.Views.TodayView"
+             x:DataType="vm:TodayViewModel">
+    <ScrollViewer>
+        <StackPanel Margin="32,24,32,30" Spacing="22" MaxWidth="860" HorizontalAlignment="Stretch">
+
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="24">
+                <StackPanel Spacing="2" VerticalAlignment="Center">
+                    <TextBlock Classes="page-title" Text="{Binding Heading}" />
+                    <TextBlock Classes="field-hint" Text="{Binding Subheading}" FontSize="12" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="22" VerticalAlignment="Center">
+                    <StackPanel Spacing="0">
+                        <TextBlock Classes="field-label" Text="Low energy" />
+                        <ToggleSwitch IsChecked="{Binding LowEnergy}" OnContent="" OffContent="" ToolTip.Tip="Only easy steps, from every goal" />
+                    </StackPanel>
+                    <StackPanel Spacing="0" Width="190">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Classes="field-label" Text="Lean toward" />
+                            <TextBlock Grid.Column="1" Classes="field-hint" Text="{Binding BiasLabel}" />
+                        </Grid>
+                        <Slider Minimum="-1" Maximum="1" TickFrequency="0.25" Value="{Binding Bias}" />
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+
+            <Border Classes="card" IsVisible="{Binding IsEmpty}">
+                <TextBlock Classes="field-hint" FontSize="13" Text="{Binding Subheading}" />
+            </Border>
+
+            <!-- The one thing to do next -->
+            <ContentControl Content="{Binding Hero}">
+                <ContentControl.ContentTemplate>
+                    <DataTemplate x:DataType="vm:PlanRowViewModel">
+                        <Border Classes="hero" Background="{DynamicResource AppSubtleBackgroundBrush}">
+                            <Grid ColumnDefinitions="6,*,Auto">
+                                <Border Background="{Binding Accent}" />
+                                <StackPanel Grid.Column="1" Margin="24,20" Spacing="5">
+                                    <StackPanel Orientation="Horizontal" Spacing="9">
+                                        <TextBlock Text="UP NEXT" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource AppAccentBrush}"
+                                                   VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding CategoryName}" FontSize="10" FontWeight="SemiBold" Foreground="{Binding Accent}"
+                                                   VerticalAlignment="Center" />
+                                    </StackPanel>
+                                    <TextBlock Classes="field-hint" Text="{Binding GoalTitle}" IsVisible="{Binding HasGoalTitle}" FontSize="12" />
+                                    <Button Classes="link" Command="{Binding InspectCommand}">
+                                        <TextBlock Classes="title" Text="{Binding Title}" FontSize="26" FontWeight="Bold" TextWrapping="Wrap" />
+                                    </Button>
+                                    <TextBlock Text="{Binding Reason}" FontSize="13" Opacity="0.8" TextWrapping="Wrap" />
+                                    <TextBlock Classes="field-hint" Text="{Binding Meta}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Margin="0,20,24,20" Spacing="10" VerticalAlignment="Center" MinWidth="150">
+                                    <Button Classes="action primary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                                            Command="{Binding StartCommand}" IsEnabled="{Binding CanStart}" Padding="16,10">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <PathIcon Data="{StaticResource IconPlay}" Width="12" Height="12" Foreground="{DynamicResource AppOnAccentBrush}" />
+                                            <TextBlock Text="Start" FontSize="13" />
+                                        </StackPanel>
+                                    </Button>
+                                    <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6">
+                                        <TextBox Classes="orrery-input" Text="{Binding AmountText}" IsVisible="{Binding ShowAmount}"
+                                                 HorizontalContentAlignment="Center" MinWidth="0" />
+                                        <TextBlock Grid.Column="1" Classes="field-hint" Text="{Binding UnitLabel}" IsVisible="{Binding ShowAmount}"
+                                                   VerticalAlignment="Center" />
+                                        <Button Grid.Column="2" Classes="action" Content="{Binding ActionLabel}" Command="{Binding CompleteCommand}" />
+                                    </Grid>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ContentControl.ContentTemplate>
+            </ContentControl>
+
+            <!-- Then -->
+            <StackPanel Spacing="0" IsVisible="{Binding HasRest}">
+                <TextBlock Classes="section-header" Text="THEN" />
+                <ItemsControl ItemsSource="{Binding Rest}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:PlanRowViewModel">
+                            <Border Classes="line">
+                                <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto,Auto" ColumnSpacing="12">
+                                    <Button Classes="check" Command="{Binding CompleteCommand}" ToolTip.Tip="Mark done">
+                                        <PathIcon Data="{StaticResource IconCheck}" />
+                                    </Button>
+                                    <Border Grid.Column="1" Width="3" CornerRadius="2" Background="{Binding Accent}" />
+                                    <Button Grid.Column="2" Classes="link" Command="{Binding InspectCommand}">
+                                        <StackPanel Spacing="1">
+                                            <TextBlock Classes="title" Text="{Binding Title}" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <TextBlock Classes="field-hint" Text="{Binding GoalTitle}" IsVisible="{Binding HasGoalTitle}" />
+                                                <TextBlock Classes="field-hint" Text="{Binding Reason}" TextTrimming="CharacterEllipsis" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Button>
+                                    <TextBox Grid.Column="3" Classes="orrery-input" Width="56" Text="{Binding AmountText}" IsVisible="{Binding ShowAmount}"
+                                             HorizontalContentAlignment="Center" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="4" Classes="field-hint" Text="{Binding UnitLabel}" IsVisible="{Binding ShowAmount}"
+                                               VerticalAlignment="Center" />
+                                    <Button Grid.Column="5" Classes="icon" Command="{Binding StartCommand}" IsEnabled="{Binding CanStart}"
+                                            ToolTip.Tip="Start working on this" VerticalAlignment="Center">
+                                        <PathIcon Data="{StaticResource IconPlay}" />
+                                    </Button>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+
+            <!-- Streaks: just numbers, no boxes -->
+            <StackPanel Spacing="8">
+                <TextBlock Classes="section-header" Text="STREAKS" Margin="0" />
+                <ItemsControl ItemsSource="{Binding Streaks}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" Spacing="34" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:StreakCardViewModel">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <PathIcon Data="{StaticResource IconFlame}" Foreground="{Binding Accent}" Width="22" Height="22"
+                                          VerticalAlignment="Center" />
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <TextBlock Classes="numeric" Text="{Binding Current}" FontSize="22" FontWeight="Bold" />
+                                        <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="SemiBold" Foreground="{Binding Accent}"
+                                                   VerticalAlignment="Bottom" Margin="0,0,0,3" />
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding Detail}" Classes="field-hint" />
+                                </StackPanel>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
