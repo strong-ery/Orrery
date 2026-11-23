@@ -71,14 +71,15 @@
                 <ItemsControl ItemsSource="{Binding Steps}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="vm:InspectorStepViewModel">
-                            <Border Classes="line" Opacity="{Binding Opacity}" Margin="{Binding Indent}">
-                                <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10">
+                            <StackPanel Margin="{Binding Indent}">
+                            <Border Classes="line" Opacity="{Binding Opacity}">
+                                <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto" ColumnSpacing="6">
                                     <Button Classes="check" Classes.done="{Binding Done}" Command="{Binding ToggleCommand}"
                                             VerticalAlignment="Top" Margin="0,1,0,0" IsVisible="{Binding IsLeaf}">
                                         <PathIcon Data="{StaticResource IconCheck}" />
                                     </Button>
-                                    <PathIcon Data="{StaticResource IconCheck}" Width="12" Height="12" VerticalAlignment="Top" Margin="2,3,0,0"
-                                              Foreground="{DynamicResource AppAccentBrush}" IsVisible="{Binding IsSection}" />
+                                    <Border Width="16" Height="16" IsVisible="{Binding IsSection}" Margin="0,1,0,0" VerticalAlignment="Top" CornerRadius="4" BorderThickness="1.5"
+                                            BorderBrush="{DynamicResource AppAccentBrush}" Opacity="0.7" />
                                     <StackPanel Grid.Column="1" Spacing="1">
                                         <TextBlock Text="{Binding Title}" FontSize="13" TextWrapping="Wrap"
                                                    FontWeight="{Binding TitleWeight}" Foreground="{DynamicResource AppIconBrush}" />
@@ -90,11 +91,38 @@
                                             IsVisible="{Binding IsLeaf}" ToolTip.Tip="Start working on this step">
                                         <PathIcon Data="{StaticResource IconPlay}" />
                                     </Button>
-                                    <Button Grid.Column="3" Classes="icon" Command="{Binding RemoveCommand}" ToolTip.Tip="Remove (a section takes its steps with it)">
+                                    <Button Grid.Column="3" Classes="icon" Command="{Binding BeginEditCommand}" ToolTip.Tip="Edit, move or reorder">
+                                        <PathIcon Data="{StaticResource IconEdit}" />
+                                    </Button>
+                                    <Button Grid.Column="4" Classes="icon" Command="{Binding RemoveCommand}" ToolTip.Tip="Remove (a section takes its steps with it)">
                                         <PathIcon Data="{StaticResource IconClose}" />
                                     </Button>
                                 </Grid>
                             </Border>
+                            <!-- In-place editor -->
+                            <Border Classes="card" Padding="12" Margin="0,2,0,6" IsVisible="{Binding IsEditing}">
+                                <StackPanel Spacing="8">
+                                    <TextBox Classes="orrery-input" Text="{Binding EditTitle}" PlaceholderText="Name" />
+                                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8" IsVisible="{Binding IsLeaf}">
+                                        <TextBox Classes="orrery-input" Text="{Binding EditMinutes}" PlaceholderText="Minutes (optional)" />
+                                        <ComboBox Grid.Column="1" Classes="orrery-combo" ItemsSource="{Binding EnergyNames}" SelectedIndex="{Binding EditEnergy}" />
+                                    </Grid>
+                                    <ComboBox Classes="orrery-combo" ItemsSource="{Binding ParentChoices}" SelectedIndex="{Binding EditParentIndex}">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:WaitOption">
+                                                <TextBlock Text="{Binding Label}" TextTrimming="CharacterEllipsis" />
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                    <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto" ColumnSpacing="6">
+                                        <Button Classes="action" Content="Up" Command="{Binding MoveUpCommand}" IsEnabled="{Binding CanMoveUp}" />
+                                        <Button Grid.Column="1" Classes="action" Content="Down" Command="{Binding MoveDownCommand}" IsEnabled="{Binding CanMoveDown}" />
+                                        <Button Grid.Column="3" Classes="action" Content="Cancel" Command="{Binding CancelEditCommand}" />
+                                        <Button Grid.Column="4" Classes="action primary" Content="Save" Command="{Binding SaveEditCommand}" />
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+                            </StackPanel>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>

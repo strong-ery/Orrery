@@ -119,7 +119,7 @@ public static class Planner
         if (demand.IsDemanding)
             reasons.Add(DescribeDemand(goal, demand));
         if (unlocks > 0)
-            reasons.Add($"unlocks {unlocks} {(unlocks == 1 ? "step" : "steps")}");
+            reasons.Add(unlocks == 1 ? "1 step is waiting on this" : $"{unlocks} steps are waiting on this");
         if (step is { DeferCount: >= 3 })
             reasons.Add("put off a few times, so it's worth making smaller");
         if (reasons.Count == 0)

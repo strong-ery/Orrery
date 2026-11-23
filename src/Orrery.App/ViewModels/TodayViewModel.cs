@@ -125,6 +125,12 @@ public partial class TodayViewModel : ObservableObject
     private bool _hasRest;
 
     [ObservableProperty]
+    private double _dayProgress;
+
+    [ObservableProperty]
+    private bool _hasDayProgress;
+
+    [ObservableProperty]
     private double _bias;
 
     [ObservableProperty]
@@ -173,9 +179,13 @@ public partial class TodayViewModel : ObservableObject
             Rest.Add(row);
         HasRest = Rest.Count > 0;
         IsEmpty = rows.Count == 0;
+        var done = data.Contributions.Where(c => c.Day == today).Select(c => c.GoalId).Distinct().Count();
+        var total = done + rows.Count;
+        DayProgress = total == 0 ? 0 : 100.0 * done / total;
+        HasDayProgress = total > 0;
         Subheading = IsEmpty
-            ? (LowEnergy ? "Nothing low-energy is waiting. Rest counts." : "Nothing is asking for you today.")
-            : rows.Count == 1 ? "One thing today" : $"{rows.Count} things today{(LowEnergy ? " · low-energy mode" : "")}";
+            ? (done > 0 ? $"{done} done today. Nothing else is asking for you." : LowEnergy ? "Nothing low-energy is waiting. Rest counts." : "Nothing is asking for you today.")
+            : $"{done} done · {rows.Count} to go{(LowEnergy ? " · low-energy mode" : "")}";
 
         Streaks.Clear();
         foreach (var category in data.Categories)

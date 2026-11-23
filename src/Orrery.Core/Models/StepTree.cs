@@ -56,4 +56,54 @@ public static class StepTree
         }
         goal.Steps.RemoveAll(s => doomed.Contains(s.Id));
     }
+
+    /// <summary>The step and everything inside it, in stored order.</summary>
+    public static List<Step> BlockOf(this Goal goal, Step step)
+    {
+        var ids = new HashSet<Guid> { step.Id };
+        foreach (var s in goal.Steps)
+            if (s.ParentId is { } p && ids.Contains(p))
+                ids.Add(s.Id);
+        return goal.Steps.Where(s => ids.Contains(s.Id)).ToList();
+    }
+
+    /// <summary>Swaps a step (with its contents) with the sibling before it. False if it is already first.</summary>
+    public static bool MoveUp(this Goal goal, Step step)
+    {
+        var siblings = goal.Steps.Where(s => s.ParentId == step.ParentId).ToList();
+        var at = siblings.IndexOf(step);
+        if (at <= 0)
+            return false;
+        var block = goal.BlockOf(step);
+        goal.Steps.RemoveAll(block.Contains);
+        goal.Steps.InsertRange(goal.Steps.IndexOf(siblings[at - 1]), block);
+        return true;
+    }
+
+    public static bool MoveDown(this Goal goal, Step step)
+    {
+        var siblings = goal.Steps.Where(s => s.ParentId == step.ParentId).ToList();
+        var at = siblings.IndexOf(step);
+        return at >= 0 && at < siblings.Count - 1 && goal.MoveUp(siblings[at + 1]);
+    }
+
+    /// <summary>Puts a step inside another section (or back at the top with null). Refuses to put a step inside itself.</summary>
+    public static bool MoveTo(this Goal goal, Step step, Guid? newParent)
+    {
+        if (step.ParentId == newParent)
+            return true;
+        var block = goal.BlockOf(step);
+        if (newParent is { } np && block.Any(b => b.Id == np))
+            return false;
+        goal.Steps.RemoveAll(block.Contains);
+        step.ParentId = newParent;
+        var at = goal.Steps.Count;
+        if (newParent is { } parentId && goal.Steps.FirstOrDefault(s => s.Id == parentId) is { } parent)
+        {
+            var parentBlock = goal.BlockOf(parent);
+            at = goal.Steps.IndexOf(parentBlock[^1]) + 1;
+        }
+        goal.Steps.InsertRange(at, block);
+        return true;
+    }
 }

@@ -46,8 +46,73 @@ public sealed partial class InspectorStepViewModel : ObservableObject
                 step.DeferCount >= 3 ? "put off a few times" : "",
             }.Where(s => s.Length > 0));
         }
+        var siblings = goal.Steps.Where(o => o.ParentId == step.ParentId).ToList();
+        CanMoveUp = siblings.IndexOf(step) > 0;
+        CanMoveDown = siblings.IndexOf(step) < siblings.Count - 1;
         CanStart = !IsSection && !Done && !IsBlocked && !main.Focus.IsVisible;
         Opacity = Done ? 0.45 : IsBlocked ? 0.65 : 1;
+    }
+
+    // --- Editing a step in place -----------------------------------------------------------------
+
+    public ObservableCollection<WaitOption> ParentChoices { get; } = [];
+    public string[] EnergyNames { get; } = ["Low energy", "Medium energy", "High energy"];
+
+    [ObservableProperty] private bool _isEditing;
+    [ObservableProperty] private string _editTitle = "";
+    [ObservableProperty] private string _editMinutes = "";
+    [ObservableProperty] private int _editEnergy = 1;
+    [ObservableProperty] private int _editParentIndex;
+    public bool CanMoveUp { get; }
+    public bool CanMoveDown { get; }
+
+    [RelayCommand]
+    private void BeginEdit()
+    {
+        if (_main.FindGoal(_goalId) is not { } goal || goal.Steps.FirstOrDefault(s => s.Id == _stepId) is not { } step)
+            return;
+        EditTitle = step.Title;
+        EditMinutes = step.EstimateMinutes?.ToString() ?? "";
+        EditEnergy = (int)step.Energy;
+        var inside = goal.BlockOf(step).Select(b => b.Id).ToHashSet();
+        ParentChoices.Clear();
+        ParentChoices.Add(new WaitOption("Top level", null));
+        foreach (var other in goal.Steps.Where(o => !inside.Contains(o.Id) && !o.Done))
+            ParentChoices.Add(new WaitOption($"Inside “{other.Title}”", other.Id));
+        EditParentIndex = Math.Max(0, ParentChoices.ToList().FindIndex(c => c.Id == step.ParentId));
+        OnPropertyChanged(nameof(EditParentIndex));
+        IsEditing = true;
+    }
+
+    [RelayCommand]
+    private void CancelEdit() => IsEditing = false;
+
+    [RelayCommand]
+    private void SaveEdit()
+    {
+        if (_main.FindGoal(_goalId) is not { } goal || goal.Steps.FirstOrDefault(s => s.Id == _stepId) is not { } step)
+            return;
+        if (!string.IsNullOrWhiteSpace(EditTitle))
+            step.Title = EditTitle.Trim();
+        step.Energy = (Energy)EditEnergy;
+        step.EstimateMinutes = int.TryParse(EditMinutes, out var m) && m > 0 ? m : null;
+        var parent = EditParentIndex >= 0 && EditParentIndex < ParentChoices.Count ? ParentChoices[EditParentIndex].Id : null;
+        goal.MoveTo(step, parent);
+        _main.Changed();
+    }
+
+    [RelayCommand]
+    private void MoveUp()
+    {
+        if (_main.FindGoal(_goalId) is { } goal && goal.Steps.FirstOrDefault(s => s.Id == _stepId) is { } step && goal.MoveUp(step))
+            _main.Changed();
+    }
+
+    [RelayCommand]
+    private void MoveDown()
+    {
+        if (_main.FindGoal(_goalId) is { } goal && goal.Steps.FirstOrDefault(s => s.Id == _stepId) is { } step && goal.MoveDown(step))
+            _main.Changed();
     }
 
     public bool IsSection { get; }

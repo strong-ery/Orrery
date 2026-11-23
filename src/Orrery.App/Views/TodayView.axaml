@@ -10,6 +10,8 @@
                 <StackPanel Spacing="2" VerticalAlignment="Center">
                     <TextBlock Classes="page-title" Text="{Binding Heading}" />
                     <TextBlock Classes="field-hint" Text="{Binding Subheading}" FontSize="12" />
+                    <ProgressBar Classes="orrery-progress" Value="{Binding DayProgress}" Maximum="100" Width="200" Margin="0,5,0,0"
+                                 IsVisible="{Binding HasDayProgress}" Foreground="{DynamicResource AppAccentBrush}" HorizontalAlignment="Left" />
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="22" VerticalAlignment="Center">
@@ -23,6 +25,10 @@
                             <TextBlock Grid.Column="1" Classes="field-hint" Text="{Binding BiasLabel}" />
                         </Grid>
                         <Slider Minimum="-1" Maximum="1" TickFrequency="0.25" Value="{Binding Bias}" />
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Classes="field-hint" FontSize="10" Text="Obligations" />
+                            <TextBlock Grid.Column="1" Classes="field-hint" FontSize="10" Text="Passions" />
+                        </Grid>
                     </StackPanel>
                 </StackPanel>
             </Grid>

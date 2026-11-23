@@ -162,3 +162,46 @@ public class NudgeTests
         Assert.Empty(Nudges.Due(data, Evening));
     }
 }
+
+public class StepEditingTests
+{
+    private static readonly DateOnly Monday = new(2026, 3, 2);
+
+    private static Goal Bio() => SampleData.Create(Monday).Goals.First(g => g.Title == "Biology 101");
+
+    [Fact]
+    public void A_section_moves_up_with_everything_in_it()
+    {
+        var bio = Bio();
+        var unit2 = bio.Steps.First(s => s.Title == "Unit 2");
+        Assert.True(bio.MoveUp(unit2));
+        var roots = bio.Roots().Select(s => s.Title).ToList();
+        Assert.Equal(["Unit 2", "Unit 1", "Unit 3", "Unit 4"], roots);
+        Assert.Equal(16, bio.Steps.Count);
+        Assert.Equal(3, bio.ChildrenOf(unit2).Count());
+        // the children stay directly after their section
+        Assert.Equal(unit2.Id, bio.Steps[1].ParentId);
+    }
+
+    [Fact]
+    public void The_first_step_cannot_move_up_and_the_last_cannot_move_down()
+    {
+        var bio = Bio();
+        Assert.False(bio.MoveUp(bio.Steps.First(s => s.Title == "Unit 1")));
+        Assert.False(bio.MoveDown(bio.Steps.First(s => s.Title == "Unit 4")));
+    }
+
+    [Fact]
+    public void A_step_can_move_into_another_section_but_not_into_itself()
+    {
+        var bio = Bio();
+        var unit1 = bio.Steps.First(s => s.Title == "Unit 1");
+        var unit2 = bio.Steps.First(s => s.Title == "Unit 2");
+        var notes = bio.ChildrenOf(unit1).First(s => s.Title == "Write up notes");
+        Assert.True(bio.MoveTo(notes, unit2.Id));
+        Assert.Equal(2, bio.ChildrenOf(unit1).Count());
+        Assert.Equal(4, bio.ChildrenOf(unit2).Count());
+        Assert.False(bio.MoveTo(unit1, unit1.Id));
+        Assert.False(bio.MoveTo(unit1, bio.ChildrenOf(unit1).First().Id));
+    }
+}
