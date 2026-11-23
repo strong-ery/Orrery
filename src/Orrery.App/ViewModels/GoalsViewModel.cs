@@ -153,12 +153,6 @@ public sealed record GoalGroup(string Label, IReadOnlyList<GoalRowViewModel> Row
 
 public enum MoonState { Done, Open, Blocked }
 
-/// <summary>One goal as drawn on the orbit map. Moons are its sections (or steps); links are the goals it waits for.</summary>
-public sealed record OrbitBody(
-    Guid Id, string Title, Color Accent, CategoryRole Role, Horizon Horizon,
-    double Pressure, double? Fraction, string Line1, string Line2,
-    IReadOnlyList<MoonState> Moons, IReadOnlyList<Guid> DependsOn, double Effort = 0.3, int TodayItems = 0);
-
 public partial class GoalsViewModel : ObservableObject
 {
     private readonly MainViewModel _main;
@@ -171,13 +165,13 @@ public partial class GoalsViewModel : ObservableObject
 
     public ObservableCollection<GoalGroup> Groups { get; } = [];
 
-    /// <summary>A new list every refresh, so the orbit map sees a change and redraws.</summary>
+    /// <summary>A new list every refresh, so the timeline sees a change and redraws.</summary>
     [ObservableProperty]
-    private IReadOnlyList<OrbitBody> _bodies = [];
+    private IReadOnlyList<TimelineLane> _lanes = [];
 
-    /// <summary>0 = orbit map, 1 = list, 2 = dependency graph.</summary>
+    /// <summary>0 = timeline, 1 = list, 2 = dependency graph.</summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(AsOrbit), nameof(AsList), nameof(AsGraph))]
+    [NotifyPropertyChangedFor(nameof(AsTimeline), nameof(AsList), nameof(AsGraph))]
     private int _mode;
 
     [ObservableProperty]
@@ -192,38 +186,24 @@ public partial class GoalsViewModel : ObservableObject
     [ObservableProperty]
     private string _flowSummary = "";
 
-    /// <summary>Days ahead the orbit map is showing. Zero is today.</summary>
+    /// <summary>How many days the timeline shows ahead: six weeks, or six months.</summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(LookAheadText), nameof(IsLookingAhead))]
-    private double _lookAhead;
+    [NotifyPropertyChangedFor(nameof(ShortSpan), nameof(LongSpan))]
+    private int _span = 42;
 
-    public bool IsLookingAhead => LookAhead >= 1;
+    public bool ShortSpan => Span <= 42;
+    public bool LongSpan => Span > 42;
 
-    public string LookAheadText => LookAhead < 1 ? "" :
-        $"In {(int)LookAhead} days · {MainViewModel.Today.AddDays((int)LookAhead):MMM d}";
-
-    partial void OnLookAheadChanged(double value)
-    {
-        var rounded = Math.Round(value);
-        if (rounded != value)
-        {
-            LookAhead = rounded;
-            return;
-        }
-        Refresh();
-    }
+    partial void OnSpanChanged(int value) => Refresh();
 
     [RelayCommand]
-    private void ResetLookAhead() => LookAhead = 0;
+    private void ShowShortSpan() => Span = 42;
+
+    [RelayCommand]
+    private void ShowLongSpan() => Span = 180;
 
     [ObservableProperty]
     private bool _isEmpty;
-
-    [ObservableProperty]
-    private int _todayCount;
-
-    [ObservableProperty]
-    private int _doneToday;
 
     [ObservableProperty]
     private Guid? _selectedId;
@@ -231,7 +211,7 @@ public partial class GoalsViewModel : ObservableObject
     [ObservableProperty]
     private string _summary = "";
 
-    public bool AsOrbit => Mode == 0;
+    public bool AsTimeline => Mode == 0;
     public bool AsList => Mode == 1;
     public bool AsGraph => Mode == 2;
 
@@ -242,7 +222,7 @@ public partial class GoalsViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void ShowOrbit() => Mode = 0;
+    private void ShowTimeline() => Mode = 0;
 
     [RelayCommand]
     private void ShowList() => Mode = 1;
@@ -320,21 +300,7 @@ public partial class GoalsViewModel : ObservableObject
         if (ShowPutAway)
             Groups.Add(new GoalGroup("PUT AWAY", putAway));
 
-        // Looking ahead re-reads every goal as if it were that many days from now: rings and pressure both move.
-        var ahead = today.AddDays((int)LookAhead);
-        var plan = Planner.Suggest(data, new PlanRequest(today, data.Settings.MaxToday, data.Settings.Bias, data.Settings.LowEnergy));
-        var bodyRows = LookAhead == 0
-            ? rows
-            : data.Goals.Where(g => !g.Archived && !Progress.IsComplete(g, data.Contributions))
-                .Select(g => new GoalRowViewModel(data, g, ahead)).ToList();
-        Bodies = bodyRows
-            .OrderBy(r => r.Title, StringComparer.OrdinalIgnoreCase)
-            .Select(row => new OrbitBody(row.Id, row.Title, row.AccentColor, row.Role, row.Horizon, row.Pressure,
-                row.HasFraction ? row.Fraction / 100 : null, row.Subtitle, row.Headline, row.Moons, row.DependsOnIds,
-                row.Effort, LookAhead == 0 ? plan.Count(p => p.GoalId == row.Id) : 0))
-            .ToList();
-
-        TodayCount = plan.Count;
+        Lanes = TimelineModel.Build(data, today, Span);
 
         Flow = FlowGraph.Build(data, today, g => Progress.IsComplete(g, data.Contributions));
         GraphIsEmpty = Flow.Nodes.Count == 0;
@@ -346,8 +312,6 @@ public partial class GoalsViewModel : ObservableObject
                 Flow.Nodes.Count(n => n.State == NodeState.Blocked) is > 0 and var w ? $"{w} waiting" : null,
                 Flow.Nodes.Count(n => n.State == NodeState.Done) is > 0 and var d ? $"{d} done" : null,
             }.Where(x => x is not null));
-
-        DoneToday = data.Contributions.Where(c => c.Day == today).Select(c => c.GoalId).Distinct().Count();
 
         IsEmpty = live.Count == 0 && putAway.Count == 0;
         var pressing = rows.Count(r => r.Horizon == Horizon.Now);

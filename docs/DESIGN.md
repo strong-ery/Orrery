@@ -130,9 +130,15 @@ the right-hand panel restates the answers as sentences.
 * Delete removes the goal, its steps, its history and every link pointing at it. Undo is offered for ten seconds for delete and put away (`MainViewModel.Undo`, a JSON snapshot taken just before).
 * "Put away" (`Goal.Archived`) hides a goal without losing it; the list ends with a "Put away (n)" toggle to bring them back. Finished goals collect under FINISHED.
 
-## Orbit map, second pass
+## Timeline (Goals, first view)
 
-Circular, top-down. A planet's size is how much work is left (log scale of remaining minutes), its glow is pressure, a brass pip with a number means it has that many things on today's list, and a ring goes out from a planet when its progress moves. Open a goal and everything not tied to it steps back. The slider under the map looks ahead up to 60 days: planets glide between rings as deadlines close in.
+Replaces the orbit map, which read as decoration. One lane per bucket (Obligations, Routines, Passions), time left to right, today as a brass line. Each goal is a bar from when it started to its deadline; the filled part is progress (a share of the whole span, even when the start is off the left edge), the notch is the deadline (brass when pressing or late), and the next step is written beside the name. Goals with no deadline are a dotted line forward from today, with a tick wherever a repeating goal comes due. Brass dots on a bar are days you planned on the calendar. Six weeks or six months; click a row to open it. Built by `TimelineModel` (Core, tested) and drawn by `TimelineCanvas`.
+
+## Planning on the calendar
+
+"Plan" on the Calendar page works on a draft copy of your data, so nothing changes until Apply. Drag a step (or a goal with no steps) from "To place" onto a day, drag a planned chip to another day, or drag it back to the side panel to unplan. Each day has a thin load bar: planned minutes against `Settings.DayCapacityMinutes` ("A full day of work" in Settings), turning red when over. "Preview Today" lists what would join and leave Today's list, and what Today would be. Apply copies `PlannedFor` onto the real steps and goals.
+
+`PlannedFor` is a promise, not a lock: planned for today puts the step on Today's list; planned for a later day holds it back unless its goal is already pressing (`Planner.MustDo`); a missed planned day rolls onto today. Logic lives in `Scheduling` (Core) and the planner.
 
 ## Waiting view
 

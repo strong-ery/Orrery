@@ -5,21 +5,27 @@
              x:Class="Orrery.App.Views.GoalsView"
              x:DataType="vm:GoalsViewModel">
     <DockPanel Margin="32,24,32,24">
-        <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,12" ColumnSpacing="10">
+        <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto,Auto" Margin="0,0,0,12" ColumnSpacing="10">
             <StackPanel Spacing="2" VerticalAlignment="Center">
                 <TextBlock Classes="page-title" Text="Goals" />
                 <TextBlock Classes="field-hint" FontSize="12" Text="{Binding Summary}" IsVisible="{Binding !AsGraph}" />
                 <TextBlock Classes="field-hint" FontSize="12" Text="{Binding FlowSummary}" IsVisible="{Binding AsGraph}" />
             </StackPanel>
-            <Button Grid.Column="1" Classes="action" Command="{Binding NewGoalCommand}" VerticalAlignment="Center">
+            <Border Grid.Column="1" Classes="chip" Padding="3" VerticalAlignment="Center" IsVisible="{Binding AsTimeline}">
+                <StackPanel Orientation="Horizontal" Spacing="2">
+                    <Button Classes="seg" Classes.active="{Binding ShortSpan}" Content="6 weeks" Command="{Binding ShowShortSpanCommand}" />
+                    <Button Classes="seg" Classes.active="{Binding LongSpan}" Content="6 months" Command="{Binding ShowLongSpanCommand}" />
+                </StackPanel>
+            </Border>
+            <Button Grid.Column="2" Classes="action" Command="{Binding NewGoalCommand}" VerticalAlignment="Center">
                 <StackPanel Orientation="Horizontal" Spacing="7">
                     <PathIcon Data="{StaticResource IconAdd}" Width="11" Height="11" />
                     <TextBlock Text="New goal" />
                 </StackPanel>
             </Button>
-            <Border Grid.Column="2" Classes="chip" Padding="3" VerticalAlignment="Center">
+            <Border Grid.Column="3" Classes="chip" Padding="3" VerticalAlignment="Center">
                 <StackPanel Orientation="Horizontal" Spacing="2">
-                    <Button Classes="seg" Classes.active="{Binding AsOrbit}" Content="Orbit" Command="{Binding ShowOrbitCommand}" />
+                    <Button Classes="seg" Classes.active="{Binding AsTimeline}" Content="Timeline" Command="{Binding ShowTimelineCommand}" />
                     <Button Classes="seg" Classes.active="{Binding AsList}" Content="List" Command="{Binding ShowListCommand}" />
                     <Button Classes="seg" Classes.active="{Binding AsGraph}" Content="Waiting" Command="{Binding ShowGraphCommand}"
                             ToolTip.Tip="What waits for what" />
@@ -34,19 +40,13 @@
             </StackPanel>
         </Border>
 
-        <!-- The scrubber: how the map looks a few days from now -->
-        <Grid DockPanel.Dock="Bottom" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="12" Margin="0,8,0,0" Width="480"
-              HorizontalAlignment="Center" IsVisible="{Binding AsOrbit}">
-            <TextBlock Text="Today" Classes="field-hint" VerticalAlignment="Center" />
-            <Slider Grid.Column="1" Minimum="0" Maximum="60" Value="{Binding LookAhead}" VerticalAlignment="Center" />
-            <TextBlock Grid.Column="2" Text="{Binding LookAheadText}" Classes="field-hint" MinWidth="110" TextAlignment="Right" VerticalAlignment="Center" />
-            <Button Grid.Column="3" Classes="ghost" Content="Reset" Command="{Binding ResetLookAheadCommand}" IsVisible="{Binding IsLookingAhead}" />
-        </Grid>
-
         <Grid>
-        <!-- Orbit: rings are how soon it'll want you, sectors are the buckets -->
-        <views:OrbitCanvas IsVisible="{Binding AsOrbit}" Bodies="{Binding Bodies}" SelectedId="{Binding SelectedId}"
-                           BodyCommand="{Binding OpenCommand}" CoreCount="{Binding TodayCount}" CoreDone="{Binding DoneToday}" />
+        <!-- Timeline: a lane per bucket, time left to right -->
+        <ScrollViewer IsVisible="{Binding AsTimeline}" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+            <views:TimelineCanvas Lanes="{Binding Lanes}" Accents="{Binding GoalColors}" SpanDays="{Binding Span}"
+                                  SelectedId="{Binding SelectedId}" BarCommand="{Binding OpenCommand}"
+                                  HorizontalAlignment="Stretch" VerticalAlignment="Top" Margin="0,0,0,16" />
+        </ScrollViewer>
 
         <!-- Waiting: dependencies, left to right -->
         <Grid IsVisible="{Binding AsGraph}">
