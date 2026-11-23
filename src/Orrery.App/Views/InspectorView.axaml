@@ -71,24 +71,26 @@
                 <ItemsControl ItemsSource="{Binding Steps}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="vm:InspectorStepViewModel">
-                            <Border Classes="line" Opacity="{Binding Opacity}">
+                            <Border Classes="line" Opacity="{Binding Opacity}" Margin="{Binding Indent}">
                                 <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10">
                                     <Button Classes="check" Classes.done="{Binding Done}" Command="{Binding ToggleCommand}"
-                                            VerticalAlignment="Top" Margin="0,1,0,0">
+                                            VerticalAlignment="Top" Margin="0,1,0,0" IsVisible="{Binding IsLeaf}">
                                         <PathIcon Data="{StaticResource IconCheck}" />
                                     </Button>
+                                    <PathIcon Data="{StaticResource IconCheck}" Width="12" Height="12" VerticalAlignment="Top" Margin="2,3,0,0"
+                                              Foreground="{DynamicResource AppAccentBrush}" IsVisible="{Binding IsSection}" />
                                     <StackPanel Grid.Column="1" Spacing="1">
                                         <TextBlock Text="{Binding Title}" FontSize="13" TextWrapping="Wrap"
-                                                   Foreground="{DynamicResource AppIconBrush}" />
+                                                   FontWeight="{Binding TitleWeight}" Foreground="{DynamicResource AppIconBrush}" />
                                         <TextBlock Classes="field-hint" Text="{Binding Detail}" />
                                         <TextBlock FontSize="11" Foreground="{DynamicResource AppWarnBrush}" Text="{Binding BlockedText}"
                                                    IsVisible="{Binding IsBlocked}" TextWrapping="Wrap" />
                                     </StackPanel>
                                     <Button Grid.Column="2" Classes="icon" Command="{Binding StartCommand}" IsEnabled="{Binding CanStart}"
-                                            ToolTip.Tip="Start working on this step">
+                                            IsVisible="{Binding IsLeaf}" ToolTip.Tip="Start working on this step">
                                         <PathIcon Data="{StaticResource IconPlay}" />
                                     </Button>
-                                    <Button Grid.Column="3" Classes="icon" Command="{Binding RemoveCommand}" ToolTip.Tip="Remove step">
+                                    <Button Grid.Column="3" Classes="icon" Command="{Binding RemoveCommand}" ToolTip.Tip="Remove (a section takes its steps with it)">
                                         <PathIcon Data="{StaticResource IconClose}" />
                                     </Button>
                                 </Grid>
@@ -103,7 +105,18 @@
                             <KeyBinding Gesture="Enter" Command="{Binding AddStepCommand}" />
                         </TextBox.KeyBindings>
                     </TextBox>
-                    <Button Grid.Column="1" Classes="action primary" Content="Add" Command="{Binding AddStepCommand}" />
+                    <Button Grid.Column="1" Classes="action primary" Content="Add step" Command="{Binding AddStepCommand}" />
+                </Grid>
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <ComboBox Classes="orrery-combo" ItemsSource="{Binding ParentOptions}" SelectedIndex="{Binding ParentIndex}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate x:DataType="vm:WaitOption">
+                                <TextBlock Text="{Binding Label}" TextTrimming="CharacterEllipsis" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                    <Button Grid.Column="1" Classes="action" Content="Add as section" Command="{Binding AddSectionCommand}"
+                            ToolTip.Tip="A section groups steps, like a unit with its readings and exercises" />
                 </Grid>
                 <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
                     <ComboBox Classes="orrery-combo" ItemsSource="{Binding EnergyNames}" SelectedIndex="{Binding NewStepEnergy}" />

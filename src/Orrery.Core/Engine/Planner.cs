@@ -50,9 +50,9 @@ public static class Planner
             var category = data.CategoryOf(goal);
 
             // A goal with unfinished steps offers its next available step; otherwise it offers itself.
-            if (goal.Steps.Any(s => !s.Done))
+            if (goal.Leaves().Any(s => !s.Done))
             {
-                var next = goal.Steps.FirstOrDefault(s =>
+                var next = goal.Leaves().FirstOrDefault(s =>
                     !s.Done && graph.BlockedReason(s, today) is null && (!request.LowEnergy || s.Energy == Energy.Low));
                 if (next is null)
                     continue;
@@ -129,7 +129,7 @@ public static class Planner
             goal.Id,
             step?.Id,
             step?.Title ?? goal.Title,
-            goal.Title,
+            step is not null && goal.ParentOf(step) is { } section ? $"{goal.Title} › {section.Title}" : goal.Title,
             category,
             step?.Energy ?? goal.DefaultEnergy,
             step?.EstimateMinutes,

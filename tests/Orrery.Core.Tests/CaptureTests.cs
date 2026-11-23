@@ -39,8 +39,8 @@ public class CaptureTests
 
         QuickCapture.Apply(data, p, Monday);
         var bio = data.Goals.First(g => g.Title == "Biology 101");
-        Assert.Equal(5, bio.Steps.Count);
-        Assert.Equal(bio.Steps[3].Id, Assert.Single(bio.Steps[4].DependsOn));
+        Assert.Equal(17, bio.Steps.Count);
+        Assert.Equal(bio.Steps.First(s => s.Title == "Unit 4").Id, Assert.Single(bio.Steps.Last().DependsOn));
     }
 
     [Fact]
@@ -126,7 +126,7 @@ public class CaptureTests
 
         Assert.Equal("Biology 101 (fall)", bio.Title);
         Assert.Equal(Monday.AddDays(40), bio.Deadline);
-        Assert.Equal(4, bio.Steps.Count);
+        Assert.Equal(16, bio.Steps.Count);
     }
 
     [Fact]

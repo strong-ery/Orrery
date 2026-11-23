@@ -21,7 +21,8 @@ public sealed record CapturePreview(
     int? Minutes = null,
     CategoryRole? Role = null,
     Rhythm? Rhythm = null,
-    double PerWeekMinutes = 0)
+    double PerWeekMinutes = 0,
+    Step? Parent = null)
 {
     public bool CanApply => Kind != CaptureKind.None && Problem is null;
 }
@@ -125,18 +126,29 @@ public static class QuickCapture
         text = Take(text, @"\safter (.+?)(?=\s+in\s|\s*$)", m => afterName = m.Groups[1].Value.Trim());
 
         var inGoal = Regex.Match(text, @"\sin (.+?)\s*$");
-        if (goalName is null && inGoal.Success && FindGoal(data, inGoal.Groups[1].Value) is not null)
+        Step? parent = null;
+        if (goalName is null && inGoal.Success)
         {
-            goalName = inGoal.Groups[1].Value;
-            text = text[..inGoal.Index] + " ";
+            var name = inGoal.Groups[1].Value;
+            if (FindGoal(data, name) is not null)
+            {
+                goalName = name;
+                text = text[..inGoal.Index] + " ";
+            }
+            else if (FindStep(data, null, name) is { } section)
+            {
+                // "Quiz in Unit 2": no goal by that name, but a step by that name becomes the section.
+                parent = section;
+                text = text[..inGoal.Index] + " ";
+            }
         }
 
         var title = text.Trim();
-        Goal? target = null;
+        Goal? target = parent is null ? null : data.Goals.First(g => g.Steps.Contains(parent));
         if (goalName is not null)
         {
             target = FindGoal(data, goalName);
-            if (target is null)
+            if (parent is null && target is null)
                 problem ??= $"No goal matches “{goalName}”.";
         }
 
@@ -157,13 +169,15 @@ public static class QuickCapture
         {
             if (deadline is not null)
                 chips.Remove(chips.FirstOrDefault(c => c.StartsWith("due ")) ?? "");
-            var parts = new List<string> { $"Add step “{title}” to {target.Title}" };
+            var parts = new List<string> { parent is null
+                ? $"Add step “{title}” to {target.Title}"
+                : $"Add step “{title}” inside “{parent.Title}” ({target.Title})" };
             if (after is not null)
                 parts.Add($"after “{after.Title}”");
             if (blockedUntil is { } from)
                 parts.Add($"not before {from:MMM d}");
             return new CapturePreview(CaptureKind.NewStep, title, string.Join(" · ", parts), chips, problem,
-                target, after, blockedUntil, null, energy, minutes, null, null, 0);
+                target, after, blockedUntil, null, energy, minutes, null, null, 0, parent);
         }
 
         var finalRole = role ?? rhythm?.Kind switch
@@ -192,6 +206,7 @@ public static class QuickCapture
                 Energy = p.Energy ?? Models.Energy.Medium,
                 EstimateMinutes = p.Minutes,
                 BlockedUntil = p.BlockedUntil,
+                ParentId = p.Parent?.Id,
             };
             if (p.After is { } after)
                 step.DependsOn.Add(after.Id);

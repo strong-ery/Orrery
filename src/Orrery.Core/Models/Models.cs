@@ -77,6 +77,12 @@ public sealed class Step
     public bool Done { get; set; }
     public int DeferCount { get; set; }
 
+    /// <summary>The section this step sits in, or null at the top level. A step with children is a section.</summary>
+    public Guid? ParentId { get; set; }
+
+    /// <summary>Marks a section explicitly, so one with nothing in it yet is still a section.</summary>
+    public bool IsGroup { get; set; }
+
     /// <summary>Not available before this day, for things like "waiting for a reply" or "opens Friday".</summary>
     public DateOnly? BlockedUntil { get; set; }
 

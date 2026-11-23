@@ -29,7 +29,7 @@ public static class Progress
     public static double Target(Goal g) => g.Measure.Kind switch
     {
         MeasureKind.Done => 1,
-        MeasureKind.Steps => g.Steps.Count,
+        MeasureKind.Steps => g.Leaves().Count(),
         _ => g.Measure.Target,
     };
 
@@ -52,7 +52,7 @@ public static class Progress
     /// <summary>Total progress right now. Steps count what is ticked, so editing the list stays honest.</summary>
     public static double Current(Goal g, IEnumerable<Contribution> log) =>
         g.Measure.Kind == MeasureKind.Steps
-            ? g.Steps.Count(s => s.Done)
+            ? g.Leaves().Count(s => s.Done)
             : Through(g, log, DateOnly.MaxValue);
 
     public static bool IsComplete(Goal g, IEnumerable<Contribution> log)

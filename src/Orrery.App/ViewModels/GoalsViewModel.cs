@@ -73,12 +73,12 @@ public partial class GoalRowViewModel : ObservableObject
         Horizon = Horizons.Of(goal, log, today);
 
         var graph = new DependencyGraph(data.Goals, g => Progress.IsComplete(g, log));
-        Steps = new ObservableCollection<StepRowViewModel>(goal.Steps.Select(s => new StepRowViewModel(s, graph, today)));
+        Steps = new ObservableCollection<StepRowViewModel>(goal.Leaves().Select(s => new StepRowViewModel(s, graph, today)));
         BlockedText = graph.BlockedReason(goal, today) ?? "";
         IsComplete = Progress.IsComplete(goal, log);
 
-        var done = goal.Steps.Count(s => s.Done);
-        StepSummary = goal.Steps.Count == 0 ? "" : $"{done}/{goal.Steps.Count} steps";
+        var leaves = goal.Leaves().ToList();
+        StepSummary = leaves.Count == 0 ? "" : $"{leaves.Count(s => s.Done)}/{leaves.Count} steps";
     }
 
     public Action<Guid>? OnOpen { get; set; }

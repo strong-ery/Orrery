@@ -27,12 +27,18 @@ public static class SampleData
             Rhythm = RhythmKind.Cadence, PerWeek = 240,
         });
         prism.Created = today;
+        var format = new Step { Title = "Project file format" };
+        var viewer = new Step { Title = "BYML viewer" };
         prism.Steps =
         [
-            new Step { Title = "Sketch the project file format", Energy = Energy.High, EstimateMinutes = 60 },
-            new Step { Title = "Rename the sample assets", Energy = Energy.Low, EstimateMinutes = 15 },
-            new Step { Title = "Wire up the BYML viewer", Energy = Energy.Medium, EstimateMinutes = 45 },
+            format,
+            new Step { Title = "Sketch the layout", ParentId = format.Id, Energy = Energy.High, EstimateMinutes = 60 },
+            new Step { Title = "Rename the sample assets", ParentId = format.Id, Energy = Energy.Low, EstimateMinutes = 15 },
+            viewer,
+            new Step { Title = "Parse the header", ParentId = viewer.Id, Energy = Energy.Medium, EstimateMinutes = 45 },
+            new Step { Title = "Show nodes in a tree", ParentId = viewer.Id, Energy = Energy.Medium, EstimateMinutes = 60 },
         ];
+        DependencyGraph.Chain(new List<Step> { format, viewer });
 
         var school = Add(data, today, new DesignAnswers
         {
@@ -47,10 +53,18 @@ public static class SampleData
             Title = "Biology 101", Role = CategoryRole.Obligation, Measure = MeasureKind.Steps, HasFinishLine = true,
             Deadline = today.AddDays(28), Energy = Energy.Medium,
         });
-        bio.Steps = Enumerable.Range(1, 4)
-            .Select(n => new Step { Title = $"Unit {n}", Energy = Energy.Medium, EstimateMinutes = 90 })
-            .ToList();
-        DependencyGraph.Chain(bio.Steps);
+        // Each unit is a section of small steps, and each unit waits for the one before it.
+        var units = new List<Step>();
+        for (var n = 1; n <= 4; n++)
+        {
+            var unit = new Step { Title = $"Unit {n}", Energy = Energy.Medium };
+            units.Add(unit);
+            bio.Steps.Add(unit);
+            bio.Steps.Add(new Step { Title = "Read the chapter", ParentId = unit.Id, Energy = Energy.Medium, EstimateMinutes = 40 });
+            bio.Steps.Add(new Step { Title = "Write up notes", ParentId = unit.Id, Energy = Energy.Low, EstimateMinutes = 20 });
+            bio.Steps.Add(new Step { Title = "Practice questions", ParentId = unit.Id, Energy = Energy.High, EstimateMinutes = 30 });
+        }
+        DependencyGraph.Chain(units);
 
         return data;
     }

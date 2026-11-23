@@ -78,7 +78,7 @@ public partial class FocusViewModel : ObservableObject
         var goal = _main.FindGoal(state.GoalId)!;
         var step = state.StepId is { } id ? goal.Steps.FirstOrDefault(s => s.Id == id) : null;
         Title = step?.Title ?? goal.Title;
-        GoalTitle = step is null ? "" : goal.Title;
+        GoalTitle = step is null ? "" : step.ParentId is not null && goal.ParentOf(step) is { } sec ? $"{goal.Title} › {sec.Title}" : goal.Title;
         Tag = state.Tag;
         IsPaused = state.PausedAt is not null;
         IsWrapUp = false;

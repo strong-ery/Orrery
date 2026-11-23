@@ -192,9 +192,11 @@ public partial class MainViewModel : ObservableObject
     {
         if (FindGoal(goalId) is not { } goal)
             return;
-        goal.Steps.RemoveAll(s => s.Id == stepId);
+        var before = goal.Steps.Select(s => s.Id).ToHashSet();
+        goal.RemoveStep(stepId);
+        var gone = before.Except(goal.Steps.Select(s => s.Id)).ToHashSet();
         foreach (var other in Data.Goals.SelectMany(g => g.Steps))
-            other.DependsOn.Remove(stepId);
+            other.DependsOn.RemoveAll(gone.Contains);
         Changed();
     }
 }

@@ -31,10 +31,16 @@ public sealed class DependencyGraph
     {
         if (_steps.TryGetValue(node, out var step))
         {
-            foreach (var id in step.DependsOn)
-                if (_steps.ContainsKey(id))
-                    yield return id;
-            foreach (var id in _goalOfStep[node].DependsOnGoals)
+            var owner = _goalOfStep[node];
+            // A step waits for what it names, and for what every section around it names.
+            for (var s = step; s is not null; s = owner.ParentOf(s))
+                foreach (var id in s.DependsOn)
+                    if (_steps.ContainsKey(id))
+                        yield return id;
+            // A section is finished when its children are.
+            foreach (var child in owner.ChildrenOf(step))
+                yield return child.Id;
+            foreach (var id in owner.DependsOnGoals)
                 if (_goals.ContainsKey(id))
                     yield return id;
         }
@@ -108,16 +114,17 @@ public sealed class DependencyGraph
     /// <summary>Why a step can't be started today, or null when it can.</summary>
     public string? BlockedReason(Step step, DateOnly today)
     {
-        if (step.BlockedUntil is { } until && until > today)
-            return $"Waiting until {until:MMM d}";
+        _goalOfStep.TryGetValue(step.Id, out var goal);
+        for (var s = step; s is not null; s = goal?.ParentOf(s))
+        {
+            if (s.BlockedUntil is { } until && until > today)
+                return $"Waiting until {until:MMM d}";
+            foreach (var id in s.DependsOn)
+                if (_steps.TryGetValue(id, out var pre) && !_goalOfStep[id].IsDone(pre))
+                    return $"Needs “{pre.Title}” first";
+        }
 
-        foreach (var id in step.DependsOn)
-            if (_steps.TryGetValue(id, out var pre) && !pre.Done)
-                return $"Needs “{pre.Title}” first";
-
-        if (_goalOfStep.TryGetValue(step.Id, out var goal))
-            return BlockedReason(goal, today);
-        return null;
+        return goal is null ? null : BlockedReason(goal, today);
     }
 
     /// <summary>Why a goal can't be started today, or null when it can.</summary>
@@ -134,7 +141,7 @@ public sealed class DependencyGraph
     {
         var count = 0;
         foreach (var other in _steps.Values)
-            if (!other.Done && other.Id != stepId && Requires(other.Id, stepId))
+            if (!other.Done && other.Id != stepId && !_goalOfStep[other.Id].IsSection(other) && Requires(other.Id, stepId))
                 count++;
         return count;
     }

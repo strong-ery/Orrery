@@ -14,27 +14,46 @@ public sealed partial class InspectorStepViewModel : ObservableObject
     private readonly Guid _goalId;
     private readonly Guid _stepId;
 
-    public InspectorStepViewModel(MainViewModel main, Goal goal, Step step, DependencyGraph graph, bool highlighted)
+    public InspectorStepViewModel(MainViewModel main, Goal goal, Step step, DependencyGraph graph, bool highlighted, int depth)
     {
         _main = main;
         _goalId = goal.Id;
         _stepId = step.Id;
         Title = step.Title;
-        Done = step.Done;
+        IsSection = goal.IsSection(step);
+        Done = goal.IsDone(step);
         IsHighlighted = highlighted;
-        var blocked = step.Done ? null : graph.BlockedReason(step, MainViewModel.Today);
+        Indent = new Avalonia.Thickness(depth * 18, 0, 0, 0);
+        var blocked = Done ? null : graph.BlockedReason(step, MainViewModel.Today);
         BlockedText = blocked ?? "";
         IsBlocked = blocked is not null;
-        Detail = string.Join(" · ", new[]
+        var estimate = goal.EstimateOf(step);
+        if (IsSection)
         {
-            step.Energy switch { Energy.Low => "low", Energy.High => "high", _ => "medium" } + " energy",
-            step.EstimateMinutes is { } m ? $"~{m} min" : "",
-            step.DeferCount >= 3 ? "put off a few times" : "",
-        }.Where(s => s.Length > 0));
-        CanStart = !step.Done && !IsBlocked && !main.Focus.IsVisible;
-        Opacity = step.Done ? 0.45 : IsBlocked ? 0.65 : 1;
+            var (d, total) = goal.CountOf(step);
+            Detail = string.Join(" · ", new[]
+            {
+                $"{d}/{total} steps",
+                estimate is { } e ? $"~{e} min" : "",
+            }.Where(s => s.Length > 0));
+        }
+        else
+        {
+            Detail = string.Join(" · ", new[]
+            {
+                step.Energy switch { Energy.Low => "low", Energy.High => "high", _ => "medium" } + " energy",
+                estimate is { } m ? $"~{m} min" : "",
+                step.DeferCount >= 3 ? "put off a few times" : "",
+            }.Where(s => s.Length > 0));
+        }
+        CanStart = !IsSection && !Done && !IsBlocked && !main.Focus.IsVisible;
+        Opacity = Done ? 0.45 : IsBlocked ? 0.65 : 1;
     }
 
+    public bool IsSection { get; }
+    public bool IsLeaf => !IsSection;
+    public Avalonia.Media.FontWeight TitleWeight => IsSection ? Avalonia.Media.FontWeight.SemiBold : Avalonia.Media.FontWeight.Normal;
+    public Avalonia.Thickness Indent { get; }
     public string Title { get; }
     public bool Done { get; }
     public bool IsHighlighted { get; }
@@ -88,6 +107,8 @@ public partial class InspectorViewModel : ObservableObject
     public ObservableCollection<WaitOption> WaitOptions { get; } = [];
     public ObservableCollection<DependencyChipViewModel> Dependencies { get; } = [];
     public ObservableCollection<WaitOption> DependencyCandidates { get; } = [];
+    public ObservableCollection<WaitOption> ParentOptions { get; } = [];
+    [ObservableProperty] private int _parentIndex;
     public string[] EnergyNames { get; } = ["Low energy", "Medium energy", "High energy"];
 
     [ObservableProperty] private bool _isOpen;
@@ -143,18 +164,30 @@ public partial class InspectorViewModel : ObservableObject
 
         var graph = new DependencyGraph(data.Goals, g => Progress.IsComplete(g, log));
         Steps.Clear();
-        foreach (var step in goal.Steps)
-            Steps.Add(new InspectorStepViewModel(_main, goal, step, graph, step.Id == _stepId));
+        void Walk(Step step, int depth)
+        {
+            Steps.Add(new InspectorStepViewModel(_main, goal, step, graph, step.Id == _stepId, depth));
+            foreach (var child in goal.ChildrenOf(step))
+                Walk(child, depth + 1);
+        }
+        foreach (var root in goal.Roots())
+            Walk(root, 0);
         HasSteps = Steps.Count > 0;
-        CanChain = goal.Steps.Count(s => !s.Done) > 1;
+        CanChain = goal.Roots().Count(s => !goal.IsDone(s)) > 1;
 
         WaitOptions.Clear();
         WaitOptions.Add(new WaitOption("Can start any time", null));
-        foreach (var s in goal.Steps.Where(s => !s.Done))
+        foreach (var s in goal.Steps.Where(s => !goal.IsDone(s)))
             WaitOptions.Add(new WaitOption($"After “{s.Title}”", s.Id));
+        ParentOptions.Clear();
+        ParentOptions.Add(new WaitOption("Top level", null));
+        foreach (var s in goal.Steps.Where(s => !s.Done))
+            ParentOptions.Add(new WaitOption($"Inside “{s.Title}”", s.Id));
         // Replacing a ComboBox's items clears its selection, so put the first option back.
         WaitIndex = 0;
         OnPropertyChanged(nameof(WaitIndex));
+        ParentIndex = 0;
+        OnPropertyChanged(nameof(ParentIndex));
 
         var kind = goal.Measure.Kind;
         ShowLog = kind is MeasureKind.Amount or MeasureKind.Time;
@@ -209,26 +242,42 @@ public partial class InspectorViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void AddStep()
+    private void AddStep() => Add(asSection: false);
+
+    /// <summary>A section starts empty; steps go inside it by picking it under "Inside".</summary>
+    [RelayCommand]
+    private void AddSection() => Add(asSection: true);
+
+    private void Add(bool asSection)
     {
         if (CurrentGoal is not { } goal || string.IsNullOrWhiteSpace(NewStepTitle))
             return;
         var step = new Step { Title = NewStepTitle.Trim(), Energy = (Energy)NewStepEnergy };
+        if (ParentIndex > 0 && ParentIndex < ParentOptions.Count)
+            step.ParentId = ParentOptions[ParentIndex].Id;
         if (WaitIndex > 0 && WaitIndex < WaitOptions.Count && WaitOptions[WaitIndex].Id is { } waitsFor)
             step.DependsOn.Add(waitsFor);
-        goal.Steps.Add(step);
+        step.IsGroup = asSection;
+        // Keep a section's children next to it so the stored order reads like the screen.
+        var at = goal.Steps.Count;
+        if (step.ParentId is { } parentId)
+        {
+            var last = goal.Steps.FindLastIndex(s => s.ParentId == parentId || s.Id == parentId);
+            if (last >= 0)
+                at = last + 1;
+        }
+        goal.Steps.Insert(at, step);
         NewStepTitle = "";
-        WaitIndex = 0;
         _main.Changed();
     }
 
-    /// <summary>"Do these in order": every unfinished step waits for the one before it.</summary>
+    /// <summary>"Do these in order": every unfinished top-level entry waits for the one before it.</summary>
     [RelayCommand]
     private void ChainSteps()
     {
         if (CurrentGoal is not { } goal)
             return;
-        DependencyGraph.Chain(goal.Steps.Where(s => !s.Done).ToList());
+        DependencyGraph.Chain(goal.Roots().Where(s => !goal.IsDone(s)).ToList());
         _main.Changed();
     }
 
