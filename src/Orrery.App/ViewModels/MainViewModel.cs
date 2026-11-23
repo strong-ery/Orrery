@@ -204,6 +204,7 @@ public partial class MainViewModel : ObservableObject
     {
         var goal = Data.Goals.First(g => g.Id == item.GoalId);
         var step = item.StepId is { } id ? goal.Steps.First(s => s.Id == id) : null;
+        var before = JsonStore.ToJson(Data);
         if (step is not null)
             step.Done = true;
 
@@ -218,6 +219,8 @@ public partial class MainViewModel : ObservableObject
             Minutes = kind == MeasureKind.Time ? amount : 0,
         });
         Changed();
+        _undoSnapshot = before;
+        OfferUndo($"Marked “{step?.Title ?? goal.Title}” done");
     }
 
     /// <summary>Ticks or unticks a step. Unticking takes back the progress the tick gave, but keeps time already spent.</summary>
@@ -228,6 +231,7 @@ public partial class MainViewModel : ObservableObject
         if (step.Done == done)
             return;
 
+        var before = done ? JsonStore.ToJson(Data) : null;
         step.Done = done;
         var counts = goal.Measure.Kind is MeasureKind.Steps or MeasureKind.Done;
         if (done)
@@ -245,6 +249,11 @@ public partial class MainViewModel : ObservableObject
             }
         }
         Changed();
+        if (before is not null)
+        {
+            _undoSnapshot = before;
+            OfferUndo($"Marked “{step.Title}” done");
+        }
     }
 
     /// <summary>Logs progress against a goal directly: units, minutes, or a plain "done".</summary>
@@ -252,6 +261,7 @@ public partial class MainViewModel : ObservableObject
     {
         if (FindGoal(goalId) is not { } goal || amount <= 0)
             return;
+        var before = JsonStore.ToJson(Data);
         Data.Contributions.Add(new Contribution
         {
             GoalId = goal.Id,
@@ -260,6 +270,8 @@ public partial class MainViewModel : ObservableObject
             Minutes = goal.Measure.Kind == MeasureKind.Time ? amount : 0,
         });
         Changed();
+        _undoSnapshot = before;
+        OfferUndo($"Logged progress on “{goal.Title}”");
     }
 
     /// <summary>"Not today": the step (or the goal's own entry) steps out of the way until tomorrow.</summary>
@@ -326,7 +338,7 @@ public partial class MainViewModel : ObservableObject
         _undoSnapshot = null;
     }
 
-    /// <summary>Puts everything back the way it was before the last delete, archive or restore.</summary>
+    /// <summary>Puts everything back the way it was before the last delete, put away, or marking something done.</summary>
     [RelayCommand]
     public void Undo()
     {
