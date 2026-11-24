@@ -380,6 +380,9 @@ public partial class InspectorViewModel : ObservableObject
 
     public bool CanStart => IsOpen && !_main.Focus.IsVisible;
 
+    public Guid? OpenGoalId => IsOpen ? _goalId : null;
+    public Guid? OpenStepId => IsOpen ? _stepId : null;
+
     public void Open(Guid goalId, Guid? stepId)
     {
         if (_goalId != goalId)
@@ -394,6 +397,7 @@ public partial class InspectorViewModel : ObservableObject
         _stepId = stepId;
         IsOpen = true;
         Refresh();
+        _main.UiChanged();
     }
 
     /// <summary>"Break this into steps": reveals the add row on a goal that has none yet.</summary>
@@ -412,6 +416,7 @@ public partial class InspectorViewModel : ObservableObject
         IsOpen = false;
         _goalId = null;
         _main.GoalsPage.Refresh();
+        _main.UiChanged();
     }
 
     public void Refresh()

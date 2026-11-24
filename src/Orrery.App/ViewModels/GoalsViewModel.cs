@@ -194,7 +194,11 @@ public partial class GoalsViewModel : ObservableObject
     public bool ShortSpan => Span <= 42;
     public bool LongSpan => Span > 42;
 
-    partial void OnSpanChanged(int value) => Refresh();
+    partial void OnSpanChanged(int value)
+    {
+        Refresh();
+        _main.UiChanged();
+    }
 
     [RelayCommand]
     private void ShowShortSpan() => Span = 42;

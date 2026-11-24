@@ -92,8 +92,63 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void QuitApp() => (Avalonia.Application.Current as App)?.QuitApp();
 
+    // --- Remembering where you were ------------------------------------------------------------
+
+    private readonly Avalonia.Threading.DispatcherTimer _uiTimer = new() { Interval = TimeSpan.FromMilliseconds(700) };
+    private bool _restoring = true;
+
+    partial void OnCurrentChanged(ObservableObject value) => UiChanged();
+
+    /// <summary>Something about the layout changed; it is written out a moment later, so dragging a window is not a write per pixel.</summary>
+    public void UiChanged()
+    {
+        if (_restoring)
+            return;
+        _uiTimer.Stop();
+        _uiTimer.Start();
+    }
+
+    private string PageName => Current == GoalsPage ? "Goals" : Current == CalendarPage ? "Calendar" : Current == HistoryPage ? "History"
+        : Current == SettingsPage ? "Settings" : "Today";
+
+    public void SaveUiNow()
+    {
+        if (_restoring)
+            return;
+        _uiTimer.Stop();
+        var ui = Data.Settings.Ui;
+        ui.Page = PageName;
+        ui.TimelineSpan = GoalsPage.Span;
+        ui.OpenGoal = Inspector.OpenGoalId;
+        ui.OpenStep = Inspector.OpenStepId;
+        ui.CalendarMonth = CalendarPage.Month;
+        ui.CalendarDay = CalendarPage.Selected;
+        JsonStore.Save(Data);
+    }
+
+    private void RestoreUi()
+    {
+        var ui = Data.Settings.Ui;
+        GoalsPage.Span = ui.TimelineSpan is 42 or 180 ? ui.TimelineSpan : 42;
+        if (ui.CalendarMonth is { } month && ui.CalendarDay is { } day)
+            CalendarPage.Restore(month, day);
+        if (ui.OpenGoal is { } goalId && FindGoal(goalId) is { Archived: false })
+            Inspector.Open(goalId, ui.OpenStep);
+        RefreshAll();
+        Current = ui.Page switch
+        {
+            "Goals" => GoalsPage,
+            "Calendar" => CalendarPage,
+            "History" => HistoryPage,
+            "Settings" => SettingsPage,
+            _ => TodayPage,
+        };
+        _restoring = false;
+    }
+
     public MainViewModel()
     {
+        _uiTimer.Tick += (_, _) => SaveUiNow();
         Data = JsonStore.Load() ?? SampleData.Create(Today);
         SoftenOldColours(Data);
         JsonStore.Save(Data);
@@ -120,6 +175,7 @@ public partial class MainViewModel : ObservableObject
             }
         };
         RefreshAll();
+        RestoreUi();
     }
 
     /// <summary>Earlier builds saved brighter bucket colours; move those to the calmer set.</summary>

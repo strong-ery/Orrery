@@ -134,6 +134,17 @@ public sealed partial class CalendarViewModel : ObservableObject
 
     public CalendarViewModel(MainViewModel main) => _main = main;
 
+    public DateOnly Month => _month;
+    public DateOnly Selected => _selected;
+
+    /// <summary>Back to the month and day that were showing when the app was closed.</summary>
+    public void Restore(DateOnly month, DateOnly day)
+    {
+        _month = FirstOfMonth(month);
+        _selected = day;
+        Refresh();
+    }
+
     public ObservableCollection<TrayItemViewModel> Tray { get; } = [];
     public ObservableCollection<PreviewLine> Added { get; } = [];
     public ObservableCollection<PreviewLine> Removed { get; } = [];
@@ -232,6 +243,7 @@ public sealed partial class CalendarViewModel : ObservableObject
     {
         _month = _month.AddMonths(-1);
         Refresh();
+        _main.UiChanged();
     }
 
     [RelayCommand]
@@ -239,6 +251,7 @@ public sealed partial class CalendarViewModel : ObservableObject
     {
         _month = _month.AddMonths(1);
         Refresh();
+        _main.UiChanged();
     }
 
     [RelayCommand]
@@ -247,6 +260,7 @@ public sealed partial class CalendarViewModel : ObservableObject
         _month = FirstOfMonth(MainViewModel.Today);
         _selected = MainViewModel.Today;
         Refresh();
+        _main.UiChanged();
     }
 
     [RelayCommand]

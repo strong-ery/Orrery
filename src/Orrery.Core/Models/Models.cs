@@ -202,6 +202,34 @@ public sealed class Settings
 
     /// <summary>A focus session in progress. Stored so closing the app doesn't lose the timer.</summary>
     public FocusState? Focus { get; set; }
+
+    /// <summary>The page, window and panels as you left them.</summary>
+    public UiState Ui { get; set; } = new();
+}
+
+/// <summary>Where you left things, so Orrery reopens exactly as it was closed.</summary>
+public sealed class UiState
+{
+    /// <summary>Which page: Today, Goals, Calendar, History or Settings.</summary>
+    public string Page { get; set; } = "Today";
+
+    /// <summary>The window, as last seen in its normal (not maximized) state. Null until it has been moved or resized.</summary>
+    public int? WindowX { get; set; }
+    public int? WindowY { get; set; }
+    public double? WindowWidth { get; set; }
+    public double? WindowHeight { get; set; }
+    public bool Maximized { get; set; }
+
+    /// <summary>How far ahead the Goals timeline looks, in days.</summary>
+    public int TimelineSpan { get; set; } = 42;
+
+    /// <summary>The goal (and step) whose panel was open.</summary>
+    public Guid? OpenGoal { get; set; }
+    public Guid? OpenStep { get; set; }
+
+    /// <summary>The month and day the calendar was showing.</summary>
+    public DateOnly? CalendarMonth { get; set; }
+    public DateOnly? CalendarDay { get; set; }
 }
 
 public sealed class FocusState

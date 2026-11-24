@@ -30,6 +30,7 @@ public partial class App : Application
             _main = new MainViewModel();
             var window = new MainWindow { DataContext = _main, Icon = AppIcon.Create() };
             desktop.MainWindow = window;
+            window.RestorePlace(_main.Data.Settings.Ui);
             window.HiddenToTray += OnHiddenToTray;
 
             _nudges = new NudgeHost(_main, (goal, step) =>
@@ -80,6 +81,7 @@ public partial class App : Application
     public void QuitApp()
     {
         Quitting = true;
+        _main?.SaveUiNow();
         _desktop?.Shutdown();
     }
 
