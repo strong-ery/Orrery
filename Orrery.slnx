@@ -3,7 +3,4 @@
     <Project Path="src/Orrery.App/Orrery.App.csproj" />
     <Project Path="src/Orrery.Core/Orrery.Core.csproj" />
   </Folder>
-  <Folder Name="/tests/">
-    <Project Path="tests/Orrery.Core.Tests/Orrery.Core.Tests.csproj" />
-  </Folder>
 </Solution>
