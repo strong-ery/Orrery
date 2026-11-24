@@ -11,7 +11,7 @@ public static class WeekStart
 }
 
 /// <summary>One line of the review: what happened, and a little more about it.</summary>
-public sealed record ReviewNote(string Text, string Detail = "", Guid? GoalId = null);
+public sealed record ReviewNote(string Text, string Detail = "", Guid? GoalId = null, DateOnly? Day = null);
 
 /// <summary>Looking back at a finished week, and ahead at the one that has just started.</summary>
 public sealed record WeekReview(
@@ -84,7 +84,7 @@ public static class WeeklyReview
                      .Select(g => (Goal: g, Total: Progress.Between(g, log, from, to)))
                      .Where(x => x.Total > 0 && !Progress.IsComplete(x.Goal, log))
                      .OrderByDescending(x => x.Total).Take(3))
-            good.Add(new ReviewNote($"Moved {goal.Title} along", $"{Planner.Format(total)} {goal.Measure.UnitLabel}".Trim(), goal.Id));
+            good.Add(new ReviewNote($"Made progress on {goal.Title}", $"{Planner.Format(total)} {goal.Measure.UnitLabel} last week".Replace("  ", " "), goal.Id));
 
         // --- The bad ---
         foreach (var goal in goals.Where(g => g.Deadline is { } d && d >= from && d <= to && !Progress.IsComplete(g, log)))
@@ -115,11 +115,19 @@ public static class WeeklyReview
             .Where(e => e.Day >= thisStart && e.Day <= nextTo)
             .Where(e => e.Kind is CalendarKind.Deadline or CalendarKind.Part or CalendarKind.Planned or CalendarKind.Due)
             .OrderBy(e => e.Day)
-            .Select(e => new ReviewNote(e.Title, $"{e.Day:ddd MMM d} · {Label(e)}", e.GoalId))
+            .Select(e => new ReviewNote(e.Title, WhatAndWhere(data, e), e.GoalId, e.Day))
             .ToList();
 
         return new WeekReview(from, to, byDay.Count, week.Count, week.Sum(c => c.Minutes), week.Select(c => c.GoalId).Distinct().Count(),
             good, bad.Take(MostShown + 2).ToList(), ahead.Take(MostShown + 2).ToList(), thisStart, nextTo);
+    }
+
+    private static string WhatAndWhere(OrreryData data, CalendarEvent e)
+    {
+        var what = Label(e);
+        what = char.ToUpperInvariant(what[0]) + what[1..];
+        var goal = data.Goals.FirstOrDefault(g => g.Id == e.GoalId)?.Title;
+        return goal is null || goal == e.Title ? what : $"{what} · {goal}";
     }
 
     private static string Label(CalendarEvent e) => e.Kind switch

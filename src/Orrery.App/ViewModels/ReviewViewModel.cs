@@ -6,9 +6,12 @@ using Orrery.Core.Engine;
 
 namespace Orrery.App.ViewModels;
 
-public sealed record ReviewLine(string Text, string Detail)
+public sealed record ReviewLine(string Text, string Detail, DateOnly? Day = null)
 {
     public bool HasDetail => Detail.Length > 0;
+    public bool HasDay => Day is not null;
+    public string DayName => Day?.ToString("ddd", System.Globalization.CultureInfo.CurrentCulture) ?? "";
+    public string DayNumber => Day?.Day.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "";
 }
 
 /// <summary>
@@ -26,6 +29,7 @@ public sealed partial class ReviewViewModel : ObservableObject
     public ObservableCollection<ReviewLine> Ahead { get; } = [];
 
     [ObservableProperty] private string _title = "";
+    [ObservableProperty] private string _summary = "";
     [ObservableProperty] private string _aheadTitle = "";
     [ObservableProperty] private bool _quietWeek;
     [ObservableProperty] private bool _nothingSlipped;
@@ -36,7 +40,11 @@ public sealed partial class ReviewViewModel : ObservableObject
         var review = WeeklyReview.Build(_main.Data, MainViewModel.Today);
         var culture = CultureInfo.CurrentCulture;
         Title = $"{review.From.ToString("MMM d", culture)} to {review.To.ToString("MMM d", culture)}";
-        AheadTitle = $"This week, {review.NextFrom.ToString("MMM d", culture)} to {review.NextTo.ToString("MMM d", culture)}";
+        AheadTitle = $"{review.NextFrom.ToString("MMM d", culture)} to {review.NextTo.ToString("MMM d", culture)}";
+
+        Summary = review.WasQuiet
+            ? "Nothing was logged last week."
+            : $"You showed up on {review.DaysShowedUp} of 7 days and got {(review.ThingsDone == 1 ? "1 thing" : $"{review.ThingsDone} things")} done.";
 
         Stats.Clear();
         Stats.Add(new Stat($"{review.DaysShowedUp} / 7", "days with something done"));
@@ -55,7 +63,7 @@ public sealed partial class ReviewViewModel : ObservableObject
     {
         into.Clear();
         foreach (var n in notes)
-            into.Add(new ReviewLine(n.Text, n.Detail));
+            into.Add(new ReviewLine(n.Text, n.Detail, n.Day));
     }
 
     [RelayCommand]
