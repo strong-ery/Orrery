@@ -5,7 +5,7 @@ using Orrery.Core.Models;
 namespace Orrery.Core.Storage;
 
 /// <summary>
-/// A first-run example set, built through the same designer the app exposes, so it doubles as a demonstration
+/// An example set for tests, built through the same designer the app exposes, so it doubles as a demonstration
 /// that very different goals come from the same few answers.
 /// </summary>
 public static class SampleData

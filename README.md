@@ -8,7 +8,7 @@ dotnet run --project src/Orrery.App
 dotnet test
 ```
 
-Data lives in `%APPDATA%\Orrery\orrery.json`. The first run seeds a few example goals; archive them from the
-Goals page. See [docs/DESIGN.md](docs/DESIGN.md) for how it works and what's missing.
+Data lives in `%APPDATA%\Orrery\orrery.json`.
+See [docs/DESIGN.md](docs/DESIGN.md) for how it works and what's missing.
 
 Licensed under the AGPL-3.0, see `LICENSE`.

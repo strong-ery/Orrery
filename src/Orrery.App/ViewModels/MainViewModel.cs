@@ -149,7 +149,7 @@ public partial class MainViewModel : ObservableObject
     public MainViewModel()
     {
         _uiTimer.Tick += (_, _) => SaveUiNow();
-        Data = JsonStore.Load() ?? SampleData.Create(Today);
+        Data = JsonStore.Load() ?? new OrreryData();
         SoftenOldColours(Data);
         JsonStore.Save(Data);
 
