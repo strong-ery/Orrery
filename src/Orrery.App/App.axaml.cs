@@ -28,7 +28,7 @@ public partial class App : Application
             _desktop = desktop;
             desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
             _main = new MainViewModel();
-            var window = new MainWindow { DataContext = _main, Icon = AppIcon.Create() };
+            var window = new MainWindow { DataContext = _main, Icon = AppIcon.Window() };
             desktop.MainWindow = window;
             window.RestorePlace(_main.Data.Settings.Ui);
             window.HiddenToTray += OnHiddenToTray;
@@ -119,7 +119,7 @@ public partial class App : Application
 
         var tray = new TrayIcon
         {
-            Icon = AppIcon.Create(),
+            Icon = AppIcon.Tray(),
             ToolTipText = "Orrery",
             Menu = new NativeMenu { Items = { open, nudgeToggle, new NativeMenuItemSeparator(), quit } },
         };
