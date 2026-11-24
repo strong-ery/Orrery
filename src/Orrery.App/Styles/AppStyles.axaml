@@ -72,6 +72,17 @@
   <Style Selector="Button.top-menu-trigger:pointerover /template/ ContentPresenter">
     <Setter Property="Background" Value="{DynamicResource AppHoverBrush}" />
   </Style>
+  <Style Selector="FlyoutPresenter">
+    <Setter Property="Background" Value="{DynamicResource AppDialogBackgroundBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AppCardBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="10" />
+    <Setter Property="Padding" Value="5" />
+    <Setter Property="MinWidth" Value="220" />
+  </Style>
+  <Style Selector="FlyoutPresenter /template/ Border">
+    <Setter Property="BoxShadow" Value="0 12 32 0 #70000000" />
+  </Style>
   <Style Selector="MenuFlyoutPresenter">
     <Setter Property="Background" Value="{DynamicResource AppDialogBackgroundBrush}" />
     <Setter Property="BorderBrush" Value="{DynamicResource AppCardBorderBrush}" />
