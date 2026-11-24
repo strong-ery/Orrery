@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Interactivity;
 using Orrery.App.ViewModels;
 
 namespace Orrery.App.Views;
@@ -7,22 +8,12 @@ public partial class InspectorView : UserControl
 {
     public InspectorView() => InitializeComponent();
 
-    /// <summary>The goals this one could start after, built fresh each time the menu opens. Picking one adds it straight away.</summary>
-    private void OnStartAfterOpening(object? sender, EventArgs e)
+    /// <summary>Picking a goal in the "Start after" list: this goal now waits for it.</summary>
+    private void OnPickGoal(object? sender, RoutedEventArgs e)
     {
-        if (DataContext is not InspectorViewModel vm || sender is not MenuFlyout menu)
-            return;
-        menu.Items.Clear();
-        foreach (var option in vm.DependencyCandidates)
-        {
-            var item = new MenuItem { Header = option.Label };
-            var id = option.Id;
-            item.Click += (_, _) =>
-            {
-                if (id is { } goal)
-                    vm.WaitFor(goal);
-            };
-            menu.Items.Add(item);
-        }
+        if (DataContext is InspectorViewModel vm && (sender as Button)?.DataContext is WaitOption { Id: { } id })
+            vm.WaitFor(id);
+        (sender as Button)?.Flyout?.Hide();
+        StartAfter.Flyout?.Hide();
     }
 }

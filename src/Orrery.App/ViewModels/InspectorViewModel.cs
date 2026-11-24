@@ -61,6 +61,7 @@ public sealed partial class InspectorStepViewModel : ObservableObject
     public ObservableCollection<WaitOption> GoalChoices { get; } = [];
     [ObservableProperty] private int _editGoalIndex;
     [ObservableProperty] private bool _hasOtherGoals;
+    [ObservableProperty] private bool _hasGroups;
     public string[] EnergyNames { get; } = ["Low energy", "Medium energy", "High energy"];
 
     [ObservableProperty] private bool _isEditing;
@@ -81,9 +82,12 @@ public sealed partial class InspectorStepViewModel : ObservableObject
         EditEnergy = (int)step.Energy;
         var inside = goal.BlockOf(step).Select(b => b.Id).ToHashSet();
         ParentChoices.Clear();
-        ParentChoices.Add(new WaitOption("Top level", null));
-        foreach (var other in goal.Steps.Where(o => !inside.Contains(o.Id) && !o.Done))
-            ParentChoices.Add(new WaitOption($"Inside “{other.Title}”", other.Id));
+        ParentChoices.Add(new WaitOption("Not in a group", null));
+        // Only groups can hold steps, and a nested group is named by its path so equal names stay apart.
+        string PathOf(Step s) => s.ParentId is { } p && goal.Steps.FirstOrDefault(x => x.Id == p) is { } up ? $"{PathOf(up)} › {s.Title}" : s.Title;
+        foreach (var other in goal.Steps.Where(o => goal.IsSection(o) && !inside.Contains(o.Id) && !o.Done))
+            ParentChoices.Add(new WaitOption(PathOf(other), other.Id));
+        HasGroups = ParentChoices.Count > 1;
         var at = Math.Max(0, ParentChoices.ToList().FindIndex(c => c.Id == step.ParentId));
         EditParentIndex = -1;
         EditParentIndex = at;

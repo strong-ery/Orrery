@@ -124,8 +124,8 @@
                                                 <TextBox Classes="orrery-input" Text="{Binding EditMinutes}" PlaceholderText="Minutes (optional)" />
                                                 <ComboBox Grid.Column="1" Classes="orrery-combo" ItemsSource="{Binding EnergyNames}" SelectedIndex="{Binding EditEnergy}" />
                                             </Grid>
-                                            <StackPanel Spacing="3">
-                                                <TextBlock Classes="field-hint" Text="Where it sits" />
+                                            <StackPanel Spacing="3" IsVisible="{Binding HasGroups}">
+                                                <TextBlock Classes="field-hint" Text="Group" />
                                                 <ComboBox Classes="orrery-combo" ItemsSource="{Binding ParentChoices}" SelectedIndex="{Binding EditParentIndex}">
                                                     <ComboBox.ItemTemplate>
                                                         <DataTemplate x:DataType="vm:WaitOption">
@@ -208,7 +208,17 @@
             </StackPanel>
             <Button x:Name="StartAfter" Classes="ghost" HorizontalAlignment="Left" Padding="0,5" IsVisible="{Binding HasDependencyCandidates}">
                 <Button.Flyout>
-                    <MenuFlyout Placement="BottomEdgeAlignedLeft" Opening="OnStartAfterOpening" />
+                    <Flyout Placement="BottomEdgeAlignedLeft" ShowMode="Standard">
+                        <ItemsControl ItemsSource="{Binding DependencyCandidates}" MinWidth="200" MaxHeight="260">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:WaitOption">
+                                    <Button Classes="ghost" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Click="OnPickGoal">
+                                        <TextBlock Text="{Binding Label}" TextTrimming="CharacterEllipsis" />
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Flyout>
                 </Button.Flyout>
                 <StackPanel Orientation="Horizontal" Spacing="7">
                     <PathIcon Data="{StaticResource IconLater}" Width="11" Height="11" />
