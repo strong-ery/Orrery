@@ -30,6 +30,31 @@ public static class Planner
     /// <summary>Anything this pressing goes on the list whatever the bias says.</summary>
     public const double MustDo = 0.85;
 
+    /// <summary>How many steps of one goal can be offered at once, so a long goal shows what is open without taking over the list.</summary>
+    public const int PerGoal = 3;
+
+    /// <summary>
+    /// How hard the date of a group pulls on a step inside it: nothing without a date, rising over the three weeks
+    /// before it, and everything once it has passed. Also says why.
+    /// </summary>
+    private static (double Pull, string Note) GroupPull(Goal goal, Step step, DateOnly today)
+    {
+        double best = 0;
+        var note = "";
+        for (var group = goal.ParentOf(step); group is not null; group = goal.ParentOf(group))
+        {
+            if (GroupSchedule.DueOf(goal, group, today) is not { } due)
+                continue;
+            var days = due.DayNumber - today.DayNumber;
+            var pull = days < 0 ? 1 : 0.3 + 0.7 * (1 - Math.Clamp(days / 21.0, 0, 1));
+            if (pull <= best)
+                continue;
+            best = pull;
+            note = days < 0 ? $"{group.Title} was due {due:MMM d}" : days == 0 ? $"{group.Title} is due today" : $"{group.Title} is due {due:MMM d}";
+        }
+        return (best, note);
+    }
+
     public static IReadOnlyList<PlanItem> Suggest(OrreryData data, PlanRequest request)
     {
         var today = request.Today;
@@ -69,20 +94,40 @@ public static class Planner
             bool Open(Step s) => !s.Done && graph.BlockedReason(s, today) is null && (!request.LowEnergy || s.Energy == Energy.Low);
             if (goal.Leaves().Any(s => !s.Done))
             {
+                // One step as an item. A group with a date pulls on the steps inside it, whatever the goal as a whole is doing.
+                PlanItem ForStep(Step s)
+                {
+                    var (pull, note) = GroupPull(goal, s, today);
+                    var item = Make(goal, s, category, Math.Max(pressure, pull), graph.UnlockCount(s.Id), demand, today);
+                    if (pull > pressure)
+                        return item with { Reason = $"{note} · {item.Reason}" };
+                    return Soft(item);
+                }
+
                 // Steps you planned for today (or earlier, and never got to) come first, all of them.
                 var planned = goal.Leaves().Where(s => Open(s) && s.PlannedFor is { } d && d <= today).ToList();
                 if (planned.Count > 0)
                 {
                     foreach (var step in planned)
-                        candidates.Add(Soft(AsPlanned(Make(goal, step, category, pressure, graph.UnlockCount(step.Id), demand, today), step.PlannedFor!.Value, today)));
+                        candidates.Add(AsPlanned(ForStep(step), step.PlannedFor!.Value, today));
                     continue;
                 }
-                // Otherwise the next step, skipping any you planned for a later day unless the goal is truly pressing.
-                var next = goal.Leaves().FirstOrDefault(s =>
-                    Open(s) && (s.PlannedFor is null || pressure >= MustDo));
-                if (next is null)
-                    continue;
-                candidates.Add(Soft(Make(goal, next, category, pressure, graph.UnlockCount(next.Id), demand, today)));
+                // Otherwise everything that can be started now, the first few in order, skipping any you planned for
+                // a later day unless the goal is truly pressing. Later ones rank just under the one before.
+                // Steps in a group with a date that is near or past come before the rest, then stored order.
+                var ready = goal.Leaves()
+                    .Where(s => Open(s) && (s.PlannedFor is null || pressure >= MustDo))
+                    .Select((s, order) => (Step: s, Order: order, Pull: GroupPull(goal, s, today).Pull))
+                    .OrderByDescending(x => x.Pull)
+                    .ThenBy(x => x.Order)
+                    .Take(PerGoal)
+                    .Select(x => x.Step)
+                    .ToList();
+                for (var i = 0; i < ready.Count; i++)
+                {
+                    var item = ForStep(ready[i]);
+                    candidates.Add(i == 0 ? item : item with { Score = item.Score - 0.35 * i });
+                }
             }
             else
             {
