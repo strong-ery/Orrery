@@ -149,7 +149,7 @@ public partial class MainViewModel : ObservableObject
     public MainViewModel()
     {
         _uiTimer.Tick += (_, _) => SaveUiNow();
-        Data = JsonStore.Load() ?? new OrreryData();
+        Data = JsonStore.Load() ?? OrreryData.CreateEmpty();
         SoftenOldColours(Data);
         JsonStore.Save(Data);
 
@@ -330,29 +330,6 @@ public partial class MainViewModel : ObservableObject
         Changed();
         _undoSnapshot = before;
         OfferUndo($"Logged progress on “{goal.Title}”");
-    }
-
-    /// <summary>"Not today": the step (or the goal's own entry) steps out of the way until tomorrow.</summary>
-    public void PutOffItem(PlanItem item)
-    {
-        if (FindGoal(item.GoalId) is not { } goal)
-            return;
-        if (item.StepId is { } id && goal.Steps.FirstOrDefault(s => s.Id == id) is { } step)
-            PutOff.ForStep(step, Today);
-        else
-            PutOff.ForGoal(goal, Today);
-        Changed();
-    }
-
-    /// <summary>Turns a step that keeps being put off into a section with a small first piece, and opens it.</summary>
-    public void SplitStep(Guid goalId, Guid stepId)
-    {
-        if (FindGoal(goalId) is not { } goal || goal.Steps.FirstOrDefault(s => s.Id == stepId) is not { } step)
-            return;
-        var first = PutOff.Split(goal, step);
-        Changed();
-        if (first is not null)
-            Inspect(goalId, first.Id);
     }
 
     /// <summary>Moves a step, and anything inside it, to another goal.</summary>

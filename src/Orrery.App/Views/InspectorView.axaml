@@ -110,9 +110,6 @@
                                                 <TextBlock Classes="field-hint" Text="{Binding Detail}" />
                                                 <TextBlock FontSize="11" Opacity="0.6" Text="{Binding BlockedText}"
                                                            IsVisible="{Binding IsBlocked}" TextWrapping="Wrap" />
-                                                                                                <StackPanel Orientation="Horizontal" IsVisible="{Binding NeedsSplit}">
-                                                    <Button Classes="ghost" Padding="0,3" Content="Put off a few times. Break it up?" Command="{Binding SplitCommand}" />
-                                                </StackPanel>
                                             </StackPanel>
                                             <!-- Only while editing the steps -->
                                             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top" IsVisible="{Binding EditMode}">

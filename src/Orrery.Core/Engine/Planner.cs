@@ -18,8 +18,7 @@ public sealed record PlanItem(
     string Reason,
     Demand Demand,
     string DemandNote = "",
-    int Unlocks = 0,
-    int DeferCount = 0);
+    int Unlocks = 0);
 
 /// <summary>
 /// Picks today's list. It knows nothing about what a goal is: it reads each goal's pressure and demand, the
@@ -34,38 +33,17 @@ public static class Planner
     public const int PerGoal = 4;
 
     /// <summary>
-    /// How hard the date of a group pulls on a step inside it: nothing without a date, rising over the three weeks
-    /// before it, and everything once it has passed. Also says why.
+    /// How hard a date pulls on a step: nothing without one, rising over the three weeks before it, and everything once
+    /// it has passed. Also says why.
     /// </summary>
-    private static (double Pull, string Note) GroupPull(Goal goal, Step step, DateOnly today, DependencyGraph graph)
+    private static (double Pull, string Note) GroupPull(GroupNeeds needs, Step step, DateOnly today)
     {
-        var (best, note) = OwnPull(goal, step, today);
-        // A step that holds up a group with a near date takes on that date: you cannot start Unit 3 until this is done.
-        foreach (var later in graph.Dependents(step.Id).Where(d => goal.Steps.Contains(d)))
-        {
-            var (pull, why) = OwnPull(goal, later, today);
-            if (pull > best)
-                (best, note) = (pull, $"{why} and waits on this");
-        }
-        return (best, note);
-    }
-
-    private static (double Pull, string Note) OwnPull(Goal goal, Step step, DateOnly today)
-    {
-        double best = 0;
-        var note = "";
-        for (var group = goal.ParentOf(step); group is not null; group = goal.ParentOf(group))
-        {
-            if (GroupSchedule.DueOf(goal, group, today) is not { } due)
-                continue;
-            var days = due.DayNumber - today.DayNumber;
-            var pull = days < 0 ? 1 : 0.3 + 0.7 * (1 - Math.Clamp(days / 21.0, 0, 1));
-            if (pull <= best)
-                continue;
-            best = pull;
-            note = days < 0 ? $"{group.Title} was due {due:MMM d}" : days == 0 ? $"{group.Title} is due today" : $"{group.Title} is due {due:MMM d}";
-        }
-        return (best, note);
+        if (needs.Of(step) is not { } need)
+            return (0, "");
+        var days = need.Due.DayNumber - today.DayNumber;
+        var pull = days < 0 ? 1 : 0.3 + 0.7 * (1 - Math.Clamp(days / 21.0, 0, 1));
+        var why = days < 0 ? $"{need.Group.Title} was due {need.Due:MMM d}" : days == 0 ? $"{need.Group.Title} is due today" : $"{need.Group.Title} is due {need.Due:MMM d}";
+        return (pull, need.Inherited ? $"{why} and waits on this" : why);
     }
 
     public static IReadOnlyList<PlanItem> Suggest(OrreryData data, PlanRequest request)
@@ -79,9 +57,6 @@ public static class Planner
         {
             if (goal.Archived || Progress.IsComplete(goal, log))
                 continue;
-
-            if (goal.SnoozedUntil is { } snoozed && snoozed > today && !goal.Leaves().Any())
-                continue; // put off until another day
 
             var stepless = !goal.Leaves().Any();
             if (stepless && goal.PlannedFor is { } later && later > today && Pressure(goal, log, today, Demands.For(goal, log, today)) < MustDo)
@@ -101,6 +76,7 @@ public static class Planner
                 continue; // between two due dates, a repeating goal stays out of the way
 
             var pressure = Pressure(goal, log, today, demand);
+            var needs = new GroupNeeds(goal, today, graph);
             var category = data.CategoryOf(goal);
 
             // A goal with unfinished steps offers its next available step; otherwise it offers itself.
@@ -110,7 +86,7 @@ public static class Planner
                 // One step as an item. A group with a date pulls on the steps inside it, whatever the goal as a whole is doing.
                 PlanItem ForStep(Step s)
                 {
-                    var (pull, note) = GroupPull(goal, s, today, graph);
+                    var (pull, note) = GroupPull(needs, s, today);
                     var item = Make(goal, s, category, Math.Max(pressure, pull), graph.UnlockCount(s.Id), demand, today);
                     if (pull > pressure)
                         return item with { Reason = $"{note} · {item.Reason}" };
@@ -132,7 +108,7 @@ public static class Planner
                 Step Top(Step s) { while (goal.ParentOf(s) is { } up) s = up; return s; }
                 var ready = goal.Leaves()
                     .Where(s => Open(s) && (s.PlannedFor is null || pressure >= MustDo))
-                    .Select((s, order) => (Step: s, Order: order, Pull: GroupPull(goal, s, today, graph).Pull, Group: Top(s).Id))
+                    .Select((s, order) => (Step: s, Order: order, Pull: GroupPull(needs, s, today).Pull, Group: Top(s).Id))
                     .GroupBy(x => x.Group)
                     .SelectMany(g => g.OrderBy(x => x.Order).Select((x, rank) => (x.Step, x.Order, x.Pull, Rank: rank)))
                     .OrderBy(x => x.Rank)
@@ -222,8 +198,6 @@ public static class Planner
             reasons.Add(demandNote);
         if (unlocks > 0)
             reasons.Add(unlocks == 1 ? "1 step is waiting on this" : $"{unlocks} steps are waiting on this");
-        if (step is { DeferCount: >= 3 })
-            reasons.Add("put off a few times, so it's worth making smaller");
         if (reasons.Count == 0)
             reasons.Add(pressure > 0.3 ? "it's been a while" : "whenever you're ready");
 
@@ -240,8 +214,7 @@ public static class Planner
             string.Join(" · ", reasons),
             demand,
             demandNote,
-            unlocks,
-            step?.DeferCount ?? 0);
+            unlocks);
     }
 
     /// <summary>"Needs 2.1 % today", "Due today" and so on, in the goal's own words.</summary>

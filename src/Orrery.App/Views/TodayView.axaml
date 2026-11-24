@@ -125,11 +125,6 @@
                                     <TextBlock Classes="demand" Text="{Binding DemandNote}" IsVisible="{Binding HasDemand}" />
                                     <TextBlock Classes="field-hint" Text="{Binding UnlockNote}" IsVisible="{Binding HasUnlock}" FontSize="12" />
                                     <TextBlock Classes="field-hint" Text="{Binding Meta}" />
-                                    <StackPanel Orientation="Horizontal" Spacing="4" IsVisible="{Binding NeedsSplit}" Margin="0,4,0,0">
-                                        <TextBlock Classes="field-hint" FontSize="12" VerticalAlignment="Center"
-                                                   Text="You've put this off a few times." />
-                                        <Button Classes="ghost" Content="Break it into smaller pieces" Command="{Binding SplitCommand}" />
-                                    </StackPanel>
                                 </StackPanel>
 
                                 <StackPanel Grid.Column="2" Margin="0,20,24,20" Spacing="6" VerticalAlignment="Center" MinWidth="170">
@@ -145,14 +140,10 @@
                                         <TextBlock Grid.Column="1" Classes="field-hint" Text="{Binding UnitLabel}" VerticalAlignment="Center" />
                                         <Button Grid.Column="2" Classes="action" Content="Save" Command="{Binding CompleteCommand}" />
                                     </Grid>
-                                    <Grid ColumnDefinitions="*,*" ColumnSpacing="2">
-                                        <Button Classes="ghost" Content="Done" Command="{Binding CompleteCommand}" HorizontalAlignment="Stretch"
-                                                HorizontalContentAlignment="Center" IsVisible="{Binding !ShowAmount}" />
-                                        <Button Classes="ghost" Content="Log…" Command="{Binding ToggleLogCommand}" HorizontalAlignment="Stretch"
-                                                HorizontalContentAlignment="Center" IsVisible="{Binding ShowAmount}" />
-                                        <Button Grid.Column="1" Classes="ghost" Content="Not today" Command="{Binding PutOffCommand}"
-                                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
-                                    </Grid>
+                                    <Button Classes="ghost" Content="Done" Command="{Binding CompleteCommand}" HorizontalAlignment="Stretch"
+                                            HorizontalContentAlignment="Center" IsVisible="{Binding !ShowAmount}" />
+                                    <Button Classes="ghost" Content="Log…" Command="{Binding ToggleLogCommand}" HorizontalAlignment="Stretch"
+                                            HorizontalContentAlignment="Center" IsVisible="{Binding ShowAmount}" />
                                     <Button Classes="ghost" Command="{Binding MoveDownCommand}" IsEnabled="{Binding CanMoveDown}"
                                             HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" ToolTip.Tip="{Binding DownTip}">
                                         <StackPanel Orientation="Horizontal" Spacing="6">
@@ -176,7 +167,7 @@
                             <StackPanel>
                                 <TextBlock Classes="section-header" Text="For you" Margin="0,18,0,2" IsVisible="{Binding StartsPassions}" />
                                 <Border Classes="line">
-                                    <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto,Auto,Auto" ColumnSpacing="12">
+                                    <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto,Auto" ColumnSpacing="12">
                                         <Border Classes="grip"
                                                 PointerPressed="OnGripPressed" PointerMoved="OnGripMoved" PointerReleased="OnGripReleased">
                                             <PathIcon Data="{StaticResource IconGrip}" />
@@ -196,12 +187,7 @@
                                         </Button>
                                         <TextBlock Grid.Column="4" Classes="field-hint" Text="{Binding UnlockNote}" IsVisible="{Binding HasUnlock}"
                                                    VerticalAlignment="Center" TextWrapping="NoWrap" />
-                                        <StackPanel Grid.Column="5" Classes="tools" Orientation="Horizontal" VerticalAlignment="Center">
-                                            <Button Classes="icon" Command="{Binding PutOffCommand}" ToolTip.Tip="Not today: hide it until tomorrow">
-                                                <PathIcon Data="{StaticResource IconLater}" />
-                                            </Button>
-                                        </StackPanel>
-                                        <Button Grid.Column="6" Classes="icon" Command="{Binding StartCommand}" IsEnabled="{Binding CanStart}" VerticalAlignment="Center">
+                                        <Button Grid.Column="5" Classes="icon" Command="{Binding StartCommand}" IsEnabled="{Binding CanStart}" VerticalAlignment="Center">
                                             <PathIcon Data="{StaticResource IconPlay}" />
                                         </Button>
                                     </Grid>

@@ -31,6 +31,7 @@ public static class CalendarModel
     {
         var events = new List<CalendarEvent>();
         var log = data.Contributions;
+        var graph = new DependencyGraph(data.Goals, g => Progress.IsComplete(g, log));
 
         foreach (var goal in data.Goals.Where(g => !g.Archived))
         {
@@ -40,9 +41,14 @@ public static class CalendarModel
                 events.Add(new CalendarEvent(deadline, CalendarKind.Deadline, goal.Id, null, goal.Title, "Deadline"));
 
             if (!complete)
-                foreach (var (group, due) in GroupSchedule.Dates(goal, today))
-                    if (due >= from && due <= to)
-                        events.Add(new CalendarEvent(due, CalendarKind.Part, goal.Id, group.Id, group.Title, $"Due · {goal.Title}"));
+            {
+                var needs = new GroupNeeds(goal, today, graph);
+                if (needs.Any)
+                    foreach (var group in goal.Steps.Where(s => goal.IsSection(s) && !goal.IsDone(s)))
+                        if (needs.OfGroup(group) is { } need && (needs.OwnDate(group) is not null || need.Inherited) && need.Due >= from && need.Due <= to)
+                            events.Add(new CalendarEvent(need.Due, CalendarKind.Part, goal.Id, group.Id, group.Title,
+                                need.Inherited ? $"Needed for {need.Group.Title} · {goal.Title}" : $"Due · {goal.Title}"));
+            }
 
             if (goal.Rhythm.Kind == RhythmKind.Repeat)
                 foreach (var due in DueDays(goal, log, Max(from, today), to))

@@ -136,7 +136,7 @@ public sealed class DependencyGraph
         return null;
     }
 
-    /// <summary>How many unfinished steps are waiting, directly or through others, on this one.</summary>
+
     /// <summary>The open steps, in any goal, that cannot start until this one is finished.</summary>
     public IEnumerable<Step> Dependents(Guid stepId)
     {

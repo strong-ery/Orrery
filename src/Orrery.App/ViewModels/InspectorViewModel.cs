@@ -104,13 +104,18 @@ public sealed partial class InspectorStepViewModel : ObservableObject
         if (IsSection)
         {
             var (d, total) = goal.CountOf(step);
-            var due = Orrery.Core.Engine.GroupSchedule.DueOf(goal, step, MainViewModel.Today);
+            var needs = new Orrery.Core.Engine.GroupNeeds(goal, MainViewModel.Today, graph);
+            var need = needs.OfGroup(step);
+            var due = need is not null && (needs.OwnDate(step) is not null || need.Inherited) ? need : null;
             Detail = string.Join(" · ", new[]
             {
                 $"{d}/{total} steps",
                 estimate is { } e ? $"~{e} min" : "",
-                due is { } when ? (when < MainViewModel.Today ? $"late · {when:MMM d}" : $"due {when:MMM d}")
-                    + (goal.Deadline is { } end && when > end ? " (after the deadline)" : "") : "",
+                due is { } n
+                    ? (n.Inherited ? $"needed by {n.Due:MMM d} for {n.Group.Title}"
+                        : n.Due < MainViewModel.Today ? $"late · {n.Due:MMM d}" : $"due {n.Due:MMM d}")
+                      + (!n.Inherited && goal.Deadline is { } end && n.Due > end ? " (after the deadline)" : "")
+                    : "",
             }.Where(s => s.Length > 0));
             _due = step.Due;
             CanSetDate = editMode && goal.GroupDates == GroupDateMode.Custom;
@@ -121,14 +126,12 @@ public sealed partial class InspectorStepViewModel : ObservableObject
             {
                 step.Energy switch { Energy.Low => "low", Energy.High => "high", _ => "medium" } + " energy",
                 estimate is { } m ? $"~{m} min" : "",
-                step.DeferCount >= 3 ? "put off a few times" : "",
             }.Where(s => s.Length > 0));
         }
         var siblings = goal.Steps.Where(o => o.ParentId == step.ParentId).ToList();
         CanMoveUp = siblings.IndexOf(step) > 0;
         CanMoveDown = siblings.IndexOf(step) < siblings.Count - 1;
         CanStart = !IsSection && !Done && !IsBlocked && !main.Focus.IsVisible;
-        NeedsSplit = !IsSection && !Done && step.DeferCount >= Orrery.Core.Engine.PutOff.SplitAfter;
         CanMakeList = !IsSection && !Done;
         var open = goal.Steps.Count(o => o.ParentId == step.Id && !goal.IsDone(o));
         CanMakeStep = step.IsGroup && !goal.Steps.Any(o => o.ParentId == step.Id);
@@ -206,11 +209,6 @@ public sealed partial class InspectorStepViewModel : ObservableObject
         goal.MoveTo(step, parent);
         _main.Changed();
     }
-
-    [RelayCommand]
-    private void Split() => _main.SplitStep(_goalId, _stepId);
-
-    public bool NeedsSplit { get; private set; }
 
     [RelayCommand]
     private void MoveUp()

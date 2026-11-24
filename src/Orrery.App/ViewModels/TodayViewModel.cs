@@ -30,7 +30,6 @@ public partial class PlanRowViewModel : ObservableObject
 
         DemandNote = item.DemandNote;
         UnlockNote = item.Unlocks switch { 0 => "", 1 => "1 step is waiting on this", _ => $"{item.Unlocks} steps are waiting on this" };
-        NeedsSplit = item.StepId is not null && item.DeferCount >= Orrery.Core.Engine.PutOff.SplitAfter;
         var energy = item.Energy switch { Energy.Low => "low energy", Energy.High => "high energy", _ => "medium energy" };
         var time = item.EstimateMinutes is { } m ? $"~{m} min" : "";
         Meta = string.Join(" · ", new[] { energy, time }.Where(s => s.Length > 0));
@@ -60,7 +59,6 @@ public partial class PlanRowViewModel : ObservableObject
     public string UnlockNote { get; }
     public bool HasUnlock => UnlockNote.Length > 0;
 
-    public bool NeedsSplit { get; }
     public string Meta { get; }
     public bool HasGoalTitle => GoalTitle.Length > 0;
     public bool ShowAmount { get; }
@@ -95,16 +93,6 @@ public partial class PlanRowViewModel : ObservableObject
 
     [RelayCommand]
     private void Inspect() => _main.Inspect(_item.GoalId, _item.StepId);
-
-    [RelayCommand]
-    private void PutOff() => _main.PutOffItem(_item);
-
-    [RelayCommand]
-    private void Split()
-    {
-        if (_item.StepId is { } id)
-            _main.SplitStep(_item.GoalId, id);
-    }
 
     [RelayCommand]
     private void MoveUp() => _main.TodayPage.Move(Key, -1);

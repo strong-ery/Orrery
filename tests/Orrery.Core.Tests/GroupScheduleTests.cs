@@ -55,4 +55,25 @@ public class GroupScheduleTests
         goal.GroupDates = GroupDateMode.Off;
         Assert.Empty(GroupSchedule.Dates(goal, Today));
     }
+
+    [Fact]
+    public void A_group_holding_up_a_dated_group_is_wanted_by_that_date_everywhere()
+    {
+        var goal = Course(GroupDateMode.Custom, null);
+        var units = goal.Steps.Where(s => s.IsGroup).ToList();
+        units[2].Due = Today.AddDays(5);
+        goal.SetOrdered(null, true); // Unit 2 waits on Unit 1, and so on
+        var graph = new DependencyGraph([goal], _ => false);
+        var needs = new GroupNeeds(goal, Today, graph);
+
+        var need = needs.OfGroup(units[0])!;
+
+        Assert.True(need.Inherited);
+        Assert.Equal(Today.AddDays(5), need.Due);
+        Assert.Equal("Unit 3", need.Group.Title);
+
+        var data = new OrreryData { Goals = { goal } };
+        var parts = CalendarModel.Events(data, Today, Today.AddDays(30), Today).Where(e => e.Kind == CalendarKind.Part).ToList();
+        Assert.Contains(parts, e => e.Title == "Unit 1" && e.Day == Today.AddDays(5));
+    }
 }

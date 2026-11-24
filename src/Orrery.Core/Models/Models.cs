@@ -86,7 +86,6 @@ public sealed class Step
     public Energy Energy { get; set; } = Energy.Medium;
     public int? EstimateMinutes { get; set; }
     public bool Done { get; set; }
-    public int DeferCount { get; set; }
 
     /// <summary>The day you decided to do this, from the calendar. Today's list leans on it; it never blocks anything.</summary>
     public DateOnly? PlannedFor { get; set; }
@@ -134,9 +133,6 @@ public sealed class Goal
 
     public DateOnly Created { get; set; } = DateOnly.FromDateTime(DateTime.Today);
     public bool Archived { get; set; }
-
-    /// <summary>Put off until this day. Only used when the goal has no steps of its own to put off.</summary>
-    public DateOnly? SnoozedUntil { get; set; }
 
     /// <summary>For a goal with no steps of its own: the day you decided to work on it.</summary>
     public DateOnly? PlannedFor { get; set; }
