@@ -21,7 +21,7 @@ public sealed record UpdateInfo(string Version, string Notes, string DownloadUrl
 /// <summary>Asks GitHub whether a newer release exists, and downloads it. Same approach as str-amp: a zip attached to a release.</summary>
 public static class Updates
 {
-    public const string Owner = "strong-ery", Repo = "Orrery", ExeName = "Orrery.App.exe";
+    public const string Owner = "strong-ery", Repo = "Orrery", ExeName = "Orrery.exe";
     private const string ClientId = "Orrery (https://github.com/strong-ery/Orrery)";
 
     private static HttpClient Client(TimeSpan timeout)

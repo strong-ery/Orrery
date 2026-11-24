@@ -3,7 +3,7 @@
     Builds the release zip to attach to a GitHub release: a self-contained single-file win-x64 build of Orrery.
 
 .DESCRIPTION
-    Matches what the app's updater expects: a zip with Orrery.App.exe at its root. Bump AppVersion.Current in
+    Matches what the app's updater expects: a zip with Orrery.exe at its root. Bump AppVersion.Current in
     src/Orrery.Core/Updates/AppVersion.cs (and <Version> in Orrery.App.csproj) to the release tag first, then
     create a GitHub release tagged v<version> and attach publish/orrery-<version>.zip.
 #>
