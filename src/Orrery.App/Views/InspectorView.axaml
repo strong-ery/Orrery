@@ -75,11 +75,12 @@
                                 IsVisible="{Binding CanChain}" />
                     </Grid>
 
-                    <ItemsControl ItemsSource="{Binding Steps}">
+                    <ItemsControl x:Name="StepList" ItemsSource="{Binding Steps}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="vm:InspectorStepViewModel">
                                 <StackPanel Margin="{Binding Indent}">
-                                    <Border Classes="line" Opacity="{Binding Opacity}">
+                                    <Border Height="2" CornerRadius="1" Margin="0,0,0,-2" Background="{DynamicResource AppAccentBrush}" IsVisible="{Binding ShowBefore}" />
+                                    <Border Classes="line" Classes.drop="{Binding ShowInside}" Opacity="{Binding Opacity}">
                                         <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
                                             <Button Classes="check" Classes.done="{Binding Done}" Command="{Binding ToggleCommand}"
                                                     VerticalAlignment="Top" Margin="0,1,0,0" IsVisible="{Binding IsLeaf}">
@@ -123,6 +124,7 @@
                                             </Button>
                                         </Grid>
                                     </Border>
+                                    <Border Height="2" CornerRadius="1" Margin="0,-2,0,0" Background="{DynamicResource AppAccentBrush}" IsVisible="{Binding ShowAfter}" />
 
                                     <!-- The editor, open only for the step being edited -->
                                     <Border Classes="card" Padding="12" Margin="0,2,0,8" IsVisible="{Binding IsEditing}">

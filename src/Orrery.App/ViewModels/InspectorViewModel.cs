@@ -15,6 +15,17 @@ public sealed partial class InspectorStepViewModel : ObservableObject
     private readonly Guid _stepId;
     private readonly Action<Guid> _addInside;
 
+    public Guid StepId => _stepId;
+
+    /// <summary>Where a dragged step would land on this row right now: none, before, inside or after.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowBefore), nameof(ShowInside), nameof(ShowAfter))]
+    private Orrery.Core.Models.DropPlace? _dropPlace;
+
+    public bool ShowBefore => DropPlace == Orrery.Core.Models.DropPlace.Before;
+    public bool ShowInside => DropPlace == Orrery.Core.Models.DropPlace.Inside;
+    public bool ShowAfter => DropPlace == Orrery.Core.Models.DropPlace.After;
+
     /// <summary>On a group: start adding steps inside it.</summary>
     [RelayCommand]
     private void AddInside() => _addInside(_stepId);
@@ -255,6 +266,20 @@ public partial class InspectorViewModel : ObservableObject
 
     [RelayCommand]
     private void ToggleInOrder() => InOrder = !InOrder;
+
+    /// <summary>Whether a step may be dropped on another: never onto itself or something inside it.</summary>
+    public bool CanDrop(Guid dragged, Guid target) =>
+        CurrentGoal is { } goal && goal.Steps.FirstOrDefault(s => s.Id == dragged) is { } step && goal.BlockOf(step).All(b => b.Id != target);
+
+    public void MoveStep(Guid dragged, Guid target, Orrery.Core.Models.DropPlace place)
+    {
+        if (CurrentGoal is not { } goal
+            || goal.Steps.FirstOrDefault(s => s.Id == dragged) is not { } step
+            || goal.Steps.FirstOrDefault(s => s.Id == target) is not { } over)
+            return;
+        if (goal.Relocate(step, over, place))
+            _main.Changed();
+    }
 
     /// <summary>Raised when the add field should take focus.</summary>
     public event Action? FocusAdd;

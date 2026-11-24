@@ -127,4 +127,36 @@ public static class StepTree
         goal.Steps.InsertRange(at, block);
         return true;
     }
+
+    /// <summary>
+    /// Drag and drop: puts a step (with everything inside it) before, after or inside another one. Dropping onto a plain
+    /// step turns it into a group; a group left with nothing in it goes back to being a plain step. False when the
+    /// target is the step itself or something inside it.
+    /// </summary>
+    public static bool Relocate(this Goal goal, Step step, Step target, DropPlace place)
+    {
+        var block = goal.BlockOf(step);
+        if (block.Any(b => b.Id == target.Id))
+            return false;
+        var oldParent = goal.ParentOf(step);
+        goal.Steps.RemoveAll(block.Contains);
+        int at;
+        if (place == DropPlace.Inside)
+        {
+            target.IsGroup = true;
+            step.ParentId = target.Id;
+            at = goal.Steps.IndexOf(goal.BlockOf(target)[^1]) + 1;
+        }
+        else
+        {
+            step.ParentId = target.ParentId;
+            at = place == DropPlace.Before ? goal.Steps.IndexOf(target) : goal.Steps.IndexOf(goal.BlockOf(target)[^1]) + 1;
+        }
+        goal.Steps.InsertRange(at, block);
+        if (oldParent is { IsGroup: true } && !goal.Steps.Any(s => s.ParentId == oldParent.Id))
+            oldParent.IsGroup = false;
+        return true;
+    }
 }
+
+public enum DropPlace { Before, Inside, After }
