@@ -71,8 +71,17 @@
                 <StackPanel Spacing="4" IsVisible="{Binding ShowAddRow}">
                     <Grid ColumnDefinitions="*,Auto">
                         <TextBlock Classes="section-header" Text="Steps" VerticalAlignment="Center" Margin="0" />
-                        <Button Grid.Column="1" Classes="ghost" Content="Do in order" Command="{Binding ChainStepsCommand}"
-                                IsVisible="{Binding CanChain}" />
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                            <Button Classes="seg" Classes.active="{Binding OrderedTop}" Content="In order" Command="{Binding ToggleOrderTopCommand}">
+                                <Button.IsVisible>
+                                    <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                        <Binding Path="EditSteps" />
+                                        <Binding Path="CanOrderTop" />
+                                    </MultiBinding>
+                                </Button.IsVisible>
+                            </Button>
+                            <Button Classes="ghost" Content="{Binding EditLabel}" Command="{Binding ToggleEditStepsCommand}" />
+                        </StackPanel>
                     </Grid>
 
                     <ItemsControl x:Name="StepList" ItemsSource="{Binding Steps}">
@@ -89,35 +98,34 @@
                                             <Border Width="16" Height="16" IsVisible="{Binding IsSection}" Margin="0,1,0,0" VerticalAlignment="Top"
                                                     CornerRadius="4" BorderThickness="1.5" BorderBrush="{DynamicResource AppAccentBrush}" Opacity="0.7" />
                                             <StackPanel Grid.Column="1" Spacing="1">
-                                                <Button Classes="link" Command="{Binding BeginEditCommand}" HorizontalAlignment="Left" Padding="0" Cursor="Hand">
+                                                <Button Classes="link" Command="{Binding BeginEditCommand}" HorizontalAlignment="Left" Padding="0" IsHitTestVisible="{Binding EditMode}">
                                                     <TextBlock Text="{Binding Title}" FontSize="13" TextWrapping="Wrap"
                                                                FontWeight="{Binding TitleWeight}" Foreground="{DynamicResource AppIconBrush}" />
                                                 </Button>
                                                 <TextBlock Classes="field-hint" Text="{Binding Detail}" />
                                                 <TextBlock FontSize="11" Opacity="0.6" Text="{Binding BlockedText}"
                                                            IsVisible="{Binding IsBlocked}" TextWrapping="Wrap" />
+                                                <WrapPanel Margin="0,4,0,0" IsVisible="{Binding EditMode}">
+                                                    <Button Classes="seg" Margin="0,0,4,0" Content="Make it a list" Command="{Binding AddInsideCommand}" IsVisible="{Binding CanMakeList}" />
+                                                    <Button Classes="seg" Margin="0,0,4,0" Content="Add a step" Command="{Binding AddInsideCommand}" IsVisible="{Binding IsSection}" />
+                                                    <Button Classes="seg" Margin="0,0,4,0" Classes.active="{Binding Ordered}" Content="In order" Command="{Binding ToggleOrderCommand}" IsVisible="{Binding CanOrder}" />
+                                                    <Button Classes="seg" Margin="0,0,4,0" Content="Make it a step" Command="{Binding MakeStepCommand}" IsVisible="{Binding CanMakeStep}" />
+                                                </WrapPanel>
                                                 <StackPanel Orientation="Horizontal" IsVisible="{Binding NeedsSplit}">
                                                     <Button Classes="ghost" Padding="0,3" Content="Put off a few times. Break it up?" Command="{Binding SplitCommand}" />
                                                 </StackPanel>
                                             </StackPanel>
-                                            <!-- Tools appear when the pointer is over the row -->
-                                            <StackPanel Grid.Column="2" Classes="tools soft" Orientation="Horizontal" VerticalAlignment="Top">
-                                                <Button Classes="icon" Command="{Binding AddInsideCommand}" IsVisible="{Binding CanAddInside}"
-                                                        ToolTip.Tip="Add steps inside this">
-                                                    <PathIcon Data="{StaticResource IconAdd}" />
-                                                </Button>
-                                                <Button Classes="icon" Command="{Binding PutOffCommand}" IsVisible="{Binding CanPutOff}" ToolTip.Tip="Not today">
-                                                    <PathIcon Data="{StaticResource IconLater}" />
-                                                </Button>
-                                                <Button Classes="icon" Command="{Binding BeginEditCommand}">
+                                            <!-- Only while editing the steps -->
+                                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top" IsVisible="{Binding EditMode}">
+                                                <Button Classes="icon" Command="{Binding BeginEditCommand}" ToolTip.Tip="Rename, change time or energy, move">
                                                     <PathIcon Data="{StaticResource IconEdit}" />
                                                 </Button>
-                                                <Button Classes="icon" Command="{Binding RemoveCommand}" ToolTip.Tip="Remove (a section takes its steps with it)">
+                                                <Button Classes="icon" Command="{Binding RemoveCommand}" ToolTip.Tip="Remove (a list takes its steps with it)">
                                                     <PathIcon Data="{StaticResource IconClose}" />
                                                 </Button>
                                             </StackPanel>
                                             <Button Grid.Column="3" Classes="icon" Command="{Binding StartCommand}" IsEnabled="{Binding CanStart}"
-                                                    IsVisible="{Binding IsLeaf}" VerticalAlignment="Top">
+                                                    IsVisible="{Binding ShowPlay}" VerticalAlignment="Top">
                                                 <PathIcon Data="{StaticResource IconPlay}" />
                                             </Button>
                                         </Grid>
@@ -170,7 +178,7 @@
                     </ItemsControl>
 
                     <!-- Adding: type a step and press Enter. Time and order only show up once there is something to add. -->
-                    <StackPanel Spacing="6" Margin="0,8,0,0">
+                    <StackPanel Spacing="6" Margin="0,8,0,0" IsVisible="{Binding ShowAdder}">
                         <Button Classes="ghost" HorizontalAlignment="Left" Padding="0,2" IsVisible="{Binding IsInto}"
                                 Command="{Binding LeaveGroupCommand}">
                             <StackPanel Orientation="Horizontal" Spacing="6">

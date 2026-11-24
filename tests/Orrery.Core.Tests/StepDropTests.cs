@@ -54,3 +54,35 @@ public class StepDropTests
         Assert.Equal(b.Id, a.ParentId);
     }
 }
+
+public class StepOrderTests
+{
+    [Fact]
+    public void In_order_can_be_turned_on_and_off_for_one_level()
+    {
+        Step S(string t) => new() { Title = t };
+        var (a, b, c) = (S("A"), S("B"), S("C"));
+        var g = new Goal { Steps = [a, b, c] };
+        Assert.False(g.IsOrdered(null));
+        g.SetOrdered(null, true);
+        Assert.True(g.IsOrdered(null));
+        Assert.Equal([a.Id], b.DependsOn);
+        g.SetOrdered(null, false);
+        Assert.False(g.IsOrdered(null));
+        Assert.Empty(b.DependsOn);
+        Assert.Empty(c.DependsOn);
+    }
+
+    [Fact]
+    public void Finished_steps_are_left_out_of_the_order()
+    {
+        Step S(string t) => new() { Title = t };
+        var (a, b, c) = (S("A"), S("B"), S("C"));
+        a.Done = true;
+        var g = new Goal { Steps = [a, b, c] };
+        g.SetOrdered(null, true);
+        Assert.Empty(b.DependsOn);
+        Assert.Equal([b.Id], c.DependsOn);
+        Assert.True(g.IsOrdered(null));
+    }
+}

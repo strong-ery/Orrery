@@ -157,6 +157,32 @@ public static class StepTree
             oldParent.IsGroup = false;
         return true;
     }
+
+    private static List<Step> OpenSiblings(Goal goal, Guid? parentId) =>
+        goal.Steps.Where(s => s.ParentId == parentId && !goal.IsDone(s)).ToList();
+
+    /// <summary>Whether there is an order to do things in at one level: every open entry waits for the one before it.</summary>
+    public static bool IsOrdered(this Goal goal, Guid? parentId)
+    {
+        var open = OpenSiblings(goal, parentId);
+        return open.Count > 1 && Enumerable.Range(1, open.Count - 1).All(i => open[i].DependsOn.Contains(open[i - 1].Id));
+    }
+
+    /// <summary>Turns "do these in order" on or off for the entries at one level (the top, or inside one group).</summary>
+    public static void SetOrdered(this Goal goal, Guid? parentId, bool ordered)
+    {
+        var open = OpenSiblings(goal, parentId);
+        if (ordered)
+        {
+            for (var i = 1; i < open.Count; i++)
+                if (!open[i].DependsOn.Contains(open[i - 1].Id))
+                    open[i].DependsOn.Add(open[i - 1].Id);
+            return;
+        }
+        var ids = goal.Steps.Where(s => s.ParentId == parentId).Select(s => s.Id).ToHashSet();
+        foreach (var s in goal.Steps.Where(s => s.ParentId == parentId))
+            s.DependsOn.RemoveAll(ids.Contains);
+    }
 }
 
 public enum DropPlace { Before, Inside, After }

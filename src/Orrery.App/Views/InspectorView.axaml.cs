@@ -51,7 +51,7 @@ public partial class InspectorView : UserControl
         if (src.GetSelfAndVisualAncestors().Any(v => v is TextBox or ComboBox))
             return;
         var row = src.GetSelfAndVisualAncestors().OfType<ContentPresenter>().FirstOrDefault(p => p.DataContext is InspectorStepViewModel);
-        if (row?.DataContext is InspectorStepViewModel { IsEditing: false } vm)
+        if (row?.DataContext is InspectorStepViewModel { IsEditing: false, EditMode: true } vm)
         {
             _held = vm;
             _from = e.GetPosition(StepList);

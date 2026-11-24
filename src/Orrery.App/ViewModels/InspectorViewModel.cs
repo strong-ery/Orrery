@@ -17,8 +17,40 @@ public sealed partial class InspectorStepViewModel : ObservableObject
 
     public Guid StepId => _stepId;
 
-    /// <summary>Any open step can become a list: adding inside it turns it into a group.</summary>
-    public bool CanAddInside { get; }
+    /// <summary>Editing the steps (rearranging, adding, removing) is a mode of its own; otherwise a row is just for doing.</summary>
+    public bool EditMode { get; }
+    public bool DoMode => !EditMode;
+    public bool ShowPlay => IsLeaf && DoMode;
+
+    /// <summary>On a plain step: turns it into a list and starts adding to it.</summary>
+    public bool CanMakeList { get; }
+
+    /// <summary>On an empty list: turns it back into a plain step.</summary>
+    public bool CanMakeStep { get; }
+
+    /// <summary>On a list with several open steps: whether they have to be done in order.</summary>
+    public bool CanOrder { get; }
+    public bool Ordered { get; }
+
+    [RelayCommand]
+    private void MakeStep()
+    {
+        if (_main.FindGoal(_goalId) is { } goal && goal.Steps.FirstOrDefault(s => s.Id == _stepId) is { } step)
+        {
+            step.IsGroup = false;
+            _main.Changed();
+        }
+    }
+
+    [RelayCommand]
+    private void ToggleOrder()
+    {
+        if (_main.FindGoal(_goalId) is { } goal)
+        {
+            goal.SetOrdered(_stepId, !goal.IsOrdered(_stepId));
+            _main.Changed();
+        }
+    }
 
     /// <summary>Where a dragged step would land on this row right now: none, before, inside or after.</summary>
     [ObservableProperty]
@@ -33,10 +65,11 @@ public sealed partial class InspectorStepViewModel : ObservableObject
     [RelayCommand]
     private void AddInside() => _addInside(_stepId);
 
-    public InspectorStepViewModel(MainViewModel main, Goal goal, Step step, DependencyGraph graph, bool highlighted, int depth, Action<Guid> addInside)
+    public InspectorStepViewModel(MainViewModel main, Goal goal, Step step, DependencyGraph graph, bool highlighted, int depth, Action<Guid> addInside, bool editMode)
     {
         _main = main;
         _addInside = addInside;
+        EditMode = editMode;
         _goalId = goal.Id;
         _stepId = step.Id;
         Title = step.Title;
@@ -71,8 +104,11 @@ public sealed partial class InspectorStepViewModel : ObservableObject
         CanMoveDown = siblings.IndexOf(step) < siblings.Count - 1;
         CanStart = !IsSection && !Done && !IsBlocked && !main.Focus.IsVisible;
         NeedsSplit = !IsSection && !Done && step.DeferCount >= Orrery.Core.Engine.PutOff.SplitAfter;
-        CanPutOff = !IsSection && !Done;
-        CanAddInside = IsSection || !Done;
+        CanMakeList = !IsSection && !Done;
+        var open = goal.Steps.Count(o => o.ParentId == step.Id && !goal.IsDone(o));
+        CanMakeStep = step.IsGroup && !goal.Steps.Any(o => o.ParentId == step.Id);
+        CanOrder = IsSection && open > 1;
+        Ordered = CanOrder && goal.IsOrdered(step.Id);
         Opacity = Done ? 0.45 : IsBlocked ? 0.65 : 1;
     }
 
@@ -146,22 +182,10 @@ public sealed partial class InspectorStepViewModel : ObservableObject
         _main.Changed();
     }
 
-    /// <summary>"Not today" for a step: back tomorrow.</summary>
-    [RelayCommand]
-    private void PutOff()
-    {
-        if (_main.FindGoal(_goalId) is { } goal && goal.Steps.FirstOrDefault(s => s.Id == _stepId) is { } step)
-        {
-            Orrery.Core.Engine.PutOff.ForStep(step, MainViewModel.Today);
-            _main.Changed();
-        }
-    }
-
     [RelayCommand]
     private void Split() => _main.SplitStep(_goalId, _stepId);
 
     public bool NeedsSplit { get; private set; }
-    public bool CanPutOff { get; private set; }
 
     [RelayCommand]
     private void MoveUp()
@@ -329,6 +353,31 @@ public partial class InspectorViewModel : ObservableObject
     [ObservableProperty] private bool _showProgress;
     private bool _addRequested;
 
+    /// <summary>Doing mode is the default; editing the steps is something you turn on.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowAdder), nameof(EditLabel))]
+    private bool _editSteps;
+
+    public string EditLabel => EditSteps ? "Done" : "Edit";
+    public bool ShowAdder => ShowAddRow && EditSteps;
+    [ObservableProperty] private bool _orderedTop;
+    [ObservableProperty] private bool _canOrderTop;
+
+    partial void OnEditStepsChanged(bool value) => Refresh();
+    partial void OnShowAddRowChanged(bool value) => OnPropertyChanged(nameof(ShowAdder));
+
+    [RelayCommand]
+    private void ToggleEditSteps() => EditSteps = !EditSteps;
+
+    [RelayCommand]
+    private void ToggleOrderTop()
+    {
+        if (CurrentGoal is not { } goal)
+            return;
+        goal.SetOrdered(null, !goal.IsOrdered(null));
+        _main.Changed();
+    }
+
     public bool CanStart => IsOpen && !_main.Focus.IsVisible;
 
     public void Open(Guid goalId, Guid? stepId)
@@ -336,6 +385,7 @@ public partial class InspectorViewModel : ObservableObject
         if (_goalId != goalId)
         {
             _addRequested = false;
+            EditSteps = false;
             _into = null;
             NewMinutes = 0;
             InOrder = false;
@@ -352,11 +402,13 @@ public partial class InspectorViewModel : ObservableObject
     {
         _addRequested = true;
         ShowAddRow = true;
+        EditSteps = true;
     }
 
     [RelayCommand]
     private void Close()
     {
+        EditSteps = false;
         IsOpen = false;
         _goalId = null;
         _main.GoalsPage.Refresh();
@@ -381,7 +433,7 @@ public partial class InspectorViewModel : ObservableObject
         Steps.Clear();
         void Walk(Step step, int depth)
         {
-            Steps.Add(new InspectorStepViewModel(_main, goal, step, graph, step.Id == _stepId, depth, AddInside));
+            Steps.Add(new InspectorStepViewModel(_main, goal, step, graph, step.Id == _stepId, depth, AddInside, EditSteps));
             foreach (var child in goal.ChildrenOf(step))
                 Walk(child, depth + 1);
         }
@@ -389,7 +441,8 @@ public partial class InspectorViewModel : ObservableObject
             Walk(root, 0);
         HasSteps = Steps.Count > 0;
         ShowAddRow = HasSteps || _addRequested;
-        CanChain = goal.Roots().Count(s => !goal.IsDone(s)) > 1;
+        CanOrderTop = goal.Roots().Count(s => !goal.IsDone(s)) > 1;
+        OrderedTop = CanOrderTop && goal.IsOrdered(null);
 
         // If the group being filled was removed, go back to the top level.
         if (_into is { } into && goal.Steps.FirstOrDefault(s => s.Id == into) is not { } group)
@@ -487,16 +540,6 @@ public partial class InspectorViewModel : ObservableObject
             IntoLabel = step.Title;
             IsInto = true;
         }
-        _main.Changed();
-    }
-
-    /// <summary>"Do these in order": every unfinished top-level entry waits for the one before it.</summary>
-    [RelayCommand]
-    private void ChainSteps()
-    {
-        if (CurrentGoal is not { } goal)
-            return;
-        DependencyGraph.Chain(goal.Roots().Where(s => !goal.IsDone(s)).ToList());
         _main.Changed();
     }
 
