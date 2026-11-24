@@ -9,6 +9,5 @@ dotnet test
 ```
 
 Data lives in `%APPDATA%\Orrery\orrery.json`.
-See [docs/DESIGN.md](docs/DESIGN.md) for how it works and what's missing.
 
 Licensed under the AGPL-3.0, see `LICENSE`.
