@@ -105,18 +105,25 @@
                                                 <TextBlock Classes="field-hint" Text="{Binding Detail}" />
                                                 <TextBlock FontSize="11" Opacity="0.6" Text="{Binding BlockedText}"
                                                            IsVisible="{Binding IsBlocked}" TextWrapping="Wrap" />
-                                                <WrapPanel Margin="0,4,0,0" IsVisible="{Binding EditMode}">
-                                                    <Button Classes="seg" Margin="0,0,4,0" Content="Make it a list" Command="{Binding AddInsideCommand}" IsVisible="{Binding CanMakeList}" />
-                                                    <Button Classes="seg" Margin="0,0,4,0" Content="Add a step" Command="{Binding AddInsideCommand}" IsVisible="{Binding IsSection}" />
-                                                    <Button Classes="seg" Margin="0,0,4,0" Classes.active="{Binding Ordered}" Content="In order" Command="{Binding ToggleOrderCommand}" IsVisible="{Binding CanOrder}" />
-                                                    <Button Classes="seg" Margin="0,0,4,0" Content="Make it a step" Command="{Binding MakeStepCommand}" IsVisible="{Binding CanMakeStep}" />
-                                                </WrapPanel>
-                                                <StackPanel Orientation="Horizontal" IsVisible="{Binding NeedsSplit}">
+                                                                                                <StackPanel Orientation="Horizontal" IsVisible="{Binding NeedsSplit}">
                                                     <Button Classes="ghost" Padding="0,3" Content="Put off a few times. Break it up?" Command="{Binding SplitCommand}" />
                                                 </StackPanel>
                                             </StackPanel>
                                             <!-- Only while editing the steps -->
                                             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top" IsVisible="{Binding EditMode}">
+                                                <Button Classes="icon" Command="{Binding AddInsideCommand}" IsVisible="{Binding CanMakeList}" ToolTip.Tip="Make it a list">
+                                                    <PathIcon Data="{StaticResource IconList}" />
+                                                </Button>
+                                                <Button Classes="icon" Command="{Binding AddInsideCommand}" IsVisible="{Binding IsSection}" ToolTip.Tip="Add a step to it">
+                                                    <PathIcon Data="{StaticResource IconAdd}" />
+                                                </Button>
+                                                <Button Classes="icon" Classes.active="{Binding Ordered}" Command="{Binding ToggleOrderCommand}" IsVisible="{Binding CanOrder}"
+                                                        ToolTip.Tip="Do these in order">
+                                                    <PathIcon Data="{StaticResource IconOrder}" />
+                                                </Button>
+                                                <Button Classes="icon" Command="{Binding MakeStepCommand}" IsVisible="{Binding CanMakeStep}" ToolTip.Tip="Make it a plain step again">
+                                                    <PathIcon Data="{StaticResource IconMaximize}" />
+                                                </Button>
                                                 <Button Classes="icon" Command="{Binding BeginEditCommand}" ToolTip.Tip="Rename, change time or energy, move">
                                                     <PathIcon Data="{StaticResource IconEdit}" />
                                                 </Button>
