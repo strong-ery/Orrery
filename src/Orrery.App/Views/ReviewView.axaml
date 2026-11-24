@@ -1,0 +1,72 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Orrery.App.ViewModels"
+             x:Class="Orrery.App.Views.ReviewView"
+             x:DataType="vm:ReviewViewModel">
+    <UserControl.Resources>
+        <DataTemplate x:Key="ReviewLineTemplate" x:DataType="vm:ReviewLine">
+            <Border Classes="line" Padding="2,8">
+                <StackPanel Spacing="0">
+                    <TextBlock Text="{Binding Text}" FontSize="13" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding Detail}" Classes="field-hint" FontSize="11" IsVisible="{Binding HasDetail}" />
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+    </UserControl.Resources>
+    <ScrollViewer>
+        <StackPanel Margin="32,24,32,34" Spacing="30" MaxWidth="760" HorizontalAlignment="Left">
+            <StackPanel Spacing="2">
+                <TextBlock Classes="page-title" Text="Last week" />
+                <TextBlock Classes="field-hint" Text="{Binding Title}" />
+            </StackPanel>
+
+            <ItemsControl ItemsSource="{Binding Stats}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="48" /></ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:Stat">
+                        <StackPanel Spacing="0">
+                            <TextBlock Classes="numeric" Text="{Binding Value}" FontSize="30" FontWeight="Bold" />
+                            <TextBlock Classes="field-hint" Text="{Binding Label}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <StackPanel Spacing="8">
+                <TextBlock Classes="section-header" Text="What went well" Margin="0" />
+                <TextBlock Classes="field-hint" FontSize="13" IsVisible="{Binding QuietWeek}"
+                           Text="A quiet week. That happens, and the new one starts clean." />
+                <ItemsControl ItemsSource="{Binding WentWell}" ItemTemplate="{StaticResource ReviewLineTemplate}" />
+            </StackPanel>
+
+            <StackPanel Spacing="8">
+                <TextBlock Classes="section-header" Text="What slipped" Margin="0" />
+                <TextBlock Classes="field-hint" FontSize="13" IsVisible="{Binding NothingSlipped}" Text="Nothing slipped." />
+                <ItemsControl ItemsSource="{Binding Slipped}" ItemTemplate="{StaticResource ReviewLineTemplate}" />
+            </StackPanel>
+
+            <StackPanel Spacing="8">
+                <TextBlock Classes="section-header" Text="{Binding AheadTitle}" Margin="0" />
+                <TextBlock Classes="field-hint" FontSize="13" IsVisible="{Binding NothingAhead}"
+                           Text="Nothing is due or planned yet." />
+                <ItemsControl ItemsSource="{Binding Ahead}" ItemTemplate="{StaticResource ReviewLineTemplate}" />
+            </StackPanel>
+
+            <Border Classes="card" Padding="20,18">
+                <StackPanel Spacing="12">
+                    <StackPanel Spacing="2">
+                        <TextBlock Text="Anything to add for this week?" FontWeight="SemiBold" FontSize="15" />
+                        <TextBlock Classes="field-hint" TextWrapping="Wrap"
+                                   Text="A new step, a new goal, something you want to make time for." />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Button Classes="action" Content="Add something" Command="{Binding AddSomethingCommand}" />
+                        <Button Classes="action primary" Content="Start the week" Command="{Binding FinishCommand}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

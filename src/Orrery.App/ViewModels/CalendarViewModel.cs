@@ -228,7 +228,7 @@ public sealed partial class CalendarViewModel : ObservableObject
     public ObservableCollection<DayCellViewModel> Cells { get; } = [];
     public ObservableCollection<CalendarItemViewModel> DayItems { get; } = [];
     public ObservableCollection<CalendarItemViewModel> ComingUp { get; } = [];
-    public string[] Weekdays { get; } = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    [ObservableProperty] private string[] _weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
     [ObservableProperty] private string _monthTitle = "";
     [ObservableProperty] private string _dayTitle = "";
@@ -278,8 +278,12 @@ public sealed partial class CalendarViewModel : ObservableObject
         var data = IsPlanning && _draft is not null ? _draft : _main.Data;
         var today = MainViewModel.Today;
 
-        // Six Monday-first weeks cover any month.
-        var lead = ((int)_month.DayOfWeek + 6) % 7;
+        // Six weeks cover any month, starting on whichever day the week starts on.
+        var first = (int)Orrery.Core.Engine.WeekStart.First;
+        Weekdays = Enumerable.Range(0, 7)
+            .Select(i => System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetAbbreviatedDayName((DayOfWeek)((first + i) % 7)))
+            .ToArray();
+        var lead = ((int)_month.DayOfWeek - first + 7) % 7;
         var gridStart = _month.AddDays(-lead);
         var gridEnd = gridStart.AddDays(41);
         var events = CalendarModel.Events(data, gridStart, gridEnd.AddDays(30), today);

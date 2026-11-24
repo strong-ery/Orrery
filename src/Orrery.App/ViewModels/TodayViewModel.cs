@@ -226,10 +226,24 @@ public partial class TodayViewModel : ObservableObject
         _main.Changed();
     }
 
+    [ObservableProperty] private bool _reviewDue;
+
+    [RelayCommand]
+    private void OpenReview() => _main.ShowReview();
+
+    [RelayCommand]
+    private void SkipReview()
+    {
+        Orrery.Core.Engine.WeeklyReview.MarkSeen(_main.Data, MainViewModel.Today);
+        ReviewDue = false;
+        _main.Changed();
+    }
+
     public void Refresh()
     {
         var today = MainViewModel.Today;
         var data = _main.Data;
+        ReviewDue = Orrery.Core.Engine.WeeklyReview.IsDue(data, today);
         Heading = today.ToString("dddd, MMM d", CultureInfo.CurrentCulture);
 
         // An arrangement is for one day only; tomorrow starts from the planner's own order again.

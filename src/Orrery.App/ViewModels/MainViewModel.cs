@@ -24,6 +24,7 @@ public partial class MainViewModel : ObservableObject
     public DesignerViewModel DesignerPage { get; }
     public HistoryViewModel HistoryPage { get; }
     public CalendarViewModel CalendarPage { get; }
+    public ReviewViewModel ReviewPage { get; }
     public FocusViewModel Focus { get; }
     public InspectorViewModel Inspector { get; }
     public CaptureViewModel Capture { get; }
@@ -31,7 +32,7 @@ public partial class MainViewModel : ObservableObject
     public UpdateViewModel Updates { get; }
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsToday), nameof(IsGoals), nameof(IsDesigner), nameof(IsHistory), nameof(IsCalendar), nameof(IsSettings))]
+    [NotifyPropertyChangedFor(nameof(IsToday), nameof(IsGoals), nameof(IsDesigner), nameof(IsHistory), nameof(IsCalendar), nameof(IsSettings), nameof(IsReview))]
     private ObservableObject _current;
 
     public bool IsToday => Current == TodayPage;
@@ -40,6 +41,7 @@ public partial class MainViewModel : ObservableObject
     public bool IsHistory => Current == HistoryPage;
     public bool IsCalendar => Current == CalendarPage;
     public bool IsSettings => Current == SettingsPage;
+    public bool IsReview => Current == ReviewPage;
 
     // --- Window size: the side panels ease between wide and narrow instead of squeezing the page ----
 
@@ -150,6 +152,7 @@ public partial class MainViewModel : ObservableObject
     {
         _uiTimer.Tick += (_, _) => SaveUiNow();
         Data = JsonStore.Load() ?? OrreryData.CreateEmpty();
+        Orrery.Core.Engine.WeekStart.First = Data.Settings.WeekStartsOn;
         SoftenOldColours(Data);
         JsonStore.Save(Data);
 
@@ -158,6 +161,7 @@ public partial class MainViewModel : ObservableObject
         DesignerPage = new DesignerViewModel(this);
         HistoryPage = new HistoryViewModel(this);
         CalendarPage = new CalendarViewModel(this);
+        ReviewPage = new ReviewViewModel(this);
         Focus = new FocusViewModel(this);
         Inspector = new InspectorViewModel(this);
         Capture = new CaptureViewModel(this);
@@ -209,6 +213,13 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void ShowCalendar() => Show(CalendarPage);
 
+    [RelayCommand]
+    public void ShowReview()
+    {
+        ReviewPage.Refresh();
+        Show(ReviewPage);
+    }
+
     private void Show(ObservableObject page)
     {
         RefreshAll();
@@ -221,6 +232,8 @@ public partial class MainViewModel : ObservableObject
         GoalsPage.Refresh();
         HistoryPage.Refresh();
         CalendarPage.Refresh();
+        if (Current == ReviewPage)
+            ReviewPage.Refresh();
         Inspector.Refresh();
     }
 

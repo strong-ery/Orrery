@@ -39,7 +39,7 @@ public sealed class MiniCalendar : Border
         Grid.SetColumn(next, 2);
 
         var names = new UniformGrid { Columns = 7 };
-        var first = CultureInfo.CurrentCulture.DateTimeFormat.FirstDayOfWeek;
+        var first = Orrery.Core.Engine.WeekStart.First;
         for (var i = 0; i < 7; i++)
         {
             var day = (DayOfWeek)(((int)first + i) % 7);
@@ -103,7 +103,7 @@ public sealed class MiniCalendar : Border
     {
         _title.Text = _month.ToString("MMMM yyyy", CultureInfo.CurrentCulture);
         _days.Children.Clear();
-        var firstDay = CultureInfo.CurrentCulture.DateTimeFormat.FirstDayOfWeek;
+        var firstDay = Orrery.Core.Engine.WeekStart.First;
         var lead = ((int)_month.DayOfWeek - (int)firstDay + 7) % 7;
         var start = _month.AddDays(-lead);
         var today = DateOnly.FromDateTime(DateTime.Today);

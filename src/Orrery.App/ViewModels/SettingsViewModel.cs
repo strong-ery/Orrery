@@ -55,6 +55,8 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private int _gentleIndex;
     [ObservableProperty] private int _listSizeIndex;
     [ObservableProperty] private int _dayLengthIndex;
+    public IReadOnlyList<string> WeekStartNames { get; } = ["Sunday", "Monday"];
+    [ObservableProperty] private int _weekStartIndex;
     [ObservableProperty] private bool _soundOn;
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(SoundLabel), nameof(IsCustomSound))] private string _soundName = "";
     [ObservableProperty] private string _soundError = "";
@@ -105,6 +107,7 @@ public partial class SettingsViewModel : ObservableObject
         GentleIndex = Nearest(Hours(12, 21), s.NudgeGentleFromHour);
         ListSizeIndex = Nearest(ListSizes.Select(n => (double)n), s.MaxToday);
         DayLengthIndex = Nearest(DayHours.Select(h => h * 60.0), s.DayCapacityMinutes);
+        WeekStartIndex = s.WeekStartsOn == DayOfWeek.Sunday ? 0 : 1;
         SoundOn = s.NotifySound;
         SoundName = s.NotifySoundName;
         SoundError = "";
@@ -143,6 +146,16 @@ public partial class SettingsViewModel : ObservableObject
         Save(s => s.MaxToday = ListSizes[Math.Clamp(value, 0, ListSizes.Length - 1)]);
         if (!_loading)
             _main.RefreshAll();
+    }
+
+    partial void OnWeekStartIndexChanged(int value)
+    {
+        var day = value == 0 ? DayOfWeek.Sunday : DayOfWeek.Monday;
+        Save(s => s.WeekStartsOn = day);
+        if (_loading)
+            return;
+        Orrery.Core.Engine.WeekStart.First = day;
+        _main.RefreshAll();
     }
 
     partial void OnSoundOnChanged(bool value) => Save(s => s.NotifySound = value);

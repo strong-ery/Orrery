@@ -177,6 +177,12 @@ public sealed class Settings
     /// <summary>The original name of the custom sound, for display.</summary>
     public string NotifySoundName { get; set; } = "";
 
+    /// <summary>The first day of the week: where the calendar starts its rows and when the weekly review comes round.</summary>
+    public DayOfWeek WeekStartsOn { get; set; } = DayOfWeek.Monday;
+
+    /// <summary>The first day of the last week you looked back on, so the review is offered once per week.</summary>
+    public DateOnly? LastReviewedWeek { get; set; }
+
     /// <summary>When GitHub was last asked about a new version, and the newest version already announced.</summary>
     public DateTime? LastUpdateCheckUtc { get; set; }
     public string AnnouncedUpdate { get; set; } = "";

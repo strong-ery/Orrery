@@ -5,7 +5,10 @@
              x:DataType="vm:HistoryViewModel">
     <ScrollViewer>
         <StackPanel Margin="32,24,32,34" Spacing="30" MaxWidth="860" HorizontalAlignment="Left">
-            <TextBlock Classes="page-title" Text="History" />
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Classes="page-title" Text="History" />
+                <Button Grid.Column="1" Classes="action" Content="Weekly review" Command="{Binding OpenReviewCommand}" VerticalAlignment="Center" />
+            </Grid>
 
             <StackPanel Spacing="6" IsVisible="{Binding !HasAnyActivity}" Margin="0,6,0,0">
                 <TextBlock Text="Nothing here yet" FontSize="16" FontWeight="SemiBold" />

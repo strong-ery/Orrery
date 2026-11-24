@@ -109,6 +109,9 @@ public partial class HistoryViewModel : ObservableObject
     [ObservableProperty] private bool _logIsEmpty;
     [ObservableProperty] private string _logSummary = "";
 
+    [RelayCommand]
+    private void OpenReview() => _main.ShowReview();
+
     partial void OnSearchChanged(string value) => RefreshLog();
 
     [RelayCommand]

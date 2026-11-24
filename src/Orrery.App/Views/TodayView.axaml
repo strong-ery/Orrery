@@ -6,6 +6,20 @@
     <ScrollViewer>
         <StackPanel Margin="32,24,32,30" Spacing="22" MaxWidth="860" HorizontalAlignment="Stretch">
 
+            <!-- A new week has started -->
+            <Border Classes="card" Padding="20,14" IsVisible="{Binding ReviewDue}">
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                    <StackPanel Spacing="2" VerticalAlignment="Center">
+                        <TextBlock Text="A new week" FontWeight="SemiBold" />
+                        <TextBlock Classes="field-hint" Text="Look back at last week and set up this one." />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                        <Button Classes="ghost" Content="Not now" Command="{Binding SkipReviewCommand}" />
+                        <Button Classes="action primary" Content="Review last week" Command="{Binding OpenReviewCommand}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
             <!-- Date and how the day is going. The two dials stay tucked away until wanted. -->
             <StackPanel Spacing="12" IsVisible="{Binding ShowControls}">
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="24">

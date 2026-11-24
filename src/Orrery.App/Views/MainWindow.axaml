@@ -18,6 +18,7 @@
         <DataTemplate DataType="vm:HistoryViewModel"><views:HistoryView /></DataTemplate>
         <DataTemplate DataType="vm:CalendarViewModel"><views:CalendarView /></DataTemplate>
         <DataTemplate DataType="vm:SettingsViewModel"><views:SettingsView /></DataTemplate>
+        <DataTemplate DataType="vm:ReviewViewModel"><views:ReviewView /></DataTemplate>
     </Window.DataTemplates>
 
     <Grid>
