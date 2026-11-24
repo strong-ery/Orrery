@@ -31,13 +31,26 @@ public static class Planner
     public const double MustDo = 0.85;
 
     /// <summary>How many steps of one goal can be offered at once, so a long goal shows what is open without taking over the list.</summary>
-    public const int PerGoal = 3;
+    public const int PerGoal = 4;
 
     /// <summary>
     /// How hard the date of a group pulls on a step inside it: nothing without a date, rising over the three weeks
     /// before it, and everything once it has passed. Also says why.
     /// </summary>
-    private static (double Pull, string Note) GroupPull(Goal goal, Step step, DateOnly today)
+    private static (double Pull, string Note) GroupPull(Goal goal, Step step, DateOnly today, DependencyGraph graph)
+    {
+        var (best, note) = OwnPull(goal, step, today);
+        // A step that holds up a group with a near date takes on that date: you cannot start Unit 3 until this is done.
+        foreach (var later in graph.Dependents(step.Id).Where(d => goal.Steps.Contains(d)))
+        {
+            var (pull, why) = OwnPull(goal, later, today);
+            if (pull > best)
+                (best, note) = (pull, $"{why} and waits on this");
+        }
+        return (best, note);
+    }
+
+    private static (double Pull, string Note) OwnPull(Goal goal, Step step, DateOnly today)
     {
         double best = 0;
         var note = "";
@@ -97,7 +110,7 @@ public static class Planner
                 // One step as an item. A group with a date pulls on the steps inside it, whatever the goal as a whole is doing.
                 PlanItem ForStep(Step s)
                 {
-                    var (pull, note) = GroupPull(goal, s, today);
+                    var (pull, note) = GroupPull(goal, s, today, graph);
                     var item = Make(goal, s, category, Math.Max(pressure, pull), graph.UnlockCount(s.Id), demand, today);
                     if (pull > pressure)
                         return item with { Reason = $"{note} · {item.Reason}" };
@@ -115,10 +128,15 @@ public static class Planner
                 // Otherwise everything that can be started now, the first few in order, skipping any you planned for
                 // a later day unless the goal is truly pressing. Later ones rank just under the one before.
                 // Steps in a group with a date that is near or past come before the rest, then stored order.
+                // Each group gets its next step before any group gets a second one, so Unit 2 is not drowned out by Unit 1.
+                Step Top(Step s) { while (goal.ParentOf(s) is { } up) s = up; return s; }
                 var ready = goal.Leaves()
                     .Where(s => Open(s) && (s.PlannedFor is null || pressure >= MustDo))
-                    .Select((s, order) => (Step: s, Order: order, Pull: GroupPull(goal, s, today).Pull))
-                    .OrderByDescending(x => x.Pull)
+                    .Select((s, order) => (Step: s, Order: order, Pull: GroupPull(goal, s, today, graph).Pull, Group: Top(s).Id))
+                    .GroupBy(x => x.Group)
+                    .SelectMany(g => g.OrderBy(x => x.Order).Select((x, rank) => (x.Step, x.Order, x.Pull, Rank: rank)))
+                    .OrderBy(x => x.Rank)
+                    .ThenByDescending(x => x.Pull)
                     .ThenBy(x => x.Order)
                     .Take(PerGoal)
                     .Select(x => x.Step)

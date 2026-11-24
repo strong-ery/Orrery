@@ -53,7 +53,25 @@ public class TodaySuggestionTests
         var (data, goal) = Course();
         var plan = Planner.Suggest(data, new PlanRequest(Monday, MaxItems: 10)).Where(p => p.GoalId == goal.Id).ToList();
         Assert.Equal(Planner.PerGoal, plan.Count);
-        Assert.Equal(["Unit 1 part 1", "Unit 1 part 2", "Unit 1 part 3"], plan.Select(p => p.Title).Order());
+        // Each group gets its next step before any gets a second.
+        Assert.Contains(plan, p => p.Title == "Unit 1 part 1");
+        Assert.Contains(plan, p => p.Title == "Unit 2 part 1");
+    }
+
+    [Fact]
+    public void Groups_done_in_order_surface_the_step_holding_up_a_near_group()
+    {
+        var (data, goal) = Course(GroupDateMode.Custom);
+        goal.SetOrdered(null, true);
+        goal.Steps.First(s => s.Title == "Unit 2").Due = Monday.AddDays(3);
+
+        var plan = Planner.Suggest(data, new PlanRequest(Monday, MaxItems: 5)).Where(p => p.GoalId == goal.Id).ToList();
+
+        // Unit 2 cannot start yet, so what stands in its way is what to do now, and it says why.
+        var first = Assert.Single(plan, p => p.Title == "Unit 1 part 1");
+        Assert.Contains("Unit 2 is due", first.Reason);
+        Assert.Contains("waits on this", first.Reason);
+        Assert.DoesNotContain(plan, p => p.Title.StartsWith("Unit 2"));
     }
 
     [Fact]
