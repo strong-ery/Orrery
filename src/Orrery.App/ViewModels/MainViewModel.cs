@@ -303,6 +303,34 @@ public partial class MainViewModel : ObservableObject
             return;
 
         var before = done ? JsonStore.ToJson(Data) : null;
+        ApplyStepDone(goal, step, done);
+        Changed();
+        if (before is not null)
+        {
+            _undoSnapshot = before;
+            OfferUndo($"Marked “{step.Title}” done");
+        }
+    }
+
+    /// <summary>Ticks or unticks a group: every step inside it at once, as one change you can take back.</summary>
+    public void SetGroupDone(Guid goalId, Guid groupId, bool done)
+    {
+        if (FindGoal(goalId) is not { } goal || goal.Steps.FirstOrDefault(s => s.Id == groupId) is not { } group)
+            return;
+        var inside = goal.Leaves().Where(l => goal.BlockOf(group).Contains(l) && l.Done != done).ToList();
+        if (inside.Count == 0)
+            return;
+
+        var before = JsonStore.ToJson(Data);
+        foreach (var leaf in inside)
+            ApplyStepDone(goal, leaf, done);
+        Changed();
+        _undoSnapshot = before;
+        OfferUndo(done ? $"Marked everything in “{group.Title}” done" : $"Reopened everything in “{group.Title}”");
+    }
+
+    private void ApplyStepDone(Goal goal, Step step, bool done)
+    {
         step.Done = done;
         var counts = goal.Measure.Kind is MeasureKind.Steps or MeasureKind.Done;
         if (done)
@@ -318,12 +346,6 @@ public partial class MainViewModel : ObservableObject
                 else
                     Data.Contributions.Remove(c);
             }
-        }
-        Changed();
-        if (before is not null)
-        {
-            _undoSnapshot = before;
-            OfferUndo($"Marked “{step.Title}” done");
         }
     }
 

@@ -100,9 +100,10 @@
                                                     VerticalAlignment="Top" Margin="0,1,0,0" IsVisible="{Binding IsLeaf}">
                                                 <PathIcon Data="{StaticResource IconCheck}" />
                                             </Button>
-                                            <Border Classes="group-box" Classes.done="{Binding Done}" IsVisible="{Binding IsSection}" Margin="0,1,0,0" VerticalAlignment="Top">
+                                            <Button Classes="group-box" Classes.done="{Binding Done}" Command="{Binding ToggleCommand}" IsVisible="{Binding IsSection}"
+                                                    Margin="0,1,0,0" VerticalAlignment="Top" ToolTip.Tip="{Binding GroupTip}">
                                                 <PathIcon Data="{StaticResource IconCheck}" />
-                                            </Border>
+                                            </Button>
                                             <StackPanel Grid.Column="1" Spacing="1">
                                                 <Button Classes="link" Command="{Binding BeginEditCommand}" HorizontalAlignment="Left" Padding="0" IsHitTestVisible="{Binding EditMode}">
                                                     <TextBlock Text="{Binding Title}" FontSize="13" TextWrapping="Wrap"

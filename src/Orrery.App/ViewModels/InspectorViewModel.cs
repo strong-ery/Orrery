@@ -230,6 +230,7 @@ public sealed partial class InspectorStepViewModel : ObservableObject
     public Avalonia.Thickness Indent { get; }
     public string Title { get; }
     public bool Done { get; }
+    public string GroupTip => Done ? "Reopen everything in it" : "Mark everything in it done";
     public bool IsHighlighted { get; }
     public bool IsBlocked { get; }
     public string BlockedText { get; }
@@ -238,7 +239,13 @@ public sealed partial class InspectorStepViewModel : ObservableObject
     public double Opacity { get; }
 
     [RelayCommand]
-    private void Toggle() => _main.SetStepDone(_goalId, _stepId, !Done);
+    private void Toggle()
+    {
+        if (IsSection)
+            _main.SetGroupDone(_goalId, _stepId, !Done);
+        else
+            _main.SetStepDone(_goalId, _stepId, !Done);
+    }
 
     [RelayCommand]
     private void Start() => _main.StartFocus(_goalId, _stepId);
