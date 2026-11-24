@@ -6,7 +6,15 @@ namespace Orrery.App.Views;
 
 public partial class InspectorView : UserControl
 {
-    public InspectorView() => InitializeComponent();
+    public InspectorView()
+    {
+        InitializeComponent();
+        DataContextChanged += (_, _) =>
+        {
+            if (DataContext is InspectorViewModel vm)
+                vm.FocusAdd += () => Avalonia.Threading.Dispatcher.UIThread.Post(() => NewStepBox.Focus(), Avalonia.Threading.DispatcherPriority.Loaded);
+        };
+    }
 
     /// <summary>Picking a goal in the "Start after" list: this goal now waits for it.</summary>
     private void OnPickGoal(object? sender, RoutedEventArgs e)

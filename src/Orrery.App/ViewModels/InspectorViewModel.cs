@@ -13,10 +13,16 @@ public sealed partial class InspectorStepViewModel : ObservableObject
     private readonly MainViewModel _main;
     private readonly Guid _goalId;
     private readonly Guid _stepId;
+    private readonly Action<Guid> _addInside;
 
-    public InspectorStepViewModel(MainViewModel main, Goal goal, Step step, DependencyGraph graph, bool highlighted, int depth)
+    /// <summary>On a group: start adding steps inside it.</summary>
+    [RelayCommand]
+    private void AddInside() => _addInside(_stepId);
+
+    public InspectorStepViewModel(MainViewModel main, Goal goal, Step step, DependencyGraph graph, bool highlighted, int depth, Action<Guid> addInside)
     {
         _main = main;
+        _addInside = addInside;
         _goalId = goal.Id;
         _stepId = step.Id;
         Title = step.Title;
@@ -250,6 +256,21 @@ public partial class InspectorViewModel : ObservableObject
     [RelayCommand]
     private void ToggleInOrder() => InOrder = !InOrder;
 
+    /// <summary>Raised when the add field should take focus.</summary>
+    public event Action? FocusAdd;
+
+    /// <summary>"Add a step" on a group: steps typed next go inside that group.</summary>
+    private void AddInside(Guid groupId)
+    {
+        if (CurrentGoal?.Steps.FirstOrDefault(s => s.Id == groupId) is not { } group)
+            return;
+        _into = groupId;
+        IntoLabel = group.Title;
+        IsInto = true;
+        ShowAddRow = true;
+        FocusAdd?.Invoke();
+    }
+
     /// <summary>The time chips: tap one to set it, tap it again to clear it.</summary>
     [RelayCommand]
     private void SetMinutes(string minutes)
@@ -325,7 +346,7 @@ public partial class InspectorViewModel : ObservableObject
         Steps.Clear();
         void Walk(Step step, int depth)
         {
-            Steps.Add(new InspectorStepViewModel(_main, goal, step, graph, step.Id == _stepId, depth));
+            Steps.Add(new InspectorStepViewModel(_main, goal, step, graph, step.Id == _stepId, depth, AddInside));
             foreach (var child in goal.ChildrenOf(step))
                 Walk(child, depth + 1);
         }

@@ -88,11 +88,19 @@
                                             <Border Width="16" Height="16" IsVisible="{Binding IsSection}" Margin="0,1,0,0" VerticalAlignment="Top"
                                                     CornerRadius="4" BorderThickness="1.5" BorderBrush="{DynamicResource AppAccentBrush}" Opacity="0.7" />
                                             <StackPanel Grid.Column="1" Spacing="1">
-                                                <TextBlock Text="{Binding Title}" FontSize="13" TextWrapping="Wrap"
-                                                           FontWeight="{Binding TitleWeight}" Foreground="{DynamicResource AppIconBrush}" />
+                                                <Button Classes="link" Command="{Binding BeginEditCommand}" HorizontalAlignment="Left" Padding="0" Cursor="Hand">
+                                                    <TextBlock Text="{Binding Title}" FontSize="13" TextWrapping="Wrap"
+                                                               FontWeight="{Binding TitleWeight}" Foreground="{DynamicResource AppIconBrush}" />
+                                                </Button>
                                                 <TextBlock Classes="field-hint" Text="{Binding Detail}" />
                                                 <TextBlock FontSize="11" Opacity="0.6" Text="{Binding BlockedText}"
                                                            IsVisible="{Binding IsBlocked}" TextWrapping="Wrap" />
+                                                <Button Classes="ghost" HorizontalAlignment="Left" Padding="0,3" IsVisible="{Binding IsSection}" Command="{Binding AddInsideCommand}">
+                                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                                        <PathIcon Data="{StaticResource IconAdd}" Width="10" Height="10" />
+                                                        <TextBlock Text="Add a step here" FontSize="12" />
+                                                    </StackPanel>
+                                                </Button>
                                                 <StackPanel Orientation="Horizontal" IsVisible="{Binding NeedsSplit}">
                                                     <Button Classes="ghost" Padding="0,3" Content="Put off a few times. Break it up?" Command="{Binding SplitCommand}" />
                                                 </StackPanel>
@@ -172,7 +180,7 @@
                             </StackPanel>
                         </Button>
                         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                            <TextBox Classes="orrery-input" PlaceholderText="Add a step…" Text="{Binding NewStepTitle}">
+                            <TextBox x:Name="NewStepBox" Classes="orrery-input" PlaceholderText="Add a step…" Text="{Binding NewStepTitle}">
                                 <TextBox.KeyBindings>
                                     <KeyBinding Gesture="Enter" Command="{Binding AddStepCommand}" />
                                 </TextBox.KeyBindings>
