@@ -4,4 +4,4 @@
 
 A free and open-source goal tracking and planning app. I built this because I hated every existing solution.
 
-Licensed under the AGPL-3.0, see `LICENSE`.
+Licensed under AGPL-3.0, see `LICENSE`.
