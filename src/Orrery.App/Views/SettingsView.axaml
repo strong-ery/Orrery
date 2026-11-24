@@ -12,7 +12,7 @@
 
             <!-- Reminders -->
             <StackPanel Spacing="10">
-                <TextBlock Classes="section-header" Text="REMINDERS" Margin="0" />
+                <TextBlock Classes="section-header" Text="Reminders" Margin="0" />
                 <Border Classes="card" Padding="20,16">
                     <StackPanel Spacing="16">
                         <Grid ColumnDefinitions="*,Auto">
@@ -118,7 +118,7 @@
 
             <!-- Today -->
             <StackPanel Spacing="10">
-                <TextBlock Classes="section-header" Text="TODAY" Margin="0" />
+                <TextBlock Classes="section-header" Text="Today" Margin="0" />
                 <Border Classes="card" Padding="20,16">
                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
                         <StackPanel Spacing="2">
@@ -141,7 +141,7 @@
 
             <!-- Data -->
             <StackPanel Spacing="10">
-                <TextBlock Classes="section-header" Text="YOUR DATA" Margin="0" />
+                <TextBlock Classes="section-header" Text="Your data" Margin="0" />
                 <Border Classes="card" Padding="20,16">
                     <StackPanel Spacing="10">
                         <TextBlock Classes="field-hint" TextWrapping="Wrap"

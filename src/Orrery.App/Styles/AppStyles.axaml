@@ -12,9 +12,9 @@
     <Setter Property="FontWeight" Value="Bold" />
   </Style>
   <Style Selector="TextBlock.section-header">
-    <Setter Property="FontSize" Value="11" />
+    <Setter Property="FontSize" Value="12" />
     <Setter Property="FontWeight" Value="SemiBold" />
-    <Setter Property="Opacity" Value="0.55" />
+    <Setter Property="Opacity" Value="0.7" />
     <Setter Property="Margin" Value="0,0,0,6" />
   </Style>
   <Style Selector="TextBlock.field-label">

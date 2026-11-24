@@ -296,9 +296,9 @@ public partial class GoalsViewModel : ObservableObject
                      .GroupBy(r => r.Horizon))
             Groups.Add(new GoalGroup(Horizons.Label(group.Key), group.ToList()));
         if (finished.Count > 0)
-            Groups.Add(new GoalGroup("FINISHED", finished.OrderBy(r => r.Title, StringComparer.OrdinalIgnoreCase).ToList()));
+            Groups.Add(new GoalGroup("Finished", finished.OrderBy(r => r.Title, StringComparer.OrdinalIgnoreCase).ToList()));
         if (ShowPutAway)
-            Groups.Add(new GoalGroup("PUT AWAY", putAway));
+            Groups.Add(new GoalGroup("Put away", putAway));
 
         Lanes = TimelineModel.Build(data, today, Span);
 

@@ -47,7 +47,7 @@
 
             <!-- Streaks -->
             <StackPanel Spacing="10">
-                <TextBlock Classes="section-header" Text="STREAKS" Margin="0" />
+                <TextBlock Classes="section-header" Text="Streaks" Margin="0" />
                 <ItemsControl ItemsSource="{Binding Ribbons}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="vm:RibbonViewModel">
@@ -81,7 +81,7 @@
 
             <!-- Where the week went -->
             <StackPanel Spacing="8">
-                <TextBlock Classes="section-header" Text="WHERE THE WEEK WENT" Margin="0" />
+                <TextBlock Classes="section-header" Text="Where the week went" Margin="0" />
                 <TextBlock Classes="field-hint" FontSize="13" IsVisible="{Binding !HasEffort}"
                            Text="Nothing logged yet. Finish something on Today and it shows up here." />
                 <ItemsControl ItemsSource="{Binding Effort}">
@@ -102,7 +102,7 @@
             <!-- Everything, in order -->
             <StackPanel Spacing="8">
                 <Grid ColumnDefinitions="*,Auto,240" ColumnSpacing="14">
-                    <TextBlock Classes="section-header" Text="EVERYTHING YOU HAVE DONE" Margin="0" VerticalAlignment="Center" />
+                    <TextBlock Classes="section-header" Text="Everything you have done" Margin="0" VerticalAlignment="Center" />
                     <TextBlock Grid.Column="1" Classes="field-hint" Text="{Binding LogSummary}" VerticalAlignment="Center" />
                     <TextBox Grid.Column="2" Text="{Binding Search}" Watermark="Search" />
                 </Grid>

@@ -110,7 +110,7 @@
                 </ItemsControl>
 
                 <StackPanel Spacing="0" IsVisible="{Binding HasComingUp}">
-                    <TextBlock Classes="section-header" Text="COMING UP" />
+                    <TextBlock Classes="section-header" Text="Coming up" />
                     <ItemsControl ItemsSource="{Binding ComingUp}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="vm:CalendarItemViewModel">
@@ -144,7 +144,7 @@
                         Content="{Binding PreviewButton}" />
 
                 <StackPanel Spacing="0" IsVisible="{Binding ShowTray}">
-                    <TextBlock Classes="section-header" Text="TO PLACE" />
+                    <TextBlock Classes="section-header" Text="To place" />
                     <TextBlock Classes="field-hint" FontSize="13" Margin="0,8,0,0" IsVisible="{Binding TrayIsEmpty}"
                                Text="Everything has a day." />
                     <ItemsControl ItemsSource="{Binding Tray}">
@@ -168,7 +168,7 @@
                     <TextBlock Classes="field-hint" FontSize="13" TextWrapping="Wrap" IsVisible="{Binding PreviewIsSame}"
                                Text="Today would look the same as it does now." />
                     <StackPanel Spacing="0" IsVisible="{Binding HasAdded}">
-                        <TextBlock Classes="section-header" Text="JOINS TODAY" />
+                        <TextBlock Classes="section-header" Text="Joins today" />
                         <ItemsControl ItemsSource="{Binding Added}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="vm:PreviewLine">
@@ -181,7 +181,7 @@
                         </ItemsControl>
                     </StackPanel>
                     <StackPanel Spacing="0" IsVisible="{Binding HasRemoved}">
-                        <TextBlock Classes="section-header" Text="LEAVES TODAY" />
+                        <TextBlock Classes="section-header" Text="Leaves today" />
                         <ItemsControl ItemsSource="{Binding Removed}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="vm:PreviewLine">
@@ -191,7 +191,7 @@
                         </ItemsControl>
                     </StackPanel>
                     <StackPanel Spacing="0">
-                        <TextBlock Classes="section-header" Text="TODAY WOULD BE" />
+                        <TextBlock Classes="section-header" Text="Today would be" />
                         <ItemsControl ItemsSource="{Binding TodayAfter}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="vm:PreviewLine">

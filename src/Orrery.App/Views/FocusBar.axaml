@@ -42,7 +42,7 @@
             <Grid IsVisible="{Binding IsWrapUp}" ColumnDefinitions="*,Auto" ColumnSpacing="24">
                 <StackPanel VerticalAlignment="Center" Spacing="8">
                     <StackPanel Spacing="1">
-                        <TextBlock Classes="field-hint" Text="NICE WORK" />
+                        <TextBlock Classes="field-hint" Text="Nice work" />
                         <TextBlock Text="{Binding WrapText}" FontWeight="SemiBold" FontSize="15" TextTrimming="CharacterEllipsis" />
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Spacing="18">

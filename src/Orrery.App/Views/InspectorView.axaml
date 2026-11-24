@@ -70,7 +70,7 @@
 
                 <StackPanel Spacing="4" IsVisible="{Binding ShowAddRow}">
                     <Grid ColumnDefinitions="*,Auto">
-                        <TextBlock Classes="section-header" Text="STEPS" VerticalAlignment="Center" Margin="0" />
+                        <TextBlock Classes="section-header" Text="Steps" VerticalAlignment="Center" Margin="0" />
                         <Button Grid.Column="1" Classes="ghost" Content="Do in order" Command="{Binding ChainStepsCommand}"
                                 IsVisible="{Binding CanChain}" />
                     </Grid>
@@ -211,7 +211,7 @@
                     </StackPanel>
                 </Button>
                 <StackPanel Spacing="6" IsVisible="{Binding ShowWaitsSection}">
-                    <TextBlock Classes="section-header" Text="WAITS FOR" Margin="0" />
+                    <TextBlock Classes="section-header" Text="Waits for" Margin="0" />
                     <TextBlock Classes="field-hint" Text="There are no other goals to wait for." IsVisible="{Binding !HasDependencyCandidates}" />
                     <ItemsControl ItemsSource="{Binding Dependencies}">
                         <ItemsControl.ItemTemplate>

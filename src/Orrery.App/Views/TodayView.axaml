@@ -78,7 +78,7 @@
 
             <!-- What is next, for the three empty days -->
             <StackPanel Spacing="4" IsVisible="{Binding HasUpcoming}">
-                <TextBlock Classes="section-header" Text="COMING UP" Margin="0,0,0,4" />
+                <TextBlock Classes="section-header" Text="Coming up" Margin="0,0,0,4" />
                 <ItemsControl ItemsSource="{Binding Upcoming}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="vm:CalendarItemViewModel">
@@ -169,12 +169,12 @@
 
             <!-- Then -->
             <StackPanel Spacing="0" IsVisible="{Binding HasRest}">
-                <TextBlock Classes="section-header" Text="THEN" />
+                <TextBlock Classes="section-header" Text="Then" />
                 <ItemsControl x:Name="RestList" ItemsSource="{Binding Rest}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="vm:PlanRowViewModel">
                             <StackPanel>
-                                <TextBlock Classes="section-header" Text="FOR YOU" Margin="0,18,0,2" IsVisible="{Binding StartsPassions}" />
+                                <TextBlock Classes="section-header" Text="For you" Margin="0,18,0,2" IsVisible="{Binding StartsPassions}" />
                                 <Border Classes="line">
                                     <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto,Auto,Auto" ColumnSpacing="12">
                                         <Border Classes="grip"
@@ -214,7 +214,7 @@
 
             <!-- Streaks: just numbers, no boxes -->
             <StackPanel Spacing="8" IsVisible="{Binding ShowControls}">
-                <TextBlock Classes="section-header" Text="STREAKS" Margin="0" />
+                <TextBlock Classes="section-header" Text="Streaks" Margin="0" />
                 <ItemsControl ItemsSource="{Binding Streaks}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>

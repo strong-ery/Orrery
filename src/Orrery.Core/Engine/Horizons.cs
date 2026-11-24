@@ -9,10 +9,10 @@ public static class Horizons
 {
     public static string Label(Horizon h) => h switch
     {
-        Horizon.Now => "NOW",
-        Horizon.Week => "THIS WEEK",
-        Horizon.Month => "THIS MONTH",
-        _ => "LATER",
+        Horizon.Now => "Now",
+        Horizon.Week => "This week",
+        Horizon.Month => "This month",
+        _ => "Later",
     };
 
     public static Horizon Of(Goal g, IReadOnlyList<Contribution> log, DateOnly today)

@@ -152,7 +152,7 @@ public sealed class TimelineCanvas : Control
         var y = AxisH;
         foreach (var lane in Lanes ?? [])
         {
-            var heading = Text(string.Join(' ', lane.Name.ToUpperInvariant().Select(c => c.ToString())), 10, "#7F88BC", 300, bold: true);
+            var heading = Text(lane.Name, 12, "#B8C0E8", 300, bold: true);
             context.DrawText(heading, new Point(Pad + 2, y + 10));
             context.DrawLine(PenOf(Tint(Ink, 0x30), 1), new Point(Pad, y + HeadH - 6), new Point(FullWidth - Pad, y + HeadH - 6));
             y += HeadH + lane.Bars.Count * RowH + LaneGap;
@@ -183,13 +183,13 @@ public sealed class TimelineCanvas : Control
                 continue;
             context.DrawLine(PenOf(Tint(Ink, firstOfMonth ? 0x30 : 0x16), 1), new Point(x, AxisH - 8), new Point(x, height - 4));
             var label = firstOfMonth
-                ? d.ToString("MMM", CultureInfo.CurrentCulture).ToUpperInvariant()
+                ? d.ToString("MMM", CultureInfo.CurrentCulture)
                 : d.Day.ToString(CultureInfo.InvariantCulture);
             var ft = Text(label, firstOfMonth ? 10.5 : 10, firstOfMonth ? "#B8C0E8" : "#6E77A8", 60, bold: firstOfMonth);
             context.DrawText(ft, new Point(x + 4, 6));
         }
 
-        var todayLabel = Text("TODAY", 10, "#E8B64C", 60, bold: true);
+        var todayLabel = Text("Today", 10, "#E8B64C", 60, bold: true);
         context.DrawText(todayLabel, new Point(Math.Max(Left - 4, XOf(today) - todayLabel.Width / 2), 21));
     }
 

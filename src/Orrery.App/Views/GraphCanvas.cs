@@ -34,10 +34,12 @@ public sealed class GraphCanvas : Control
     public IReadOnlyDictionary<Guid, Color>? Colors { get => GetValue(ColorsProperty); set => SetValue(ColorsProperty, value); }
     public ICommand? NodeCommand { get => GetValue(NodeCommandProperty); set => SetValue(NodeCommandProperty, value); }
 
-    private double NodeW = 236;
-    private const double NodeH = 66, GapX = 72, GapY = 16, Pad = 28, Top = 56;
+    // Box width and the gap between columns ease toward whatever fits, so the graph glides when the panel beside it opens or closes.
+    private double NodeW = -1, GapX = -1, _wantW = 236, _wantGap = 72;
+    private const double NodeH = 66, GapY = 16, Pad = 28, Top = 56;
+    private readonly DispatcherTimer _fit = new() { Interval = TimeSpan.FromMilliseconds(16) };
     private ScrollViewer? _scroll;
-    private static readonly string[] ColumnNames = ["FIRST", "THEN", "AFTER THAT"];
+    private static readonly string[] ColumnNames = ["First", "Then", "After that"];
 
     private Guid? _focusId;
     private HashSet<Guid> _chain = [];
@@ -50,6 +52,19 @@ public sealed class GraphCanvas : Control
     public GraphCanvas()
     {
         _timer.Tick += (_, _) => Step();
+        _fit.Tick += (_, _) =>
+        {
+            NodeW += (_wantW - NodeW) * 0.2;
+            GapX += (_wantGap - GapX) * 0.2;
+            if (Math.Abs(_wantW - NodeW) < 0.5 && Math.Abs(_wantGap - GapX) < 0.5)
+            {
+                NodeW = _wantW;
+                GapX = _wantGap;
+                _fit.Stop();
+            }
+            InvalidateMeasure();
+            InvalidateVisual();
+        };
     }
 
     private Rect RectOf(FlowNode n) =>
@@ -69,7 +84,20 @@ public sealed class GraphCanvas : Control
         if (LayoutData is not { Nodes.Count: > 0 } l)
             return new Size(0, 0);
         var room = (_scroll?.Bounds.Width ?? 1000) - Pad * 2 - 18;
-        NodeW = Math.Clamp((room - (l.Columns - 1) * GapX) / l.Columns, 180, 250);
+        // Shrink the gaps first (down to a small arrow's length), then the boxes, and only then scroll.
+        var gap = Math.Clamp((room - l.Columns * 236) / Math.Max(1, l.Columns - 1), 40, 72);
+        var w = Math.Clamp((room - (l.Columns - 1) * gap) / l.Columns, 170, 250);
+        if (NodeW < 0)
+        {
+            NodeW = w;
+            GapX = gap;
+        }
+        if (Math.Abs(w - _wantW) > 0.5 || Math.Abs(gap - _wantGap) > 0.5)
+        {
+            _wantW = w;
+            _wantGap = gap;
+            _fit.Start();
+        }
         return new Size(Pad * 2 + l.Columns * NodeW + (l.Columns - 1) * GapX, Top + Pad + l.Rows * NodeH + (l.Rows - 1) * GapY);
     }
 
@@ -179,7 +207,7 @@ public sealed class GraphCanvas : Control
         // Column headings: how far along the chain you are.
         for (var c = 0; c < layout.Columns; c++)
         {
-            var name = c < ColumnNames.Length ? ColumnNames[c] : "THEN";
+            var name = c < ColumnNames.Length ? ColumnNames[c] : "Then";
             var ft = Format(string.Join(' ', name.Select(ch => ch.ToString())), 10, "#7F88BC", 200, bold: true);
             var x = Pad + c * (NodeW + GapX);
             context.DrawText(ft, new Point(x + 2, Top - 30));
