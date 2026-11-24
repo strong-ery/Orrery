@@ -92,6 +92,6 @@
 
     <Application.Styles>
         <FluentTheme />
-        <StyleInclude Source="avares://Orrery.App/Styles/AppStyles.axaml" />
+        <StyleInclude Source="avares://Orrery/Styles/AppStyles.axaml" />
     </Application.Styles>
 </Application>
