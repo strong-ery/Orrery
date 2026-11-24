@@ -19,10 +19,45 @@ public static class Install
         get
         {
             var p = Environment.ProcessPath;
-            return !string.IsNullOrWhiteSpace(p) && !string.Equals(Path.GetFileName(p), "dotnet.exe", StringComparison.OrdinalIgnoreCase) && File.Exists(p)
-                ? Path.GetFullPath(p)
-                : null;
+            if (!string.IsNullOrWhiteSpace(p) && !string.Equals(Path.GetFileName(p), "dotnet.exe", StringComparison.OrdinalIgnoreCase) && File.Exists(p))
+                return Path.GetFullPath(p);
+            // `dotnet run` starts the app through dotnet.exe; the real exe sits beside the assembly.
+            var beside = Path.Combine(AppContext.BaseDirectory, "Orrery.exe");
+            return File.Exists(beside) ? Path.GetFullPath(beside) : null;
         }
+    }
+
+    /// <summary>True when this process is running from the installed location.</summary>
+    public static bool IsInstalledCopy => ExePath is { } exe && Path.GetDirectoryName(exe) is { } here && Same(here, Directory);
+
+    /// <summary>
+    /// Another Orrery is running and this is a different build of it: ask it to save and quit, wait for it, and if it
+    /// is too old to listen (or stuck) end it. True once this process holds the single-instance lock.
+    /// </summary>
+    public static bool TakeOver(Mutex mutex)
+    {
+        try
+        {
+            try { EventWaitHandle.OpenExisting(App.QuitEventName).Set(); } catch { }
+            if (Acquire(mutex, 8000))
+                return true;
+            foreach (var other in Process.GetProcessesByName("Orrery").Where(p => p.Id != Environment.ProcessId))
+            {
+                try { other.Kill(); other.WaitForExit(3000); } catch { }
+            }
+            return Acquire(mutex, 4000);
+        }
+        catch
+        {
+
+            return false;
+        }
+    }
+
+    private static bool Acquire(Mutex mutex, int milliseconds)
+    {
+        try { return mutex.WaitOne(milliseconds); }
+        catch (AbandonedMutexException) { return true; } // the old one was ended; the lock is ours now
     }
 
     private static bool Same(string a, string b) => string.Equals(
@@ -37,6 +72,7 @@ public static class Install
             return false;
         try
         {
+            StopInstalledCopy();
             Copy(here, Directory);
             var installed = Path.Combine(Directory, Path.GetFileName(exe));
             if (!File.Exists(installed))
@@ -56,6 +92,31 @@ public static class Install
             return false; // no write access or similar: just run where we are
         }
     }
+
+    /// <summary>Whatever is running from the installed folder has to go before its files can be replaced.</summary>
+    private static void StopInstalledCopy()
+    {
+        try { EventWaitHandle.OpenExisting(App.QuitEventName).Set(); } catch { }
+        var installed = Path.Combine(Directory, "Orrery.exe");
+        for (var waited = 0; waited < 8000; waited += 250)
+        {
+            var running = RunningFrom(installed);
+            if (running.Count == 0)
+                return;
+            Thread.Sleep(250);
+        }
+        foreach (var p in RunningFrom(installed))
+        {
+            try { p.Kill(); p.WaitForExit(3000); } catch { }
+        }
+    }
+
+    private static List<Process> RunningFrom(string exe) =>
+        Process.GetProcessesByName("Orrery").Where(p =>
+        {
+            try { return p.Id != Environment.ProcessId && string.Equals(p.MainModule?.FileName, exe, StringComparison.OrdinalIgnoreCase); }
+            catch { return false; }
+        }).ToList();
 
     private static void Copy(string from, string to)
     {

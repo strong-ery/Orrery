@@ -14,6 +14,10 @@ sealed class Program
 #endif
         // One Orrery at a time: a second launch just asks the first one to come forward.
         using var mutex = new Mutex(true, "Orrery.SingleInstance", out var first);
+        // Starting the installed copy again just brings the open window forward. Any other build (a dev run, a fresh
+        // download) replaces whatever is running, so you never end up looking at an old version.
+        if (!first && !Install.IsInstalledCopy)
+            first = Install.TakeOver(mutex);
         if (!first)
         {
             try { EventWaitHandle.OpenExisting(App.ShowEventName).Set(); } catch { }

@@ -14,6 +14,7 @@ public partial class App : Application
     public static bool Quitting { get; private set; }
 
     public const string ShowEventName = "Orrery.ShowWindow";
+    public const string QuitEventName = "Orrery.Quit";
 
     private MainViewModel? _main;
     private NudgeHost? _nudges;
@@ -58,6 +59,14 @@ public partial class App : Application
             {
                 while (show.WaitOne())
                     Avalonia.Threading.Dispatcher.UIThread.Post(ShowMain);
+            }) { IsBackground = true }.Start();
+
+            // A different build (a new version, a dev build) starting up asks this one to step aside and waits for it.
+            var quit = new EventWaitHandle(false, EventResetMode.AutoReset, QuitEventName);
+            new Thread(() =>
+            {
+                if (quit.WaitOne())
+                    Avalonia.Threading.Dispatcher.UIThread.Post(QuitApp);
             }) { IsBackground = true }.Start();
 
             _main.Updates.Found = u => _nudges.Show("Update available", $"Orrery {u.Version} is ready to install.",
