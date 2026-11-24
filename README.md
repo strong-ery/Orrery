@@ -1,13 +1,7 @@
+<img src="resources/logo/Artboard-1.png" alt="logo" width="400">
+
 # Orrery
 
-Long-term and short-term goals in one place. Keeps responsibilities and passions apart, tracks the small
-steps under each, and suggests a short list for today. Local-first, no accounts.
-
-```powershell
-dotnet run --project src/Orrery.App
-dotnet test
-```
-
-Data lives in `%APPDATA%\Orrery\orrery.json`.
+A free and open-source goal tracking and planning app. I built this because I hated every existing solution.
 
 Licensed under the AGPL-3.0, see `LICENSE`.
