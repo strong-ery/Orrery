@@ -161,42 +161,31 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
 
-                    <!-- Adding: one field. The rest is behind "More". -->
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" Margin="0,8,0,0">
-                        <TextBox Classes="orrery-input" PlaceholderText="Add a step…" Text="{Binding NewStepTitle}">
-                            <TextBox.KeyBindings>
-                                <KeyBinding Gesture="Enter" Command="{Binding AddStepCommand}" />
-                            </TextBox.KeyBindings>
-                        </TextBox>
-                        <Button Grid.Column="1" Classes="action" Content="Add" Command="{Binding AddStepCommand}" />
-                    </Grid>
-                    <ToggleButton Classes="disclose" IsChecked="{Binding ShowOptions}">
-                        <Grid>
-                            <TextBlock Text="More options" IsVisible="{Binding !ShowOptions}" />
-                            <TextBlock Text="Fewer options" IsVisible="{Binding ShowOptions}" />
-                        </Grid>
-                    </ToggleButton>
-                    <StackPanel Spacing="8" IsVisible="{Binding ShowOptions}">
+                    <!-- Adding: type a step and press Enter. Time and order only show up once there is something to add. -->
+                    <StackPanel Spacing="6" Margin="0,8,0,0">
+                        <Button Classes="ghost" HorizontalAlignment="Left" Padding="0,2" IsVisible="{Binding IsInto}"
+                                Command="{Binding LeaveGroupCommand}">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock Classes="field-hint" Text="Adding inside" />
+                                <TextBlock FontSize="12" Text="{Binding IntoLabel}" />
+                                <PathIcon Data="{StaticResource IconClose}" Width="9" Height="9" />
+                            </StackPanel>
+                        </Button>
                         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                            <ComboBox Classes="orrery-combo" ItemsSource="{Binding ParentOptions}" SelectedIndex="{Binding ParentIndex}">
-                                <ComboBox.ItemTemplate>
-                                    <DataTemplate x:DataType="vm:WaitOption">
-                                        <TextBlock Text="{Binding Label}" TextTrimming="CharacterEllipsis" />
-                                    </DataTemplate>
-                                </ComboBox.ItemTemplate>
-                            </ComboBox>
-                            <Button Grid.Column="1" Classes="action" Content="Add as section" Command="{Binding AddSectionCommand}" />
+                            <TextBox Classes="orrery-input" PlaceholderText="Add a step…" Text="{Binding NewStepTitle}">
+                                <TextBox.KeyBindings>
+                                    <KeyBinding Gesture="Enter" Command="{Binding AddStepCommand}" />
+                                </TextBox.KeyBindings>
+                            </TextBox>
+                            <Button Grid.Column="1" Classes="action" Content="Add" Command="{Binding AddStepCommand}" />
                         </Grid>
-                        <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-                            <ComboBox Classes="orrery-combo" ItemsSource="{Binding EnergyNames}" SelectedIndex="{Binding NewStepEnergy}" />
-                            <ComboBox Grid.Column="1" Classes="orrery-combo" ItemsSource="{Binding WaitOptions}" SelectedIndex="{Binding WaitIndex}">
-                                <ComboBox.ItemTemplate>
-                                    <DataTemplate x:DataType="vm:WaitOption">
-                                        <TextBlock Text="{Binding Label}" TextTrimming="CharacterEllipsis" />
-                                    </DataTemplate>
-                                </ComboBox.ItemTemplate>
-                            </ComboBox>
-                        </Grid>
+                        <StackPanel Orientation="Horizontal" Spacing="4" IsVisible="{Binding HasNewText}">
+                            <Button Classes="seg" Classes.active="{Binding Is15}" Content="15 min" Command="{Binding SetMinutesCommand}" CommandParameter="15" />
+                            <Button Classes="seg" Classes.active="{Binding Is30}" Content="30 min" Command="{Binding SetMinutesCommand}" CommandParameter="30" />
+                            <Button Classes="seg" Classes.active="{Binding Is60}" Content="1 hour" Command="{Binding SetMinutesCommand}" CommandParameter="60" />
+                            <Button Classes="seg" Classes.active="{Binding InOrder}" Content="After the last one" Command="{Binding ToggleInOrderCommand}" />
+                            <Button Classes="seg" Content="As a group" Command="{Binding AddSectionCommand}" />
+                        </StackPanel>
                     </StackPanel>
                 </StackPanel>
             </StackPanel>

@@ -206,11 +206,8 @@ public partial class InspectorViewModel : ObservableObject
     public InspectorViewModel(MainViewModel main) => _main = main;
 
     public ObservableCollection<InspectorStepViewModel> Steps { get; } = [];
-    public ObservableCollection<WaitOption> WaitOptions { get; } = [];
     public ObservableCollection<DependencyChipViewModel> Dependencies { get; } = [];
     public ObservableCollection<WaitOption> DependencyCandidates { get; } = [];
-    public ObservableCollection<WaitOption> ParentOptions { get; } = [];
-    [ObservableProperty] private int _parentIndex;
     public string[] EnergyNames { get; } = ["Low energy", "Medium energy", "High energy"];
 
     [ObservableProperty] private bool _isOpen;
@@ -227,13 +224,48 @@ public partial class InspectorViewModel : ObservableObject
     [ObservableProperty] private string _markDoneLabel = "Mark done";
 
     [ObservableProperty] private string _newStepTitle = "";
-    [ObservableProperty] private int _newStepEnergy = 1;
-    [ObservableProperty] private int _waitIndex;
+    [ObservableProperty] private int _newMinutes;
+    [ObservableProperty] private bool _inOrder;
+    [ObservableProperty] private bool _hasNewText;
+    [ObservableProperty] private string _intoLabel = "";
+    [ObservableProperty] private bool _isInto;
+    private Guid? _into;
+
+    partial void OnNewStepTitleChanged(string value) => HasNewText = !string.IsNullOrWhiteSpace(value);
+    partial void OnNewMinutesChanged(int value)
+    {
+        OnPropertyChanged(nameof(Is15));
+        OnPropertyChanged(nameof(Is30));
+        OnPropertyChanged(nameof(Is60));
+    }
+
+    public bool Is15 => NewMinutes == 15;
+    public bool Is30 => NewMinutes == 30;
+    public bool Is60 => NewMinutes == 60;
+
+    [RelayCommand]
+    private void ToggleInOrder() => InOrder = !InOrder;
+
+    /// <summary>The time chips: tap one to set it, tap it again to clear it.</summary>
+    [RelayCommand]
+    private void SetMinutes(string minutes)
+    {
+        var m = int.Parse(minutes, CultureInfo.InvariantCulture);
+        NewMinutes = NewMinutes == m ? 0 : m;
+    }
+
+    /// <summary>Back to adding at the top level, after working inside a group.</summary>
+    [RelayCommand]
+    private void LeaveGroup()
+    {
+        _into = null;
+        IsInto = false;
+        IntoLabel = "";
+    }
     [ObservableProperty] private int _dependencyIndex;
 
     // Things stay folded away until they are needed: adding steps, their extra options, and waiting on another goal.
     [ObservableProperty] private bool _showAddRow;
-    [ObservableProperty] private bool _showOptions;
     [ObservableProperty] private bool _showWaitsSection;
     [ObservableProperty] private bool _showWaitsPicker;
     [ObservableProperty] private bool _showProgress;
@@ -248,7 +280,9 @@ public partial class InspectorViewModel : ObservableObject
         {
             _addRequested = false;
             _waitsRequested = false;
-            ShowOptions = false;
+            _into = null;
+            NewMinutes = 0;
+            InOrder = false;
         }
         _goalId = goalId;
         _stepId = stepId;
@@ -308,19 +342,12 @@ public partial class InspectorViewModel : ObservableObject
         ShowAddRow = HasSteps || _addRequested;
         CanChain = goal.Roots().Count(s => !goal.IsDone(s)) > 1;
 
-        WaitOptions.Clear();
-        WaitOptions.Add(new WaitOption("Can start any time", null));
-        foreach (var s in goal.Steps.Where(s => !goal.IsDone(s)))
-            WaitOptions.Add(new WaitOption($"After “{s.Title}”", s.Id));
-        ParentOptions.Clear();
-        ParentOptions.Add(new WaitOption("Top level", null));
-        foreach (var s in goal.Steps.Where(s => !s.Done))
-            ParentOptions.Add(new WaitOption($"Inside “{s.Title}”", s.Id));
-        // Replacing a ComboBox's items clears its selection, so put the first option back.
-        WaitIndex = -1;
-        WaitIndex = 0;
-        ParentIndex = -1;
-        ParentIndex = 0;
+        // If the group being filled was removed, go back to the top level.
+        if (_into is { } into && goal.Steps.FirstOrDefault(s => s.Id == into) is not { } group)
+            _into = null;
+        else if (_into is not null)
+            IntoLabel = goal.Steps.First(s => s.Id == _into).Title;
+        IsInto = _into is not null;
 
         var kind = goal.Measure.Kind;
         ShowLog = kind is MeasureKind.Amount or MeasureKind.Time;
@@ -388,11 +415,14 @@ public partial class InspectorViewModel : ObservableObject
     {
         if (CurrentGoal is not { } goal || string.IsNullOrWhiteSpace(NewStepTitle))
             return;
-        var step = new Step { Title = NewStepTitle.Trim(), Energy = (Energy)NewStepEnergy };
-        if (ParentIndex > 0 && ParentIndex < ParentOptions.Count)
-            step.ParentId = ParentOptions[ParentIndex].Id;
-        if (WaitIndex > 0 && WaitIndex < WaitOptions.Count && WaitOptions[WaitIndex].Id is { } waitsFor)
-            step.DependsOn.Add(waitsFor);
+        var (title, typedMinutes) = StepText.Parse(NewStepTitle);
+        var step = new Step { Title = title, Energy = Energy.Medium };
+        if (!asSection && (NewMinutes > 0 ? NewMinutes : typedMinutes) is { } minutes and > 0)
+            step.EstimateMinutes = minutes;
+        step.ParentId = _into;
+        // "In order": this one waits for the last open entry beside it.
+        if (InOrder && goal.Steps.LastOrDefault(s => s.ParentId == step.ParentId && !goal.IsDone(s)) is { } before)
+            step.DependsOn.Add(before.Id);
         step.IsGroup = asSection;
         // Keep a section's children next to it so the stored order reads like the screen.
         var at = goal.Steps.Count;
@@ -404,6 +434,14 @@ public partial class InspectorViewModel : ObservableObject
         }
         goal.Steps.Insert(at, step);
         NewStepTitle = "";
+        NewMinutes = 0;
+        // A new group is where the next steps go, until you step back out.
+        if (asSection)
+        {
+            _into = step.Id;
+            IntoLabel = step.Title;
+            IsInto = true;
+        }
         _main.Changed();
     }
 
