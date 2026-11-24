@@ -35,17 +35,18 @@ public sealed record DayBar(double Height, string Day, string Tip, bool IsToday,
 
 public sealed record EffortBar(string Title, IBrush Dot, string Label, double Percent);
 
-public sealed record Stat(string Value, string Label);
+public sealed record Stat(string Value, string Label, string Note = "");
 
 /// <summary>One line of the record: a day heading, or something that was done that day.</summary>
 public sealed partial class LogItem : ObservableObject
 {
     private readonly Action<Guid>? _takeBack;
 
-    public LogItem(string heading)
+    public LogItem(string heading, string summary)
     {
         IsHeader = true;
         Title = heading;
+        Sub = summary;
     }
 
     public LogItem(Guid id, string title, string sub, string detail, IBrush dot, Action<Guid> takeBack)
@@ -129,10 +130,15 @@ public partial class HistoryViewModel : ObservableObject
         var minutes = week.Sum(c => c.Minutes);
         var daysWorked = week.Select(c => c.Day).Distinct().Count();
         var goalsTouched = week.Select(c => c.GoalId).Distinct().Count();
+        var before = log.Where(c => c.Day >= weekStart.AddDays(-7) && c.Day < weekStart).ToList();
+        static string Time(double m) => m >= 60 ? $"{m / 60:0.#} h" : $"{m:0} min";
+        string Prior(string value) => before.Count == 0 ? "" : $"{value} the week before";
         Stats.Clear();
-        Stats.Add(new Stat(daysWorked.ToString(CultureInfo.InvariantCulture) + " / 7", "days with something done"));
-        Stats.Add(new Stat(minutes >= 60 ? $"{minutes / 60:0.#} h" : $"{minutes:0} min", "of focused time"));
-        Stats.Add(new Stat(goalsTouched.ToString(CultureInfo.InvariantCulture), goalsTouched == 1 ? "goal moved" : "goals moved"));
+        Stats.Add(new Stat(daysWorked.ToString(CultureInfo.InvariantCulture) + " / 7", "days with something done",
+            Prior($"{before.Select(c => c.Day).Distinct().Count()} / 7")));
+        Stats.Add(new Stat(Time(minutes), "of focused time", Prior(Time(before.Sum(c => c.Minutes)))));
+        Stats.Add(new Stat(goalsTouched.ToString(CultureInfo.InvariantCulture), goalsTouched == 1 ? "goal moved" : "goals moved",
+            Prior(before.Select(c => c.GoalId).Distinct().Count().ToString(CultureInfo.InvariantCulture))));
         HasAnyActivity = log.Count > 0;
 
         // --- Fourteen days of minutes, as bars ---
@@ -140,16 +146,20 @@ public partial class HistoryViewModel : ObservableObject
         var perDay = Enumerable.Range(0, 14).Select(i => today.AddDays(i - 13))
             .Select(d => (Day: d, Minutes: log.Where(c => c.Day == d).Sum(c => c.Minutes), Count: log.Count(c => c.Day == d)))
             .ToList();
-        var max = Math.Max(30, perDay.Max(x => x.Minutes));
+        // Time when any was recorded; otherwise just how many things were done, so the chart is never an empty box.
+        var byTime = perDay.Any(x => x.Minutes > 0);
+        var max = byTime ? Math.Max(30, perDay.Max(x => x.Minutes)) : Math.Max(3, perDay.Max(x => x.Count));
         foreach (var (day, mins, count) in perDay)
         {
-            var empty = mins <= 0;
-            var height = empty ? (count > 0 ? 6 : 2) : Math.Max(6, mins / max * ChartHeight);
-            Bars.Add(new DayBar(height, day.ToString("ddd", CultureInfo.CurrentCulture)[..1],
-                empty ? $"{day:ddd MMM d}: " + (count > 0 ? "done, no time recorded" : "nothing") : $"{day:ddd MMM d}: {mins:0} min",
-                day == today, empty));
+            var amount = byTime ? mins : count;
+            var empty = amount <= 0;
+            var height = empty ? 2 : Math.Max(6, amount / max * ChartHeight);
+            var tip = byTime
+                ? (empty ? $"{day:ddd MMM d}: " + (count > 0 ? "done, no time recorded" : "nothing") : $"{day:ddd MMM d}: {mins:0} min")
+                : (empty ? $"{day:ddd MMM d}: nothing" : $"{day:ddd MMM d}: {count} done");
+            Bars.Add(new DayBar(height, day.ToString("ddd", CultureInfo.CurrentCulture)[..1], tip, day == today, empty));
         }
-        ChartCaption = $"Minutes of focused time, last 14 days (tallest bar {max:0} min)";
+        ChartCaption = byTime ? $"Minutes of focused time a day (tallest bar {max:0} min)" : "Things done a day";
 
         // --- Streak ribbons, one per bucket ---
         Ribbons.Clear();
@@ -220,8 +230,15 @@ public partial class HistoryViewModel : ObservableObject
             if (last != c.Day)
             {
                 last = c.Day;
+                var thatDay = shown.Where(x => x.Entry.Day == c.Day).ToList();
+                var mins = thatDay.Sum(x => x.Entry.Minutes);
+                var summary = string.Join(" · ", new[]
+                {
+                    thatDay.Count == 1 ? "1 thing" : $"{thatDay.Count} things",
+                    mins > 0 ? Planner.Format(mins) + " min" : "",
+                }.Where(s => s.Length > 0));
                 Log.Add(new LogItem(c.Day == today ? "Today" : c.Day == today.AddDays(-1) ? "Yesterday"
-                    : c.Day.ToString(c.Day.Year == today.Year ? "dddd, MMMM d" : "dddd, MMMM d, yyyy", CultureInfo.CurrentCulture)));
+                    : c.Day.ToString(c.Day.Year == today.Year ? "dddd, MMMM d" : "dddd, MMMM d, yyyy", CultureInfo.CurrentCulture), summary));
             }
             var title = TitleOf(c, goal);
             var sub = goal is not null && title != goal.Title ? goal.Title : data.CategoryOf(goal!)?.Name ?? "";

@@ -7,8 +7,14 @@
         <StackPanel Margin="32,24,32,34" Spacing="30" MaxWidth="860" HorizontalAlignment="Left">
             <TextBlock Classes="page-title" Text="History" />
 
-            <!-- The week in three numbers -->
-            <ItemsControl ItemsSource="{Binding Stats}">
+            <StackPanel Spacing="6" IsVisible="{Binding !HasAnyActivity}" Margin="0,6,0,0">
+                <TextBlock Text="Nothing here yet" FontSize="16" FontWeight="SemiBold" />
+                <TextBlock Classes="field-hint" FontSize="13" TextWrapping="Wrap" MaxWidth="460"
+                           Text="Finish a step on Today and this page starts to fill in: how many days you showed up, where the time went, and your streaks." />
+            </StackPanel>
+
+            <!-- The last week in three numbers -->
+            <ItemsControl ItemsSource="{Binding Stats}" IsVisible="{Binding HasAnyActivity}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="48" /></ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
@@ -17,14 +23,16 @@
                         <StackPanel Spacing="0">
                             <TextBlock Classes="numeric" Text="{Binding Value}" FontSize="30" FontWeight="Bold" />
                             <TextBlock Classes="field-hint" Text="{Binding Label}" />
+                            <TextBlock Classes="field-hint" Text="{Binding Note}" FontSize="11" Opacity="0.6"
+                                       IsVisible="{Binding Note, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                         </StackPanel>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
 
             <!-- Fourteen days of time put in -->
-            <StackPanel Spacing="8">
-                <TextBlock Classes="section-header" Text="LAST 14 DAYS" Margin="0" />
+            <StackPanel Spacing="8" IsVisible="{Binding HasAnyActivity}">
+                <TextBlock Classes="section-header" Text="Last 14 days" Margin="0" />
                 <ItemsControl ItemsSource="{Binding Bars}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate><UniformGrid Rows="1" /></ItemsPanelTemplate>
@@ -46,7 +54,7 @@
             </StackPanel>
 
             <!-- Streaks -->
-            <StackPanel Spacing="10">
+            <StackPanel Spacing="10" IsVisible="{Binding HasAnyActivity}">
                 <TextBlock Classes="section-header" Text="Streaks" Margin="0" />
                 <ItemsControl ItemsSource="{Binding Ribbons}">
                     <ItemsControl.ItemTemplate>
@@ -80,8 +88,8 @@
             </StackPanel>
 
             <!-- Where the week went -->
-            <StackPanel Spacing="8">
-                <TextBlock Classes="section-header" Text="Where the week went" Margin="0" />
+            <StackPanel Spacing="8" IsVisible="{Binding HasAnyActivity}">
+                <TextBlock Classes="section-header" Text="Last 7 days by goal" Margin="0" />
                 <TextBlock Classes="field-hint" FontSize="13" IsVisible="{Binding !HasEffort}"
                            Text="Nothing logged yet. Finish something on Today and it shows up here." />
                 <ItemsControl ItemsSource="{Binding Effort}">
@@ -100,11 +108,11 @@
             </StackPanel>
 
             <!-- Everything, in order -->
-            <StackPanel Spacing="8">
+            <StackPanel Spacing="8" IsVisible="{Binding HasAnyActivity}">
                 <Grid ColumnDefinitions="*,Auto,240" ColumnSpacing="14">
                     <TextBlock Classes="section-header" Text="Everything you have done" Margin="0" VerticalAlignment="Center" />
                     <TextBlock Grid.Column="1" Classes="field-hint" Text="{Binding LogSummary}" VerticalAlignment="Center" />
-                    <TextBox Grid.Column="2" Text="{Binding Search}" Watermark="Search" />
+                    <TextBox Grid.Column="2" Text="{Binding Search}" PlaceholderText="Search" />
                 </Grid>
                 <TextBlock Classes="field-hint" FontSize="13" IsVisible="{Binding LogIsEmpty}"
                            Text="Nothing here yet, or nothing matches." />
@@ -112,8 +120,10 @@
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="vm:LogItem">
                             <Grid>
-                                <TextBlock IsVisible="{Binding IsHeader}" Text="{Binding Title}" FontWeight="SemiBold" FontSize="13"
-                                           Margin="0,16,0,2" />
+                                <StackPanel IsVisible="{Binding IsHeader}" Orientation="Horizontal" Spacing="10" Margin="0,16,0,2">
+                                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="13" />
+                                    <TextBlock Text="{Binding Sub}" Classes="field-hint" FontSize="11" VerticalAlignment="Center" />
+                                </StackPanel>
                                 <Border Classes="line" IsVisible="{Binding IsEntry}" Padding="2,8">
                                     <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="12">
                                         <Border Width="8" Height="8" CornerRadius="4" Background="{Binding Dot}" VerticalAlignment="Center" />
