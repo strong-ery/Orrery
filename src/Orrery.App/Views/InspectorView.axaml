@@ -96,18 +96,16 @@
                                                 <TextBlock Classes="field-hint" Text="{Binding Detail}" />
                                                 <TextBlock FontSize="11" Opacity="0.6" Text="{Binding BlockedText}"
                                                            IsVisible="{Binding IsBlocked}" TextWrapping="Wrap" />
-                                                <Button Classes="ghost" HorizontalAlignment="Left" Padding="0,3" IsVisible="{Binding IsSection}" Command="{Binding AddInsideCommand}">
-                                                    <StackPanel Orientation="Horizontal" Spacing="6">
-                                                        <PathIcon Data="{StaticResource IconAdd}" Width="10" Height="10" />
-                                                        <TextBlock Text="Add a step here" FontSize="12" />
-                                                    </StackPanel>
-                                                </Button>
                                                 <StackPanel Orientation="Horizontal" IsVisible="{Binding NeedsSplit}">
                                                     <Button Classes="ghost" Padding="0,3" Content="Put off a few times. Break it up?" Command="{Binding SplitCommand}" />
                                                 </StackPanel>
                                             </StackPanel>
                                             <!-- Tools appear when the pointer is over the row -->
-                                            <StackPanel Grid.Column="2" Classes="tools" Orientation="Horizontal" VerticalAlignment="Top">
+                                            <StackPanel Grid.Column="2" Classes="tools soft" Orientation="Horizontal" VerticalAlignment="Top">
+                                                <Button Classes="icon" Command="{Binding AddInsideCommand}" IsVisible="{Binding CanAddInside}"
+                                                        ToolTip.Tip="Add steps inside this">
+                                                    <PathIcon Data="{StaticResource IconAdd}" />
+                                                </Button>
                                                 <Button Classes="icon" Command="{Binding PutOffCommand}" IsVisible="{Binding CanPutOff}" ToolTip.Tip="Not today">
                                                     <PathIcon Data="{StaticResource IconLater}" />
                                                 </Button>

@@ -17,6 +17,9 @@ public sealed partial class InspectorStepViewModel : ObservableObject
 
     public Guid StepId => _stepId;
 
+    /// <summary>Any open step can become a list: adding inside it turns it into a group.</summary>
+    public bool CanAddInside { get; }
+
     /// <summary>Where a dragged step would land on this row right now: none, before, inside or after.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowBefore), nameof(ShowInside), nameof(ShowAfter))]
@@ -69,6 +72,7 @@ public sealed partial class InspectorStepViewModel : ObservableObject
         CanStart = !IsSection && !Done && !IsBlocked && !main.Focus.IsVisible;
         NeedsSplit = !IsSection && !Done && step.DeferCount >= Orrery.Core.Engine.PutOff.SplitAfter;
         CanPutOff = !IsSection && !Done;
+        CanAddInside = IsSection || !Done;
         Opacity = Done ? 0.45 : IsBlocked ? 0.65 : 1;
     }
 
@@ -289,6 +293,12 @@ public partial class InspectorViewModel : ObservableObject
     {
         if (CurrentGoal?.Steps.FirstOrDefault(s => s.Id == groupId) is not { } group)
             return;
+        // A plain step becomes a list the moment you add something to it.
+        if (!group.IsGroup)
+        {
+            group.IsGroup = true;
+            _main.Changed();
+        }
         _into = groupId;
         IntoLabel = group.Title;
         IsInto = true;
