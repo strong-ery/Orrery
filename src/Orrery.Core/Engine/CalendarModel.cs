@@ -8,6 +8,8 @@ public enum CalendarKind
     Deadline,
     /// <summary>A repeating goal comes due.</summary>
     Due,
+    /// <summary>A group inside a goal is due.</summary>
+    Part,
     /// <summary>A step that was held back until this day becomes available.</summary>
     Available,
     /// <summary>Something was worked on (a day in the past).</summary>
@@ -36,6 +38,11 @@ public static class CalendarModel
 
             if (goal.Deadline is { } deadline && deadline >= from && deadline <= to && !complete)
                 events.Add(new CalendarEvent(deadline, CalendarKind.Deadline, goal.Id, null, goal.Title, "Deadline"));
+
+            if (!complete)
+                foreach (var (group, due) in GroupSchedule.Dates(goal, today))
+                    if (due >= from && due <= to)
+                        events.Add(new CalendarEvent(due, CalendarKind.Part, goal.Id, group.Id, group.Title, $"Due · {goal.Title}"));
 
             if (goal.Rhythm.Kind == RhythmKind.Repeat)
                 foreach (var due in DueDays(goal, log, Max(from, today), to))

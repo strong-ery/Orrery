@@ -84,6 +84,11 @@
                         </StackPanel>
                     </Grid>
 
+                    <StackPanel Spacing="4" Margin="0,2,0,6" IsVisible="{Binding ShowGroupDates}">
+                        <ComboBox Classes="orrery-combo" ItemsSource="{Binding GroupDateNames}" SelectedIndex="{Binding GroupDatesIndex}" />
+                        <TextBlock Classes="field-hint" Text="{Binding GroupDatesHint}" IsVisible="{Binding GroupDatesHint, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                    </StackPanel>
+
                     <ItemsControl x:Name="StepList" ItemsSource="{Binding Steps}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="vm:InspectorStepViewModel">
@@ -123,6 +128,14 @@
                                                 </Button>
                                                 <Button Classes="icon" Command="{Binding MakeStepCommand}" IsVisible="{Binding CanMakeStep}" ToolTip.Tip="Make it a plain step again">
                                                     <PathIcon Data="{StaticResource IconMaximize}" />
+                                                </Button>
+                                                <Button Classes="icon" IsVisible="{Binding CanSetDate}" ToolTip.Tip="Set a date for this group">
+                                                    <Button.Flyout>
+                                                        <Flyout Placement="BottomEdgeAlignedRight">
+                                                            <views:MiniCalendar SelectedDate="{Binding Due, Mode=TwoWay}" />
+                                                        </Flyout>
+                                                    </Button.Flyout>
+                                                    <PathIcon Data="{StaticResource IconCalendar}" />
                                                 </Button>
                                                 <Button Classes="icon" Command="{Binding BeginEditCommand}" ToolTip.Tip="Rename, change time or energy, move">
                                                     <PathIcon Data="{StaticResource IconEdit}" />

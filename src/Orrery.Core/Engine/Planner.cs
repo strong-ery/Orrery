@@ -50,8 +50,14 @@ public static class Planner
                 continue; // you planned it for another day
 
             var demand = Demands.For(goal, log, today);
-            if (demand.IsDemanding && demand.IsMet)
-                continue; // today's share of it is done
+            // Today's share of a repeating or weekly goal being done means it is done. A goal working toward a deadline
+            // stays on the list with the rest of its steps, quietly, so the bigger picture is never hidden.
+            var met = demand.IsDemanding && demand.IsMet;
+            if (met && demand.Source != DemandSource.Deadline)
+                continue;
+            PlanItem Soft(PlanItem i) => met
+                ? i with { Pressure = Math.Min(i.Pressure, 0.45), Score = Math.Min(i.Score, 3.5), Reason = "today's share is done · more if you want" }
+                : i;
 
             if (goal.Rhythm.Kind == RhythmKind.Repeat && !demand.IsDemanding)
                 continue; // between two due dates, a repeating goal stays out of the way
@@ -68,7 +74,7 @@ public static class Planner
                 if (planned.Count > 0)
                 {
                     foreach (var step in planned)
-                        candidates.Add(AsPlanned(Make(goal, step, category, pressure, graph.UnlockCount(step.Id), demand, today), step.PlannedFor!.Value, today));
+                        candidates.Add(Soft(AsPlanned(Make(goal, step, category, pressure, graph.UnlockCount(step.Id), demand, today), step.PlannedFor!.Value, today)));
                     continue;
                 }
                 // Otherwise the next step, skipping any you planned for a later day unless the goal is truly pressing.
@@ -76,14 +82,14 @@ public static class Planner
                     Open(s) && (s.PlannedFor is null || pressure >= MustDo));
                 if (next is null)
                     continue;
-                candidates.Add(Make(goal, next, category, pressure, graph.UnlockCount(next.Id), demand, today));
+                candidates.Add(Soft(Make(goal, next, category, pressure, graph.UnlockCount(next.Id), demand, today)));
             }
             else
             {
                 if (graph.BlockedReason(goal, today) is not null)
                     continue;
                 var item = Make(goal, null, category, pressure, 0, demand, today);
-                candidates.Add(goal.PlannedFor is { } day && day <= today ? AsPlanned(item, day, today) : item);
+                candidates.Add(Soft(goal.PlannedFor is { } day && day <= today ? AsPlanned(item, day, today) : item));
             }
         }
 

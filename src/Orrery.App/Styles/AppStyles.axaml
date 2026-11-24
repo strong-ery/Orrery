@@ -496,6 +496,35 @@
     <Setter Property="Height" Value="13" />
     <Setter Property="Opacity" Value="0.7" />
   </Style>
+  <!-- The little calendar in the date picker flyout. -->
+  <Style Selector="Button.mini-day">
+    <Setter Property="Width" Value="34" />
+    <Setter Property="Height" Value="30" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+  </Style>
+  <Style Selector="Button.mini-day /template/ ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="CornerRadius" Value="9" />
+  </Style>
+  <Style Selector="Button.mini-day:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AppHoverBrush}" />
+  </Style>
+  <Style Selector="Button.mini-day.dim">
+    <Setter Property="Opacity" Value="0.35" />
+  </Style>
+  <Style Selector="Button.mini-day.today /template/ ContentPresenter">
+    <Setter Property="BorderBrush" Value="{DynamicResource AppAccentBrush}" />
+  </Style>
+  <Style Selector="Button.mini-day.sel /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AppAccentBrush}" />
+    <Setter Property="TextElement.Foreground" Value="{DynamicResource AppOnAccentBrush}" />
+  </Style>
   <Style Selector="Button.icon.active PathIcon">
     <Setter Property="Foreground" Value="{DynamicResource AppAccentBrush}" />
   </Style>

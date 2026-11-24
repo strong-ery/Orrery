@@ -15,6 +15,7 @@ public sealed record TimelineBar(
     string Note,
     IReadOnlyList<DateOnly> Planned,
     IReadOnlyList<DateOnly> Due,
+    IReadOnlyList<DateOnly> Parts,
     bool Pressing);
 
 public sealed record TimelineLane(CategoryRole Role, string Name, IReadOnlyList<TimelineBar> Bars);
@@ -64,6 +65,7 @@ public static class TimelineModel
                 Progress.Fraction(goal, log), next, waiting, note,
                 mine.Where(e => e.Kind == CalendarKind.Planned).Select(e => e.Day).Distinct().ToList(),
                 mine.Where(e => e.Kind == CalendarKind.Due).Select(e => e.Day).Distinct().ToList(),
+                mine.Where(e => e.Kind == CalendarKind.Part).Select(e => e.Day).Distinct().ToList(),
                 Horizons.Of(goal, log, today) == Horizon.Now));
         }
 

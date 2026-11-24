@@ -68,6 +68,17 @@ public sealed class Category
     public CategoryRole Role { get; set; }
 }
 
+/// <summary>How the groups inside a big goal get their dates.</summary>
+public enum GroupDateMode
+{
+    /// <summary>Groups have no dates.</summary>
+    Off,
+    /// <summary>You pick a date for each group.</summary>
+    Custom,
+    /// <summary>The groups still to do are spread evenly from today to the goal's deadline.</summary>
+    Even,
+}
+
 public sealed class Step
 {
     public Guid Id { get; set; } = Guid.NewGuid();
@@ -82,6 +93,9 @@ public sealed class Step
 
     /// <summary>The section this step sits in, or null at the top level. A step with children is a section.</summary>
     public Guid? ParentId { get; set; }
+
+    /// <summary>When this group should be finished, in a goal that sets its group dates by hand.</summary>
+    public DateOnly? Due { get; set; }
 
     /// <summary>Marks a section explicitly, so one with nothing in it yet is still a section.</summary>
     public bool IsGroup { get; set; }
@@ -106,6 +120,9 @@ public sealed class Goal
     /// <summary>False for things that never finish, like a big creative project.</summary>
     public bool HasFinishLine { get; set; } = true;
     public DateOnly? Deadline { get; set; }
+
+    /// <summary>Whether (and how) the groups in this goal have their own dates.</summary>
+    public GroupDateMode GroupDates { get; set; }
 
     /// <summary>Energy used for the goal's own entry when it has no steps.</summary>
     public Energy DefaultEnergy { get; set; } = Energy.Medium;

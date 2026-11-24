@@ -267,6 +267,15 @@ public sealed class TimelineCanvas : Control
             }
         }
 
+        // Group dates inside a big goal: small hollow rings along its bar.
+        foreach (var day in bar.Parts)
+        {
+            var x = XOf(day);
+            if (x < Left || x > Right)
+                continue;
+            context.DrawEllipse(new SolidColorBrush(Color.Parse("#14172B")), new Pen(new SolidColorBrush(Color.Parse("#F2F4FF")), 1.6), new Point(x, mid), 4, 4);
+        }
+
         foreach (var day in bar.Planned)
         {
             var x = XOf(day);

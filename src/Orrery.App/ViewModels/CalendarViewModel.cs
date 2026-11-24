@@ -22,7 +22,7 @@ public sealed partial class CalendarItemViewModel : ObservableObject
         Title = e.Title;
         Detail = e.Detail;
         Bucket = bucket;
-        IsDeadline = e.Kind == CalendarKind.Deadline;
+        IsDeadline = e.Kind is CalendarKind.Deadline or CalendarKind.Part;
         IsWorked = e.Kind == CalendarKind.Worked;
         IsPlanned = e.Kind == CalendarKind.Planned;
         GoalId = e.GoalId;
@@ -32,6 +32,7 @@ public sealed partial class CalendarItemViewModel : ObservableObject
         {
             CalendarKind.Deadline => "Deadline",
             CalendarKind.Due => "Due by",
+            CalendarKind.Part => "Part due",
             CalendarKind.Available => "Opens up",
             CalendarKind.Planned => "Planned",
             _ => "Worked on",

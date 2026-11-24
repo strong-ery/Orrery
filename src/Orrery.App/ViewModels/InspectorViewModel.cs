@@ -19,6 +19,26 @@ public sealed partial class InspectorStepViewModel : ObservableObject
 
     /// <summary>Editing the steps (rearranging, adding, removing) is a mode of its own; otherwise a row is just for doing.</summary>
     public bool EditMode { get; }
+
+    /// <summary>On a group in a goal with custom dates: pick when it is due.</summary>
+    public bool CanSetDate { get; }
+    private DateOnly? _due;
+
+    public DateOnly? Due
+    {
+        get => _due;
+        set
+        {
+            if (_due == value)
+                return;
+            _due = value;
+            if (_main.FindGoal(_goalId) is { } goal && goal.Steps.FirstOrDefault(s => s.Id == _stepId) is { } step)
+            {
+                step.Due = value;
+                _main.Changed();
+            }
+        }
+    }
     public bool DoMode => !EditMode;
     public bool ShowPlay => IsLeaf && DoMode;
 
@@ -84,11 +104,16 @@ public sealed partial class InspectorStepViewModel : ObservableObject
         if (IsSection)
         {
             var (d, total) = goal.CountOf(step);
+            var due = Orrery.Core.Engine.GroupSchedule.DueOf(goal, step, MainViewModel.Today);
             Detail = string.Join(" · ", new[]
             {
                 $"{d}/{total} steps",
                 estimate is { } e ? $"~{e} min" : "",
+                due is { } when ? (when < MainViewModel.Today ? $"late · {when:MMM d}" : $"due {when:MMM d}")
+                    + (goal.Deadline is { } end && when > end ? " (after the deadline)" : "") : "",
             }.Where(s => s.Length > 0));
+            _due = step.Due;
+            CanSetDate = editMode && goal.GroupDates == GroupDateMode.Custom;
         }
         else
         {
@@ -360,6 +385,21 @@ public partial class InspectorViewModel : ObservableObject
 
     public string EditLabel => EditSteps ? "Done" : "Edit";
     public bool ShowAdder => ShowAddRow && EditSteps;
+    // Dates for the groups of a big goal: none, picked by hand, or spread evenly to the deadline.
+    public string[] GroupDateNames { get; } = ["No dates for groups", "Custom dates", "Evenly spaced dates"];
+    [ObservableProperty] private int _groupDatesIndex;
+    [ObservableProperty] private bool _showGroupDates;
+    [ObservableProperty] private string _groupDatesHint = "";
+    private bool _syncing;
+
+    partial void OnGroupDatesIndexChanged(int value)
+    {
+        if (_syncing || CurrentGoal is not { } goal || value < 0 || value > 2)
+            return;
+        goal.GroupDates = (GroupDateMode)value;
+        _main.Changed();
+    }
+
     [ObservableProperty] private bool _orderedTop;
     [ObservableProperty] private bool _canOrderTop;
 
@@ -446,6 +486,17 @@ public partial class InspectorViewModel : ObservableObject
             Walk(root, 0);
         HasSteps = Steps.Count > 0;
         ShowAddRow = HasSteps || _addRequested;
+        _syncing = true;
+        GroupDatesIndex = (int)goal.GroupDates;
+        _syncing = false;
+        ShowGroupDates = EditSteps && goal.Steps.Any(goal.IsSection);
+        GroupDatesHint = goal.GroupDates switch
+        {
+            GroupDateMode.Even when goal.Deadline is null => "Evenly spaced dates need a deadline on the goal. Edit the goal to add one.",
+            GroupDateMode.Even => $"The groups still to do are spread from today to {goal.Deadline:MMM d}.",
+            GroupDateMode.Custom => "Press the calendar button on a group to pick its date.",
+            _ => "",
+        };
         CanOrderTop = goal.Roots().Count(s => !goal.IsDone(s)) > 1;
         OrderedTop = CanOrderTop && goal.IsOrdered(null);
 
