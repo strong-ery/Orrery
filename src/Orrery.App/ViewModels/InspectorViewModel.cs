@@ -30,22 +30,6 @@ public sealed partial class InspectorStepViewModel : ObservableObject
     [RelayCommand]
     private void AddInside() => _addInside(_stepId);
 
-    /// <summary>The "Add a step here" line that closes a group.</summary>
-    public static InspectorStepViewModel AddRow(MainViewModel main, Guid groupId, int depth, Action<Guid> addInside) =>
-        new(main, groupId, depth, addInside);
-
-    private InspectorStepViewModel(MainViewModel main, Guid groupId, int depth, Action<Guid> addInside)
-    {
-        _main = main;
-        _goalId = Guid.Empty;
-        _stepId = groupId;
-        _addInside = addInside;
-        IsAddRow = true;
-        Indent = new Avalonia.Thickness(depth * 18 + 26, 0, 0, 6);
-    }
-
-    public bool IsAddRow { get; }
-
     public InspectorStepViewModel(MainViewModel main, Goal goal, Step step, DependencyGraph graph, bool highlighted, int depth, Action<Guid> addInside)
     {
         _main = main;
@@ -390,8 +374,6 @@ public partial class InspectorViewModel : ObservableObject
             Steps.Add(new InspectorStepViewModel(_main, goal, step, graph, step.Id == _stepId, depth, AddInside));
             foreach (var child in goal.ChildrenOf(step))
                 Walk(child, depth + 1);
-            if (goal.IsSection(step))
-                Steps.Add(InspectorStepViewModel.AddRow(_main, step.Id, depth, AddInside));
         }
         foreach (var root in goal.Roots())
             Walk(root, 0);

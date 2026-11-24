@@ -51,7 +51,7 @@ public partial class InspectorView : UserControl
         if (src.GetSelfAndVisualAncestors().Any(v => v is TextBox or ComboBox))
             return;
         var row = src.GetSelfAndVisualAncestors().OfType<ContentPresenter>().FirstOrDefault(p => p.DataContext is InspectorStepViewModel);
-        if (row?.DataContext is InspectorStepViewModel { IsEditing: false, IsAddRow: false } vm)
+        if (row?.DataContext is InspectorStepViewModel { IsEditing: false } vm)
         {
             _held = vm;
             _from = e.GetPosition(StepList);
@@ -87,7 +87,7 @@ public partial class InspectorView : UserControl
         {
             vm.DropPlace = null;
             var top = row.TranslatePoint(new Point(0, 0), StepList)?.Y ?? 0;
-            if (at.Y < top || at.Y >= top + row.Bounds.Height || vm == _held || vm.IsEditing || vm.IsAddRow || !inspector.CanDrop(_held.StepId, vm.StepId))
+            if (at.Y < top || at.Y >= top + row.Bounds.Height || vm == _held || vm.IsEditing || !inspector.CanDrop(_held.StepId, vm.StepId))
                 continue;
             var f = (at.Y - top) / Math.Max(1, row.Bounds.Height);
             _place = f < 0.28 ? DropPlace.Before : f > 0.72 ? DropPlace.After : DropPlace.Inside;
