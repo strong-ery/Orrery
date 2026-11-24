@@ -40,6 +40,7 @@ public partial class SettingsViewModel : ObservableObject
     public IReadOnlyList<string> GentleNames { get; }
 
     public string DataPath => JsonStore.DefaultPath;
+    public UpdateViewModel Updates => _main.Updates;
 
     [ObservableProperty] private bool _remindersOn;
     [ObservableProperty] private bool _deadlines;

@@ -13,6 +13,8 @@ public partial class App : Application
     /// <summary>Closing the window hides Orrery to the tray so nudges keep working; only "Quit" really exits.</summary>
     public static bool Quitting { get; private set; }
 
+    public const string ShowEventName = "Orrery.ShowWindow";
+
     private MainViewModel? _main;
     private NudgeHost? _nudges;
     private IClassicDesktopStyleApplicationLifetime? _desktop;
@@ -48,6 +50,18 @@ public partial class App : Application
             };
             _main.SendTestReminder = () => _nudges.Show("Reminder", "This is what a reminder looks like.", null);
             SetUpTray();
+
+            // A second launch signals this event; bring the window forward.
+            var show = new EventWaitHandle(false, EventResetMode.AutoReset, ShowEventName);
+            new Thread(() =>
+            {
+                while (show.WaitOne())
+                    Avalonia.Threading.Dispatcher.UIThread.Post(ShowMain);
+            }) { IsBackground = true }.Start();
+
+            _main.Updates.Found = u => _nudges.Show("Update available", $"Orrery {u.Version} is ready to install.",
+                () => { ShowMain(); _ = _main.Updates.InstallAsync(); }, "Install");
+            _ = _main.Updates.CheckQuietlyAsync();
         }
 
         base.OnFrameworkInitializationCompleted();
@@ -76,10 +90,10 @@ public partial class App : Application
         _main.Data.Settings.TrayHintShown = true;
         JsonStore.Save(_main.Data);
         _nudges?.Show("Still running",
-            "Orrery stays in the tray so it can nudge you about things that are due. Right-click the tray icon to quit.", null);
+            "Orrery stays in the tray so it can remind you about things that are due. Right-click the tray icon to quit.", null);
     }
 
-    private string NudgeLabel() => _main!.Data.Settings.Nudges ? "Nudges: on (click to turn off)" : "Nudges: off (click to turn on)";
+    private string NudgeLabel() => _main!.RemindersLabel;
 
     private void SetUpTray()
     {
@@ -94,6 +108,7 @@ public partial class App : Application
         {
             _main.Data.Settings.Nudges = !_main.Data.Settings.Nudges;
             JsonStore.Save(_main.Data);
+            _main.SettingsPage.Reload();
             nudgeToggle.Header = NudgeLabel();
         };
 

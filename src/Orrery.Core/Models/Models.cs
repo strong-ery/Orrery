@@ -164,6 +164,10 @@ public sealed class Settings
     /// <summary>The original name of the custom sound, for display.</summary>
     public string NotifySoundName { get; set; } = "";
 
+    /// <summary>When GitHub was last asked about a new version, and the newest version already announced.</summary>
+    public DateTime? LastUpdateCheckUtc { get; set; }
+    public string AnnouncedUpdate { get; set; } = "";
+
     /// <summary>Which Goals view was last used: 0 orbit map, 1 list, 2 dependency graph.</summary>
     public int GoalsMode { get; set; }
 

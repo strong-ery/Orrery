@@ -28,6 +28,7 @@ public partial class MainViewModel : ObservableObject
     public InspectorViewModel Inspector { get; }
     public CaptureViewModel Capture { get; }
     public SettingsViewModel SettingsPage { get; }
+    public UpdateViewModel Updates { get; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsToday), nameof(IsGoals), nameof(IsDesigner), nameof(IsHistory), nameof(IsCalendar), nameof(IsSettings))]
@@ -105,6 +106,7 @@ public partial class MainViewModel : ObservableObject
         Focus = new FocusViewModel(this);
         Inspector = new InspectorViewModel(this);
         Capture = new CaptureViewModel(this);
+        Updates = new UpdateViewModel(this);
         SettingsPage = new SettingsViewModel(this);
         _current = TodayPage;
 

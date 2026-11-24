@@ -179,53 +179,42 @@
                             </TextBox>
                             <Button Grid.Column="1" Classes="action" Content="Add" Command="{Binding AddStepCommand}" />
                         </Grid>
-                        <StackPanel Orientation="Horizontal" Spacing="4" IsVisible="{Binding HasNewText}">
-                            <Button Classes="seg" Classes.active="{Binding Is15}" Content="15 min" Command="{Binding SetMinutesCommand}" CommandParameter="15" />
-                            <Button Classes="seg" Classes.active="{Binding Is30}" Content="30 min" Command="{Binding SetMinutesCommand}" CommandParameter="30" />
-                            <Button Classes="seg" Classes.active="{Binding Is60}" Content="1 hour" Command="{Binding SetMinutesCommand}" CommandParameter="60" />
-                            <Button Classes="seg" Classes.active="{Binding InOrder}" Content="After the last one" Command="{Binding ToggleInOrderCommand}" />
-                            <Button Classes="seg" Content="As a group" Command="{Binding AddSectionCommand}" />
-                        </StackPanel>
+                        <WrapPanel Orientation="Horizontal" IsVisible="{Binding HasNewText}">
+                            <Button Classes="seg" Margin="0,0,4,4" Classes.active="{Binding Is15}" Content="15 min" Command="{Binding SetMinutesCommand}" CommandParameter="15" />
+                            <Button Classes="seg" Margin="0,0,4,4" Classes.active="{Binding Is30}" Content="30 min" Command="{Binding SetMinutesCommand}" CommandParameter="30" />
+                            <Button Classes="seg" Margin="0,0,4,4" Classes.active="{Binding Is60}" Content="1 hour" Command="{Binding SetMinutesCommand}" CommandParameter="60" />
+                            <Button Classes="seg" Margin="0,0,4,4" Classes.active="{Binding InOrder}" Content="After the last one" Command="{Binding ToggleInOrderCommand}" />
+                            <Button Classes="seg" Margin="0,0,4,4" Content="As a group" Command="{Binding AddSectionCommand}" />
+                        </WrapPanel>
                     </StackPanel>
                 </StackPanel>
             </StackPanel>
 
-            <!-- Waiting on another goal. A single line until it matters. -->
-            <StackPanel Spacing="6">
-                <Button Classes="ghost" HorizontalAlignment="Left" Command="{Binding RequestWaitsCommand}" Padding="0,5"
-                        IsVisible="{Binding !ShowWaitsSection}">
-                    <StackPanel Orientation="Horizontal" Spacing="7">
-                        <PathIcon Data="{StaticResource IconLater}" Width="11" Height="11" />
-                        <TextBlock Text="Waits for another goal first" />
-                    </StackPanel>
-                </Button>
-                <StackPanel Spacing="6" IsVisible="{Binding ShowWaitsSection}">
-                    <TextBlock Classes="section-header" Text="Waits for" Margin="0" />
-                    <TextBlock Classes="field-hint" Text="There are no other goals to wait for." IsVisible="{Binding !HasDependencyCandidates}" />
-                    <ItemsControl ItemsSource="{Binding Dependencies}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate x:DataType="vm:DependencyChipViewModel">
-                                <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,2">
-                                    <TextBlock Text="{Binding Title}" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-                                    <Button Grid.Column="1" Classes="icon" Command="{Binding RemoveCommand}" ToolTip.Tip="No longer waits for this">
-                                        <PathIcon Data="{StaticResource IconClose}" />
-                                    </Button>
-                                </Grid>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" IsVisible="{Binding ShowWaitsPicker}">
-                        <ComboBox Classes="orrery-combo" ItemsSource="{Binding DependencyCandidates}" SelectedIndex="{Binding DependencyIndex}">
-                            <ComboBox.ItemTemplate>
-                                <DataTemplate x:DataType="vm:WaitOption">
-                                    <TextBlock Text="{Binding Label}" TextTrimming="CharacterEllipsis" />
-                                </DataTemplate>
-                            </ComboBox.ItemTemplate>
-                        </ComboBox>
-                        <Button Grid.Column="1" Classes="action" Content="Add" Command="{Binding AddDependencyCommand}" />
-                    </Grid>
-                </StackPanel>
+            <!-- Starting after another goal: chips for what it follows, and a menu to pick more. Hidden when there is nothing to pick. -->
+            <StackPanel Spacing="4" IsVisible="{Binding ShowWaitsSection}">
+                <TextBlock Classes="section-header" Text="Starts after" Margin="0" />
+                <ItemsControl ItemsSource="{Binding Dependencies}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:DependencyChipViewModel">
+                            <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,2">
+                                <TextBlock Text="{Binding Title}" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                <Button Grid.Column="1" Classes="icon" Command="{Binding RemoveCommand}" ToolTip.Tip="No longer waits for this">
+                                    <PathIcon Data="{StaticResource IconClose}" />
+                                </Button>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
             </StackPanel>
+            <Button x:Name="StartAfter" Classes="ghost" HorizontalAlignment="Left" Padding="0,5" IsVisible="{Binding HasDependencyCandidates}">
+                <Button.Flyout>
+                    <MenuFlyout Placement="BottomEdgeAlignedLeft" Opening="OnStartAfterOpening" />
+                </Button.Flyout>
+                <StackPanel Orientation="Horizontal" Spacing="7">
+                    <PathIcon Data="{StaticResource IconLater}" Width="11" Height="11" />
+                    <TextBlock Text="Start after another goal…" />
+                </StackPanel>
+            </Button>
 
             <StackPanel Orientation="Horizontal" Spacing="2" Margin="-9,4,0,0">
                 <Button Classes="ghost" Command="{Binding EditCommand}">

@@ -262,15 +262,12 @@ public partial class InspectorViewModel : ObservableObject
         IsInto = false;
         IntoLabel = "";
     }
-    [ObservableProperty] private int _dependencyIndex;
 
     // Things stay folded away until they are needed: adding steps, their extra options, and waiting on another goal.
     [ObservableProperty] private bool _showAddRow;
     [ObservableProperty] private bool _showWaitsSection;
-    [ObservableProperty] private bool _showWaitsPicker;
     [ObservableProperty] private bool _showProgress;
     private bool _addRequested;
-    private bool _waitsRequested;
 
     public bool CanStart => IsOpen && !_main.Focus.IsVisible;
 
@@ -279,7 +276,6 @@ public partial class InspectorViewModel : ObservableObject
         if (_goalId != goalId)
         {
             _addRequested = false;
-            _waitsRequested = false;
             _into = null;
             NewMinutes = 0;
             InOrder = false;
@@ -296,13 +292,6 @@ public partial class InspectorViewModel : ObservableObject
     {
         _addRequested = true;
         ShowAddRow = true;
-    }
-
-    [RelayCommand]
-    private void RequestWaits()
-    {
-        _waitsRequested = true;
-        ShowWaitsSection = true;
     }
 
     [RelayCommand]
@@ -360,20 +349,16 @@ public partial class InspectorViewModel : ObservableObject
             if (_main.FindGoal(depId) is { } dep)
                 Dependencies.Add(new DependencyChipViewModel(dep.Title, () => RemoveDependency(depId)));
         HasDependencies = Dependencies.Count > 0;
-        ShowWaitsSection = HasDependencies || _waitsRequested;
+        ShowWaitsSection = HasDependencies;
         ShowProgress = Row.HasFraction;
 
         DependencyCandidates.Clear();
-        DependencyCandidates.Add(new WaitOption("Wait for another goal…", null));
         foreach (var other in data.Goals.Where(g => g.Id != goal.Id && !g.Archived && !goal.DependsOnGoals.Contains(g.Id)))
         {
             if (graph.CanWaitOnGoal(other.Id) && !graph.WouldCreateCycle(goal.Id, other.Id))
                 DependencyCandidates.Add(new WaitOption(other.Title, other.Id));
         }
-        HasDependencyCandidates = DependencyCandidates.Count > 1;
-        ShowWaitsPicker = HasDependencyCandidates && (HasDependencies || _waitsRequested);
-        DependencyIndex = -1;
-        DependencyIndex = 0;
+        HasDependencyCandidates = DependencyCandidates.Count > 0;
     }
 
     private Goal? CurrentGoal => _goalId is { } id ? _main.FindGoal(id) : null;
@@ -455,13 +440,12 @@ public partial class InspectorViewModel : ObservableObject
         _main.Changed();
     }
 
-    [RelayCommand]
-    private void AddDependency()
+    /// <summary>Called from the "Start after…" menu: this goal now waits for the one picked.</summary>
+    public void WaitFor(Guid goalId)
     {
-        if (CurrentGoal is not { } goal || DependencyIndex <= 0 || DependencyIndex >= DependencyCandidates.Count)
+        if (CurrentGoal is not { } goal || goal.DependsOnGoals.Contains(goalId))
             return;
-        if (DependencyCandidates[DependencyIndex].Id is { } id)
-            goal.DependsOnGoals.Add(id);
+        goal.DependsOnGoals.Add(goalId);
         _main.Changed();
     }
 
